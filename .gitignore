@@ -1,0 +1,10 @@
+# Foundry
+rwa-comply-hook/lib/
+rwa-comply-hook/out/
+rwa-comply-hook/cache/
+
+# Mac
+.DS_Store
+
+# Environment
+.env
