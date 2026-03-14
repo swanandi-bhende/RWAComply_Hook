@@ -1,7 +1,7 @@
 # Foundry
-rwa-comply-hook/lib/
-rwa-comply-hook/out/
-rwa-comply-hook/cache/
+lib/
+out/
+cache/
 
 # Mac
 .DS_Store
