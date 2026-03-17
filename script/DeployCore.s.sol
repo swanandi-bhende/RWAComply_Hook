@@ -12,8 +12,6 @@ contract DeployCore is Script {
 
         vm.startBroadcast(deployerPrivateKey);
 
-        // PoolManager requires a protocol fee controller
-        // For local/dev: use deployer address
         address protocolFeeController = vm.addr(deployerPrivateKey);
 
         PoolManager poolManager = new PoolManager(protocolFeeController);
