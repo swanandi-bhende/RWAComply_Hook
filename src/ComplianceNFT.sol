@@ -6,19 +6,15 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract ComplianceNFT is ERC721, Ownable {
 
-    uint256 public id;
+    uint256 public nextId;
 
-    mapping(address => uint256) public balance;
-
-    constructor() ERC721("ComplianceNFT", "CNFT") {}
+    constructor(address initialOwner)
+        ERC721("ComplianceNFT", "CNFT")
+        Ownable(initialOwner)
+    {}
 
     function mint(address to) external onlyOwner {
-        id++;
-        _mint(to, id);
-        balance[to]++;
-    }
-
-    function hasBoost(address user) external view returns (bool) {
-        return balance[user] > 1;
+        nextId++;
+        _mint(to, nextId);
     }
 }

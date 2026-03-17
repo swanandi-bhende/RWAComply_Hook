@@ -2,9 +2,11 @@
 pragma solidity ^0.8.20;
 
 import "forge-std/Script.sol";
+
+import {PoolManager} from "@uniswap/v4-core/PoolManager.sol";
+import {IPoolManager} from "@uniswap/v4-core/interfaces/IPoolManager.sol";
+
 import "../src/RWAComplyHook.sol";
-import "../src/ComplianceNFT.sol";
-import "../src/MockERC20.sol";
 import "../src/MockRWAOracle.sol";
 
 contract DeployFull is Script {
@@ -12,15 +14,13 @@ contract DeployFull is Script {
     function run() external {
         vm.startBroadcast();
 
+        PoolManager poolManager = new PoolManager(address(0));
         MockRWAOracle oracle = new MockRWAOracle();
-        RWAComplyHook hook = new RWAComplyHook(address(oracle));
-        ComplianceNFT nft = new ComplianceNFT();
 
-        hook.setNFT(address(nft));
-        nft.transferOwnership(address(hook));
-
-        MockERC20 token0 = new MockERC20("Token0", "T0");
-        MockERC20 token1 = new MockERC20("Token1", "T1");
+        RWAComplyHook hook = new RWAComplyHook(
+            IPoolManager(address(poolManager)),
+            address(oracle)
+        );
 
         vm.stopBroadcast();
     }
