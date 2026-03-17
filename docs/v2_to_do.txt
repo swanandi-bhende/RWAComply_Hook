@@ -1,0 +1,123 @@
+1. Deploy Mock ERC20 Tokens
+   Create and deploy two ERC20 tokens that will be used to form a liquidity pool (Token0 and Token1).
+
+2. Approve Token Spending
+   Approve the PoolManager (or router later) to spend your deployed tokens from your wallet.
+
+3. Construct PoolKey
+   Define a PoolKey struct including:
+
+* token0 address
+* token1 address
+* fee
+* tick spacing
+* hook address (your RWAComplyHook)
+
+4. Initialize the Pool
+   Call PoolManager.initialize() with the PoolKey and initial price (sqrtPriceX96).
+
+5. Add Liquidity
+   Call modifyLiquidity via PoolManager to add initial liquidity to the pool.
+   Ensure your hook’s beforeAddLiquidity is triggered and working.
+
+6. Verify Hook Permissions
+   Ensure your hook address has correct permission bits set (important for Uniswap v4 hooks to activate).
+
+7. Execute a Swap
+   Call swap() on PoolManager with proper SwapParams.
+   This should trigger:
+
+* beforeSwap (tier check + revert if needed)
+* afterSwap (event emission)
+
+8. Test Compliance Logic
+
+* Try swap with tier = 0 → should revert
+* Try swap with tier = 1 or 2 → should pass
+
+9. Test Dynamic Fee Logic
+
+* Change oracle volatility
+* Observe different fee behavior for retail vs institutional users
+
+10. Improve Fee Handling
+    Optionally integrate fee override properly using beforeSwap return values (lpFee override).
+
+11. Add Event Assertions / Logging
+    Verify emitted events (FeeAccrued, TierUpdated) during execution.
+
+12. Write Unit Tests (Foundry)
+
+* beforeSwap revert cases
+* successful swap cases
+* volatility-based behavior
+* liquidity add restrictions
+
+13. Add Integration Test
+    Simulate full flow:
+
+* deploy → create pool → add liquidity → swap → verify outputs
+
+14. Implement NFT Fee Accrual (Optional Next Phase)
+    Create ERC721 contract to represent LP positions and distribute fees.
+
+15. Replace Mock Oracle with Chainlink (Upgrade)
+    Integrate real oracle feed instead of MockRWAOracle.
+
+16. Add Reactive Network Integration (Advanced)
+    Enable cross-chain callback to:
+
+* update user tier
+* pause pool
+* revoke access
+
+17. Build Minimal Frontend (Optional but useful)
+    Allow:
+
+* wallet connect
+* tier display
+* swap execution
+* volatility display
+
+18. Clean Codebase for Submission
+
+* Remove unused imports
+* Fix warnings
+* Optimize functions
+
+19. Finalize README
+    Include:
+
+* architecture
+* flow
+* how to run
+* demo explanation
+
+20. Record Demo Video
+    Show:
+
+* blocked user
+* verified user swap
+* volatility change effect
+* hook execution
+
+21. Prepare Submission
+    Ensure:
+
+* public GitHub repo
+* working code
+* tests OR frontend
+* demo video under 5 min
+
+22. Optional Optimization
+
+* Gas optimization
+* security checks (reentrancy, edge cases)
+* better error messages
+
+23. Stretch Goals
+
+* tier upgrade via NFT
+* swap caps for retail users
+* liquidity range adjustments
+* multiple pools support

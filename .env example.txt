@@ -1,0 +1,2 @@
+PRIVATE_KEY=0xprivate_key
+POOL_MANAGER=0xpool_manager_address_after_deployment

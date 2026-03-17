@@ -1,0 +1,27 @@
+1. Set up Foundry environment and installed all required dependencies for Uniswap v4 development.
+
+2. Installed and configured Uniswap v4 core contracts in the project.
+
+3. Created a custom hook contract called RWAComplyHook.
+
+4. Implemented basic compliance logic:
+
+   * Users are assigned tiers (retail or institutional)
+   * Unverified users are blocked from swaps
+
+5. Added dynamic fee logic based on market volatility using a mock oracle.
+
+6. Built a MockRWAOracle contract to simulate real-world asset volatility.
+
+7. Fixed multiple Solidity issues:
+
+   * Corrected function return types to match IHooks interface
+   * Implemented all required hook functions
+   * Fixed Ownable constructor issue
+   * Removed invalid BaseHook dependency
+
+8. Successfully compiled the entire project without errors.
+
+9. Deployed PoolManager contract on local Anvil blockchain.
+
+10. Deployed Oracle and Hook contracts and connected them with PoolManager.
