@@ -2,6 +2,8 @@
 pragma solidity ^0.8.24;
 
 import "forge-std/Script.sol";
+import "forge-std/console.sol";
+
 import "../src/RWAComplyHook.sol";
 import "../src/MockRWAOracle.sol";
 import "@uniswap/v4-core/interfaces/IPoolManager.sol";
@@ -16,8 +18,7 @@ contract DeployHook is Script {
 
         MockRWAOracle oracle = new MockRWAOracle();
 
-        address poolManagerAddress = vm.envAddress("POOL_MANAGER");
-        IPoolManager poolManager = IPoolManager(poolManagerAddress);
+        IPoolManager poolManager = IPoolManager(vm.envAddress("POOL_MANAGER"));
 
         RWAComplyHook hook = new RWAComplyHook(
             poolManager,
@@ -31,8 +32,7 @@ contract DeployHook is Script {
 
         vm.stopBroadcast();
 
-        console.log("Oracle deployed at:", address(oracle));
-        console.log("Hook deployed at:", address(hook));
-        console.log("Using PoolManager:", poolManagerAddress);
+        console.log("Oracle:", address(oracle));
+        console.log("Hook:", address(hook));
     }
 }

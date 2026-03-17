@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "forge-std/Script.sol";
+import "forge-std/console.sol";
 import "../lib/v4-core/src/PoolManager.sol";
 
 contract DeployCore is Script {
@@ -12,13 +13,12 @@ contract DeployCore is Script {
 
         vm.startBroadcast(deployerPrivateKey);
 
-        address protocolFeeController = vm.addr(deployerPrivateKey);
+        address controller = vm.addr(deployerPrivateKey);
 
-        PoolManager poolManager = new PoolManager(protocolFeeController);
+        PoolManager poolManager = new PoolManager(controller);
 
         vm.stopBroadcast();
 
-        console.log("PoolManager deployed at:", address(poolManager));
-        console.log("Protocol Fee Controller:", protocolFeeController);
+        console.log("PoolManager:", address(poolManager));
     }
 }

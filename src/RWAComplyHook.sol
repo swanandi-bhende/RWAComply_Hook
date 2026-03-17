@@ -2,11 +2,15 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@uniswap/v4-core/interfaces/IHooks.sol";
-import "@uniswap/v4-core/interfaces/IPoolManager.sol";
-import "@uniswap/v4-core/types/PoolKey.sol";
-import "@uniswap/v4-core/types/BalanceDelta.sol";
-import "@uniswap/v4-core/libraries/Hooks.sol";
+
+import {IHooks} from "@uniswap/v4-core/interfaces/IHooks.sol";
+import {Hooks} from "@uniswap/v4-core/libraries/Hooks.sol";
+
+import {IPoolManager} from "@uniswap/v4-core/interfaces/IPoolManager.sol";
+import {PoolKey} from "@uniswap/v4-core/types/PoolKey.sol";
+import {BalanceDelta} from "@uniswap/v4-core/types/BalanceDelta.sol";
+import {BeforeSwapDelta, BeforeSwapDeltaLibrary} from "@uniswap/v4-core/types/BeforeSwapDelta.sol";
+
 import "./MockRWAOracle.sol";
 
 contract RWAComplyHook is IHooks, Ownable {
@@ -20,13 +24,14 @@ contract RWAComplyHook is IHooks, Ownable {
 
     address public oracle;
     IPoolManager public poolManager;
-
     uint256 public volatilityThreshold = 5;
 
-    event TierUpdated(address user, uint8 tier);
-    event FeeAccrued(address user, uint256 amount);
+    event TierUpdated(address indexed user, uint8 tier);
+    event FeeAccrued(address indexed user, uint256 amount);
 
-    constructor(IPoolManager _poolManager, address _oracle) {
+    constructor(IPoolManager _poolManager, address _oracle)
+        Ownable(msg.sender)
+    {
         poolManager = _poolManager;
         oracle = _oracle;
     }
@@ -44,63 +49,6 @@ contract RWAComplyHook is IHooks, Ownable {
         oracle = newOracle;
     }
 
-    function getHookPermissions()
-        public
-        pure
-        returns (Hooks.Permissions memory)
-    {
-        return Hooks.Permissions({
-            beforeInitialize: false,
-            afterInitialize: false,
-            beforeAddLiquidity: true,
-            afterAddLiquidity: false,
-            beforeRemoveLiquidity: false,
-            afterRemoveLiquidity: false,
-            beforeSwap: true,
-            afterSwap: true,
-            beforeDonate: false,
-            afterDonate: false,
-            beforeSwapReturnDelta: false,
-            afterSwapReturnDelta: false,
-            beforeAddLiquidityReturnDelta: false,
-            afterAddLiquidityReturnDelta: false
-        });
-    }
-
-    function beforeSwap(
-        address sender,
-        PoolKey calldata,
-        IPoolManager.SwapParams calldata,
-        bytes calldata
-    ) external override returns (bytes4) {
-        uint8 tier = userTier[sender];
-        if (tier == 0) revert AccessDenied();
-        return IHooks.beforeSwap.selector;
-    }
-
-    function afterSwap(
-        address sender,
-        PoolKey calldata,
-        IPoolManager.SwapParams calldata,
-        BalanceDelta delta,
-        bytes calldata
-    ) external override returns (bytes4) {
-        uint256 fee = uint256(int256(delta.amount0()));
-        emit FeeAccrued(sender, fee);
-        return IHooks.afterSwap.selector;
-    }
-
-    function beforeAddLiquidity(
-        address sender,
-        PoolKey calldata,
-        IPoolManager.ModifyLiquidityParams calldata,
-        bytes calldata
-    ) external override returns (bytes4) {
-        uint8 tier = userTier[sender];
-        if (tier == 0) revert AccessDenied();
-        return IHooks.beforeAddLiquidity.selector;
-    }
-
     function getDynamicFee(address user) public view returns (uint24) {
         uint8 tier = userTier[user];
         uint256 vol = MockRWAOracle(oracle).getVolatility();
@@ -111,5 +59,124 @@ contract RWAComplyHook is IHooks, Ownable {
         }
 
         return 1000;
+    }
+
+    // -------- CORE HOOKS --------
+
+    function beforeSwap(
+        address sender,
+        PoolKey calldata,
+        IPoolManager.SwapParams calldata,
+        bytes calldata
+    )
+        external
+        override
+        returns (bytes4, BeforeSwapDelta, uint24)
+    {
+        if (userTier[sender] == 0) revert AccessDenied();
+
+        uint24 fee = getDynamicFee(sender);
+
+        return (
+            IHooks.beforeSwap.selector,
+            BeforeSwapDeltaLibrary.ZERO_DELTA,
+            fee
+        );
+    }
+
+    function afterSwap(
+        address sender,
+        PoolKey calldata,
+        IPoolManager.SwapParams calldata,
+        BalanceDelta delta,
+        bytes calldata
+    )
+        external
+        override
+        returns (bytes4, int128)
+    {
+        uint256 fee = uint256(int256(delta.amount0()));
+        emit FeeAccrued(sender, fee);
+
+        return (IHooks.afterSwap.selector, 0);
+    }
+
+    function beforeAddLiquidity(
+        address sender,
+        PoolKey calldata,
+        IPoolManager.ModifyLiquidityParams calldata,
+        bytes calldata
+    ) external override returns (bytes4) {
+        if (userTier[sender] == 0) revert AccessDenied();
+        return IHooks.beforeAddLiquidity.selector;
+    }
+
+    // -------- REQUIRED STUBS --------
+
+    function beforeInitialize(address, PoolKey calldata, uint160)
+        external
+        override
+        returns (bytes4)
+    {
+        return IHooks.beforeInitialize.selector;
+    }
+
+    function afterInitialize(address, PoolKey calldata, uint160, int24)
+        external
+        override
+        returns (bytes4)
+    {
+        return IHooks.afterInitialize.selector;
+    }
+
+    function afterAddLiquidity(
+        address,
+        PoolKey calldata,
+        IPoolManager.ModifyLiquidityParams calldata,
+        BalanceDelta,
+        BalanceDelta,
+        bytes calldata
+    ) external override returns (bytes4, BalanceDelta) {
+        return (IHooks.afterAddLiquidity.selector, BalanceDelta.wrap(0));
+    }
+
+    function beforeRemoveLiquidity(
+        address,
+        PoolKey calldata,
+        IPoolManager.ModifyLiquidityParams calldata,
+        bytes calldata
+    ) external override returns (bytes4) {
+        return IHooks.beforeRemoveLiquidity.selector;
+    }
+
+    function afterRemoveLiquidity(
+        address,
+        PoolKey calldata,
+        IPoolManager.ModifyLiquidityParams calldata,
+        BalanceDelta,
+        BalanceDelta,
+        bytes calldata
+    ) external override returns (bytes4, BalanceDelta) {
+        return (IHooks.afterRemoveLiquidity.selector, BalanceDelta.wrap(0));
+    }
+
+    function beforeDonate(
+        address,
+        PoolKey calldata,
+        uint256,
+        uint256,
+        bytes calldata
+    ) external override returns (bytes4) {
+        return IHooks.beforeDonate.selector;
+    }
+
+    function afterDonate(
+        address,
+        PoolKey calldata,
+        uint256,
+        uint256,
+        bytes calldata
+    ) external override returns (bytes4) {
+        return IHooks.afterDonate.selector;
     }
 }
