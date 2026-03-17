@@ -4,9 +4,8 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 import {IHooks} from "@uniswap/v4-core/interfaces/IHooks.sol";
-import {Hooks} from "@uniswap/v4-core/libraries/Hooks.sol";
-
 import {IPoolManager} from "@uniswap/v4-core/interfaces/IPoolManager.sol";
+
 import {PoolKey} from "@uniswap/v4-core/types/PoolKey.sol";
 import {BalanceDelta} from "@uniswap/v4-core/types/BalanceDelta.sol";
 import {BeforeSwapDelta, BeforeSwapDeltaLibrary} from "@uniswap/v4-core/types/BeforeSwapDelta.sol";
@@ -16,18 +15,25 @@ import "./MockRWAOracle.sol";
 contract RWAComplyHook is IHooks, Ownable {
 
     error AccessDenied();
+    error PoolPaused();
+    error RetailLimitExceeded();
 
     uint8 constant RETAIL = 1;
     uint8 constant INSTITUTIONAL = 2;
 
     mapping(address => uint8) public userTier;
 
-    address public oracle;
     IPoolManager public poolManager;
+    address public oracle;
+
     uint256 public volatilityThreshold = 5;
+    uint256 public retailSwapCap = 1e18; // 1 token default cap
+    bool public poolPaused;
 
     event TierUpdated(address indexed user, uint8 tier);
     event FeeAccrued(address indexed user, uint256 amount);
+    event PoolPauseUpdated(bool paused);
+    event OracleUpdated(address oracle);
 
     constructor(IPoolManager _poolManager, address _oracle)
         Ownable(msg.sender)
@@ -36,44 +42,72 @@ contract RWAComplyHook is IHooks, Ownable {
         oracle = _oracle;
     }
 
+    // -------- ADMIN --------
+
     function setTier(address user, uint8 tier) external onlyOwner {
         userTier[user] = tier;
         emit TierUpdated(user, tier);
+    }
+
+    function revokeUser(address user) external onlyOwner {
+        userTier[user] = 0;
+        emit TierUpdated(user, 0);
+    }
+
+    function setOracle(address newOracle) external onlyOwner {
+        oracle = newOracle;
+        emit OracleUpdated(newOracle);
     }
 
     function setVolatilityThreshold(uint256 newThreshold) external onlyOwner {
         volatilityThreshold = newThreshold;
     }
 
-    function setOracle(address newOracle) external onlyOwner {
-        oracle = newOracle;
+    function setRetailSwapCap(uint256 cap) external onlyOwner {
+        retailSwapCap = cap;
     }
+
+    function setPoolPaused(bool paused) external onlyOwner {
+        poolPaused = paused;
+        emit PoolPauseUpdated(paused);
+    }
+
+    // -------- CORE LOGIC --------
 
     function getDynamicFee(address user) public view returns (uint24) {
         uint8 tier = userTier[user];
         uint256 vol = MockRWAOracle(oracle).getVolatility();
 
         if (vol > volatilityThreshold) {
-            if (tier == RETAIL) return 5000;
-            if (tier == INSTITUTIONAL) return 500;
+            if (tier == RETAIL) return 5000;        // 0.5%
+            if (tier == INSTITUTIONAL) return 500;  // 0.05%
         }
 
-        return 1000;
+        return 1000; // default 0.1%
     }
-
-    // -------- CORE HOOKS --------
 
     function beforeSwap(
         address sender,
         PoolKey calldata,
-        IPoolManager.SwapParams calldata,
+        IPoolManager.SwapParams calldata params,
         bytes calldata
     )
         external
         override
         returns (bytes4, BeforeSwapDelta, uint24)
     {
-        if (userTier[sender] == 0) revert AccessDenied();
+        if (poolPaused) revert PoolPaused();
+
+        uint8 tier = userTier[sender];
+        if (tier == 0) revert AccessDenied();
+
+        if (tier == RETAIL) {
+            uint256 amount = params.amountSpecified > 0
+                ? uint256(params.amountSpecified)
+                : uint256(-params.amountSpecified);
+
+            if (amount > retailSwapCap) revert RetailLimitExceeded();
+        }
 
         uint24 fee = getDynamicFee(sender);
 
@@ -95,7 +129,9 @@ contract RWAComplyHook is IHooks, Ownable {
         override
         returns (bytes4, int128)
     {
-        uint256 fee = uint256(int256(delta.amount0()));
+        int256 raw = int256(delta.amount0());
+        uint256 fee = raw < 0 ? uint256(-raw) : uint256(raw);
+
         emit FeeAccrued(sender, fee);
 
         return (IHooks.afterSwap.selector, 0);
@@ -107,24 +143,33 @@ contract RWAComplyHook is IHooks, Ownable {
         IPoolManager.ModifyLiquidityParams calldata,
         bytes calldata
     ) external override returns (bytes4) {
+        if (poolPaused) revert PoolPaused();
         if (userTier[sender] == 0) revert AccessDenied();
+
         return IHooks.beforeAddLiquidity.selector;
+    }
+
+    // -------- REACTIVE READY --------
+
+    function reactiveUpdate(address user, uint8 newTier, bool pause) external {
+        // later restrict to reactive contract
+        userTier[user] = newTier;
+        poolPaused = pause;
+
+        emit TierUpdated(user, newTier);
+        emit PoolPauseUpdated(pause);
     }
 
     // -------- REQUIRED STUBS --------
 
     function beforeInitialize(address, PoolKey calldata, uint160)
-        external
-        override
-        returns (bytes4)
+        external override returns (bytes4)
     {
         return IHooks.beforeInitialize.selector;
     }
 
     function afterInitialize(address, PoolKey calldata, uint160, int24)
-        external
-        override
-        returns (bytes4)
+        external override returns (bytes4)
     {
         return IHooks.afterInitialize.selector;
     }
