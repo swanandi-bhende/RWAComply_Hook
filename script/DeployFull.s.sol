@@ -17,6 +17,8 @@ contract DeployFull is Script {
     function run() external {
 
         uint256 pk = vm.envUint("PRIVATE_KEY");
+        address sender = vm.addr(pk);
+
         vm.startBroadcast(pk);
 
         IPoolManager poolManager =
@@ -30,6 +32,7 @@ contract DeployFull is Script {
         MockERC20 tokenA = MockERC20(tokenAAddr);
         MockERC20 tokenB = MockERC20(tokenBAddr);
 
+        // approve PoolManager
         tokenA.approve(address(poolManager), type(uint256).max);
         tokenB.approve(address(poolManager), type(uint256).max);
 
@@ -49,6 +52,9 @@ contract DeployFull is Script {
         PoolExecutor executor = new PoolExecutor(poolManager, key);
 
         RWAComplyHook(hookAddr).setTier(address(executor), 2);
+
+        tokenA.transfer(address(executor), 1e21);
+        tokenB.transfer(address(executor), 1e21);
 
         executor.execute();
 
