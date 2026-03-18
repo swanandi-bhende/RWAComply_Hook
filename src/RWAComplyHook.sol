@@ -35,29 +35,47 @@ contract RWAComplyHook is IHooks, Ownable {
 
     event TierUpdated(address indexed user, uint8 tier);
     event FeeAccrued(address indexed user, uint256 amount);
-    event PoolPauseUpdated(bool paused);
-    event OracleUpdated(address oracle);
 
     modifier onlyPoolManager() {
         if (msg.sender != address(poolManager)) revert OnlyPoolManager();
         _;
     }
 
-    constructor(IPoolManager _poolManager, address _oracle)
-        Ownable(msg.sender)
+    constructor(
+        IPoolManager _poolManager,
+        address _oracle,
+        address owner_
+    )
+        Ownable(owner_)
     {
         poolManager = _poolManager;
         oracle = _oracle;
+
+        if (block.chainid != 31337) {
+            Hooks.validateHookPermissions(
+                IHooks(address(this)),
+                getHookPermissions()
+            );
+        }
     }
 
-    // 🔥 REQUIRED FOR CREATE2 MATCHING
-    function getHookPermissions() internal pure returns (uint160) {
-        return
-            Hooks.BEFORE_INITIALIZE_FLAG |
-            Hooks.AFTER_INITIALIZE_FLAG |
-            Hooks.BEFORE_ADD_LIQUIDITY_FLAG |
-            Hooks.BEFORE_SWAP_FLAG |
-            Hooks.AFTER_SWAP_FLAG;
+    function getHookPermissions() public pure returns (Hooks.Permissions memory) {
+        return Hooks.Permissions({
+            beforeInitialize: true,
+            afterInitialize: true,
+            beforeAddLiquidity: true,
+            afterAddLiquidity: false,
+            beforeRemoveLiquidity: false,
+            afterRemoveLiquidity: false,
+            beforeSwap: true,
+            afterSwap: true,
+            beforeDonate: false,
+            afterDonate: false,
+            beforeSwapReturnDelta: false,
+            afterSwapReturnDelta: false,
+            afterAddLiquidityReturnDelta: false,
+            afterRemoveLiquidityReturnDelta: false
+        });
     }
 
     function setTier(address user, uint8 tier) external onlyOwner {
@@ -67,7 +85,6 @@ contract RWAComplyHook is IHooks, Ownable {
 
     function setPoolPaused(bool paused) external onlyOwner {
         poolPaused = paused;
-        emit PoolPauseUpdated(paused);
     }
 
     function getDynamicFee(address user) public view returns (uint24) {

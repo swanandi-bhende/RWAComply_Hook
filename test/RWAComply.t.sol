@@ -7,7 +7,6 @@ import {PoolManager} from "@uniswap/v4-core/PoolManager.sol";
 import {IPoolManager} from "@uniswap/v4-core/interfaces/IPoolManager.sol";
 
 import {PoolKey} from "@uniswap/v4-core/types/PoolKey.sol";
-import {Currency} from "@uniswap/v4-core/types/Currency.sol";
 
 import "../src/RWAComplyHook.sol";
 import "../src/MockRWAOracle.sol";
@@ -26,7 +25,8 @@ contract RWAComplyTest is Test {
 
         hook = new RWAComplyHook(
             IPoolManager(address(poolManager)),
-            address(oracle)
+            address(oracle),
+            address(this)
         );
     }
 

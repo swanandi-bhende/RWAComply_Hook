@@ -19,7 +19,8 @@ contract DeployFull is Script {
 
         RWAComplyHook hook = new RWAComplyHook(
             IPoolManager(address(poolManager)),
-            address(oracle)
+            address(oracle),
+            msg.sender
         );
 
         vm.stopBroadcast();
