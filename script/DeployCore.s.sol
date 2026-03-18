@@ -3,7 +3,8 @@ pragma solidity ^0.8.24;
 
 import "forge-std/Script.sol";
 import "forge-std/console.sol";
-import "../lib/v4-core/src/PoolManager.sol";
+
+import {PoolManager} from "@uniswap/v4-core/PoolManager.sol";
 
 contract DeployCore is Script {
 
@@ -13,12 +14,11 @@ contract DeployCore is Script {
 
         vm.startBroadcast(deployerPrivateKey);
 
-        address controller = vm.addr(deployerPrivateKey);
-
-        PoolManager poolManager = new PoolManager(controller);
+        // For local testing → no controller needed
+        PoolManager poolManager = new PoolManager(address(0));
 
         vm.stopBroadcast();
 
-        console.log("PoolManager:", address(poolManager));
+        console.log("POOL_MANAGER:", address(poolManager));
     }
 }

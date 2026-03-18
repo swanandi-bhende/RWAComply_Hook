@@ -6,11 +6,17 @@ import "forge-std/console.sol";
 
 import "../src/RWAComplyHook.sol";
 import "../src/MockRWAOracle.sol";
+import "../src/MockERC20.sol";
 
 import "@uniswap/v4-core/interfaces/IPoolManager.sol";
+import "@uniswap/v4-core/interfaces/IHooks.sol";
+
+import "@uniswap/v4-core/types/PoolKey.sol";
+import "@uniswap/v4-core/types/Currency.sol";
+
 import "@uniswap/v4-core/libraries/Hooks.sol";
 
-contract DeployHook is Script {
+contract PoolSetup is Script {
 
     function run() external {
 
@@ -19,11 +25,15 @@ contract DeployHook is Script {
 
         vm.startBroadcast(deployerPrivateKey);
 
-        MockRWAOracle oracle = new MockRWAOracle();
+        // ---------------- DEPLOY CORE ----------------
 
         IPoolManager poolManager = IPoolManager(
             vm.envAddress("POOL_MANAGER")
         );
+
+        MockRWAOracle oracle = new MockRWAOracle();
+
+        // ---------------- FIND VALID HOOK ADDRESS ----------------
 
         uint160 permissions =
             Hooks.BEFORE_INITIALIZE_FLAG |
@@ -72,6 +82,8 @@ contract DeployHook is Script {
             if (i == 999999) revert("No valid salt found");
         }
 
+        // ---------------- DEPLOY HOOK ----------------
+
         RWAComplyHook hook = new RWAComplyHook{salt: salt}(
             poolManager,
             address(oracle),
@@ -88,9 +100,42 @@ contract DeployHook is Script {
         oracle.setVolatility(3);
         hook.setTier(deployerEOA, 2);
 
+        // ---------------- DEPLOY TOKENS ----------------
+
+        MockERC20 tokenA = new MockERC20("TokenA", "TKA", 1e24);
+        MockERC20 tokenB = new MockERC20("TokenB", "TKB", 1e24);
+
+        // ---------------- SORT TOKENS ----------------
+
+        (address token0, address token1) =
+            address(tokenA) < address(tokenB)
+                ? (address(tokenA), address(tokenB))
+                : (address(tokenB), address(tokenA));
+
+        // ---------------- CREATE POOL KEY ----------------
+
+        PoolKey memory key = PoolKey({
+            currency0: Currency.wrap(token0),
+            currency1: Currency.wrap(token1),
+            fee: 3000,
+            tickSpacing: 60,
+            hooks: IHooks(address(hook))
+        });
+
+        // ---------------- INITIALIZE POOL ----------------
+
+        uint160 sqrtPriceX96 = 79228162514264337593543950336;
+
+        poolManager.initialize(key, sqrtPriceX96);
+
         vm.stopBroadcast();
 
+        // ---------------- LOG EVERYTHING ----------------
+
+        console.log("PoolManager:", address(poolManager));
         console.log("Hook:", address(hook));
         console.log("Oracle:", address(oracle));
+        console.log("TokenA:", address(tokenA));
+        console.log("TokenB:", address(tokenB));
     }
 }
