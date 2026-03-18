@@ -1,0 +1,200 @@
+Detailed Next Steps (To-Do List)
+
+--------------------------------------------------
+
+PHASE 1: Complete Core Uniswap Integration
+
+1. Deploy Mock ERC20 Tokens
+- Create two ERC20 tokens (TokenA and TokenB)
+- Mint sufficient supply to deployer
+- Approve PoolManager for token transfers
+
+2. Create PoolKey
+- Define:
+  - token0 and token1
+  - fee (use dynamic fee flag)
+  - hook address (your deployed hook)
+- Ensure correct token ordering (token0 < token1)
+
+3. Initialize Pool
+- Call PoolManager.initialize()
+- Set initial sqrtPriceX96
+- Verify hook’s beforeInitialize and afterInitialize are triggered
+
+4. Add Liquidity
+- Use modifyLiquidity()
+- Provide initial liquidity range
+- Ensure beforeAddLiquidity hook executes
+- Confirm only verified users can add liquidity
+
+5. Perform First Swap
+- Call swap() via PoolManager
+- Pass SwapParams:
+  - amountSpecified
+  - zeroForOne
+- Verify:
+  - beforeSwap executes
+  - fee returned from hook is applied
+  - afterSwap event is emitted
+
+--------------------------------------------------
+
+PHASE 2: Validate Hook Behavior On-Chain
+
+6. Test Compliance Logic
+- Try swap with:
+  - Unverified user → should revert
+  - Retail user → should pass with limits
+  - Institutional user → no limit
+
+7. Test Retail Cap
+- Attempt swap > retailSwapCap
+- Ensure transaction reverts
+
+8. Test Dynamic Fees
+- Change oracle volatility
+- Perform swaps:
+  - Low volatility → normal fee
+  - High volatility:
+    - Retail → higher fee
+    - Institutional → lower fee
+
+9. Test Pause Mechanism
+- Call setPoolPaused(true)
+- Attempt swap → should revert
+- Resume and test again
+
+--------------------------------------------------
+
+PHASE 3: Improve Contract Design
+
+10. Add Events for Better Tracking
+- Emit events for:
+  - Swap blocked
+  - Fee calculated
+  - Tier usage
+
+11. Add Getter Functions
+- Expose:
+  - current volatility
+  - user tier
+  - current fee logic output
+
+12. Optimize Gas
+- Reduce redundant storage reads
+- Cache values where needed
+
+--------------------------------------------------
+
+PHASE 4: Replace Mock Components
+
+13. Replace Mock Oracle
+- Integrate Chainlink or external oracle
+- Fetch real volatility or price feeds
+
+14. Add Real Token Support
+- Use standard ERC20 tokens (USDC, WETH on testnet)
+- Handle decimals properly
+
+--------------------------------------------------
+
+PHASE 5: Advanced Features
+
+15. NFT-based Fee Accrual (Optional)
+- Track fees per user using NFTs
+- Reward institutional liquidity providers
+
+16. Tier Management System
+- Add whitelist / KYC registry
+- Allow batch tier updates
+
+17. Governance Control
+- Add multi-sig or DAO ownership
+- Control:
+  - pause
+  - thresholds
+  - caps
+
+--------------------------------------------------
+
+PHASE 6: Frontend / UX
+
+18. Build Basic UI
+- Connect wallet
+- Display:
+  - user tier
+  - current fee
+  - pool status
+
+19. Add Swap Interface
+- Input token amount
+- Show estimated fee before execution
+
+20. Admin Dashboard
+- Set tiers
+- Update oracle
+- Pause/unpause pool
+
+--------------------------------------------------
+
+PHASE 7: Testing & Security
+
+21. Expand Test Coverage
+- Edge cases:
+  - zero amounts
+  - extreme volatility
+  - rapid swaps
+
+22. Fuzz Testing
+- Random inputs for swap amounts and tiers
+
+23. Security Checks
+- Reentrancy safety (even though hook doesn’t hold funds)
+- Validate all external calls
+
+--------------------------------------------------
+
+PHASE 8: Deployment
+
+24. Deploy to Testnet
+- Use Sepolia / Holesky
+- Deploy:
+  - PoolManager
+  - Tokens
+  - Hook
+
+25. Verify Contracts
+- Publish on Etherscan
+
+26. End-to-End Testing
+- Full swap flow with real users
+
+--------------------------------------------------
+
+PHASE 9: Finalization
+
+27. Documentation
+- Final README
+- Architecture diagram
+- Hook lifecycle explanation
+
+28. Demo Preparation
+- Record working swap
+- Show:
+  - compliance blocking
+  - dynamic fees
+
+29. Submission / Pitch
+- Highlight:
+  - Uniswap v4 hook usage
+  - real-world asset compliance
+  - extensibility
+
+--------------------------------------------------
+
+Current Priority (Immediate Next Step)
+
+→ Create pool + add liquidity + perform first swap
+
+This is the most important step to prove:
+YOUR HOOK WORKS INSIDE UNISWAP V4

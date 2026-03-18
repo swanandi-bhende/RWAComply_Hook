@@ -1,187 +1,224 @@
-# RWAComply Hook (Uniswap v4)
+RWAComply Hook (Uniswap v4)
 
-## Overview
+Overview
 
-RWAComply is a custom Uniswap v4 hook that introduces compliance-aware logic for Real-World Asset (RWA) pools. It enforces user access control and dynamically adjusts behavior based on user tiers and market conditions.
+RWAComply is a custom Uniswap v4 hook that introduces compliance-aware
+logic for Real-World Asset (RWA) pools. It enforces user access control
+and dynamically adjusts behavior based on user tiers and market
+conditions.
 
-This project is currently at a working MVP stage with deployed contracts on a local Anvil network.
+This project is currently at a working MVP stage with fully tested
+contracts and successful CREATE2-based deployment compatible with
+Uniswap v4 requirements.
 
----
+------------------------------------------------------------------------
 
-## Features Implemented
+Features Implemented
 
-* **User Tier System**
+User Tier System
 
-  * Addresses are assigned tiers:
+-   Addresses are assigned tiers: Retail (1) Institutional (2)
+-   Unverified users (tier = 0) are blocked from swaps and liquidity
+    actions.
 
-    * Retail (1)
-    * Institutional (2)
-  * Unverified users (tier = 0) are blocked from swaps and liquidity actions.
+Access Control (beforeSwap & beforeAddLiquidity)
 
-* **Access Control (beforeSwap & beforeAddLiquidity)**
+-   Transactions are validated before execution.
+-   Unauthorized users are reverted.
+-   Retail users have a swap cap enforced.
 
-  * Transactions are validated before execution.
-  * Unauthorized users are reverted.
+Dynamic Fee Logic
 
-* **Dynamic Fee Logic**
+-   Fee varies based on:
+    -   User tier
+    -   Market volatility from oracle
+-   High volatility:
+    -   Retail → higher fees
+    -   Institutional → lower fees
+-   Normal conditions:
+    -   Default fee applied
 
-  * Fee varies based on:
+Post-Swap Tracking
 
-    * User tier
-    * Market volatility from oracle
-  * Higher volatility → higher fees for retail users.
+-   Emits fee-related events after swaps.
 
-* **Post-Swap Tracking**
+Mock Oracle Integration
 
-  * Emits fee-related events after swaps.
+-   Simulates real-world volatility data for testing fee behavior.
 
-* **Mock Oracle Integration**
+------------------------------------------------------------------------
 
-  * Simulates real-world volatility data.
+Tech Stack
 
----
+-   Solidity (0.8.24 / 0.8.26)
+-   Foundry (Forge, Anvil)
+-   Uniswap v4 Core
+-   OpenZeppelin (Ownable)
 
-## Tech Stack
+------------------------------------------------------------------------
 
-* Solidity (0.8.24 / 0.8.26)
-* Foundry (Forge, Anvil)
-* Uniswap v4 Core
-* OpenZeppelin (Ownable)
+Project Structure
 
----
+src/ RWAComplyHook.sol MockRWAOracle.sol
 
-## Project Structure
+script/ DeployCore.s.sol DeployHook.s.sol PoolSetup.s.sol
 
-```
-src/
-  RWAComplyHook.sol
-  MockRWAOracle.sol
+test/ RWAComply.t.sol
 
-script/
-  DeployCore.s.sol
-  DeployHook.s.sol
+lib/ v4-core/ openzeppelin-contracts/
 
-lib/
-  v4-core/
-  openzeppelin-contracts/
-```
+------------------------------------------------------------------------
 
----
+Contracts
 
-## Contracts
+RWAComplyHook.sol
 
-### RWAComplyHook.sol
+-   Main hook contract implementing:
+    -   beforeSwap
+    -   afterSwap
+    -   beforeAddLiquidity
+-   Enforces compliance and dynamic fee logic
+-   Uses CREATE2-compatible deployment constraints
+-   Validates hook permissions (production only)
 
-Main hook contract implementing:
+MockRWAOracle.sol
 
-* beforeSwap
-* afterSwap
-* beforeAddLiquidity
-* Required IHooks interface functions
+-   Simple contract to:
+    -   Set volatility
+    -   Return current volatility
 
-### MockRWAOracle.sol
+------------------------------------------------------------------------
 
-Simple contract to:
+Deployment (Local - Anvil)
 
-* Set volatility
-* Return current volatility
+1.  Start Anvil
 
----
-
-## Deployment (Local - Anvil)
-
-### 1. Start Anvil
-
-```
 anvil
-```
 
----
+------------------------------------------------------------------------
 
-### 2. Set Environment Variables
+2.  Set Environment Variables
 
-Create `.env`:
+Create .env:
 
-```
-PRIVATE_KEY=0x<anvil_private_key>
-```
+PRIVATE_KEY=0x`<anvil_private_key>`{=html}
 
----
+------------------------------------------------------------------------
 
-### 3. Deploy PoolManager
+3.  Deploy PoolManager
 
-```
-forge script script/DeployCore.s.sol \
---rpc-url http://127.0.0.1:8545 \
+forge script script/DeployCore.s.sol\
+--rpc-url http://127.0.0.1:8545\
 --broadcast
+
+Add: POOL_MANAGER=
+```{=html}
+<address>
 ```
 
-Copy the deployed address and add:
+------------------------------------------------------------------------
 
-```
-POOL_MANAGER=<address>
-```
+4.  Deploy Hook + Oracle (CREATE2)
 
----
-
-### 4. Deploy Hook + Oracle
-
-```
-forge script script/DeployHook.s.sol \
---rpc-url http://127.0.0.1:8545 \
+forge script script/DeployHook.s.sol\
+--rpc-url http://127.0.0.1:8545\
 --broadcast
-```
 
----
+-   Salt is brute-forced automatically
+-   Hook address satisfies Uniswap v4 permission mask
 
-## Current Status
+------------------------------------------------------------------------
 
-* Contracts compile successfully
-* PoolManager deployed
-* Oracle deployed
-* Hook deployed and configured
-* Tier system working
-* Access control working
+Testing
 
----
+Tests located in: test/RWAComply.t.sol
 
-## Not Yet Implemented
+Covered cases:
 
-* Pool creation with hook attached
-* Token deployment and liquidity provisioning
-* Swap execution to trigger hooks
-* NFT-based fee accrual
-* Chainlink oracle integration
-* Reactive Network integration
-* Frontend
+-   Unverified users cannot swap
+-   Retail fee logic under high volatility
+-   Institutional fee logic under high volatility
+-   Pool pause behavior
 
----
+Run tests:
 
-## Next Steps
+forge test
 
-1. Deploy mock ERC20 tokens
-2. Create a Uniswap v4 pool using the hook
-3. Add liquidity
-4. Execute swaps to trigger:
+All tests are currently passing.
 
-   * beforeSwap
-   * afterSwap
-5. Test dynamic fee behavior
+------------------------------------------------------------------------
 
----
+Special Implementation Details
 
-## Notes
+CREATE2 Deployment
 
-* The hook does not hold funds (safe design)
-* All logic is executed via Uniswap v4 PoolManager callbacks
-* Broadcast and cache folders are ignored for clean version control
+-   Hook must satisfy: hookAddress & ALL_HOOK_MASK == permissions
+-   Salt is brute-forced to achieve valid address
+-   Uses canonical CREATE2 deployer (0x4e59...)
 
----
+Ownership Fix
 
-## Goal
+-   Owner passed explicitly in constructor
+-   Avoids CREATE2 msg.sender issue
+
+Test vs Production Handling
+
+-   Hook validation skipped in test environment
+-   onlyPoolManager relaxed in tests
+-   Fully enforced in production
+
+------------------------------------------------------------------------
+
+Current Status
+
+-   Contracts compile successfully
+-   CREATE2 hook deployment working correctly
+-   Permission bits matched exactly
+-   Ownership correctly handled
+-   Oracle integrated and functional
+-   All tests passing
+-   Hook logic validated in isolation
+
+------------------------------------------------------------------------
+
+Not Yet Implemented
+
+-   Pool creation with hook attached
+-   Token deployment and liquidity provisioning
+-   Swap execution via PoolManager
+-   NFT-based fee accrual
+-   Chainlink oracle integration
+-   Reactive Network integration
+-   Frontend interface
+
+------------------------------------------------------------------------
+
+Next Steps
+
+1.  Deploy mock ERC20 tokens
+2.  Create Uniswap v4 pool with hook
+3.  Initialize pool
+4.  Add liquidity
+5.  Execute swaps to trigger:
+    -   beforeSwap
+    -   afterSwap
+6.  Validate dynamic fee behavior on-chain
+
+------------------------------------------------------------------------
+
+Notes
+
+-   Hook does not custody funds (secure design)
+-   All logic executed via PoolManager callbacks
+-   CREATE2 is mandatory for Uniswap v4 hooks
+-   Broadcast and cache folders should be gitignored
+
+------------------------------------------------------------------------
+
+Goal
 
 To build a compliant liquidity layer for RWAs by combining:
 
-* On-chain identity (tiers)
-* Oracle-based adaptability
-* Hook-based enforcement in Uniswap v4
+-   On-chain identity (user tiers)
+-   Oracle-driven adaptability
+-   Hook-based enforcement in Uniswap v4
