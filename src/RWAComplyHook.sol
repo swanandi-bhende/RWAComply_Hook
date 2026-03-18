@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "forge-std/console.sol";
 
 import {IHooks} from "@uniswap/v4-core/interfaces/IHooks.sol";
 import {IPoolManager} from "@uniswap/v4-core/interfaces/IPoolManager.sol";
@@ -35,6 +36,8 @@ contract RWAComplyHook is IHooks, Ownable {
 
     event TierUpdated(address indexed user, uint8 tier);
     event FeeAccrued(address indexed user, uint256 amount);
+    event BeforeSwapCalled(address indexed user, uint8 tier, uint24 fee);
+    event AfterSwapCalled(address indexed user);
 
     modifier onlyPoolManager() {
         if (block.chainid != 31337) {
@@ -112,9 +115,14 @@ contract RWAComplyHook is IHooks, Ownable {
         onlyPoolManager
         returns (bytes4, BeforeSwapDelta, uint24)
     {
+        console.log("beforeSwap called");
+        console.log("sender:", sender);
+
         if (poolPaused) revert PoolPaused();
 
         uint8 tier = userTier[sender];
+        console.log("tier:", tier);
+
         if (tier == 0) revert AccessDenied();
 
         if (tier == RETAIL) {
@@ -126,6 +134,10 @@ contract RWAComplyHook is IHooks, Ownable {
         }
 
         uint24 fee = getDynamicFee(sender);
+
+        console.log("fee:", fee);
+
+        emit BeforeSwapCalled(sender, tier, fee);
 
         return (
             IHooks.beforeSwap.selector,
@@ -146,7 +158,11 @@ contract RWAComplyHook is IHooks, Ownable {
         onlyPoolManager
         returns (bytes4, int128)
     {
+        console.log("afterSwap called");
+
+        emit AfterSwapCalled(sender);
         emit FeeAccrued(sender, 0);
+
         return (IHooks.afterSwap.selector, 0);
     }
 
@@ -161,6 +177,8 @@ contract RWAComplyHook is IHooks, Ownable {
         onlyPoolManager
         returns (bytes4)
     {
+        console.log("beforeAddLiquidity called");
+
         if (userTier[sender] == 0) revert AccessDenied();
         return IHooks.beforeAddLiquidity.selector;
     }
@@ -168,12 +186,14 @@ contract RWAComplyHook is IHooks, Ownable {
     function beforeInitialize(address, PoolKey calldata, uint160)
         external override returns (bytes4)
     {
+        console.log("beforeInitialize called");
         return IHooks.beforeInitialize.selector;
     }
 
     function afterInitialize(address, PoolKey calldata, uint160, int24)
         external override returns (bytes4)
     {
+        console.log("afterInitialize called");
         return IHooks.afterInitialize.selector;
     }
 
