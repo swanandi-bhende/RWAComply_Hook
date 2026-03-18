@@ -10,21 +10,20 @@ import {PoolKey} from "@uniswap/v4-core/types/PoolKey.sol";
 import {BalanceDelta} from "@uniswap/v4-core/types/BalanceDelta.sol";
 import {BeforeSwapDelta, BeforeSwapDeltaLibrary} from "@uniswap/v4-core/types/BeforeSwapDelta.sol";
 
+import {Hooks} from "@uniswap/v4-core/libraries/Hooks.sol";
+
 import "./MockRWAOracle.sol";
 
 contract RWAComplyHook is IHooks, Ownable {
 
-    // -------- ERRORS --------
     error AccessDenied();
     error PoolPaused();
     error RetailLimitExceeded();
     error OnlyPoolManager();
 
-    // -------- CONSTANTS --------
     uint8 constant RETAIL = 1;
     uint8 constant INSTITUTIONAL = 2;
 
-    // -------- STORAGE --------
     mapping(address => uint8) public userTier;
 
     IPoolManager public immutable poolManager;
@@ -34,19 +33,16 @@ contract RWAComplyHook is IHooks, Ownable {
     uint256 public retailSwapCap = 1e18;
     bool public poolPaused;
 
-    // -------- EVENTS --------
     event TierUpdated(address indexed user, uint8 tier);
     event FeeAccrued(address indexed user, uint256 amount);
     event PoolPauseUpdated(bool paused);
     event OracleUpdated(address oracle);
 
-    // -------- MODIFIER --------
     modifier onlyPoolManager() {
         if (msg.sender != address(poolManager)) revert OnlyPoolManager();
         _;
     }
 
-    // -------- CONSTRUCTOR --------
     constructor(IPoolManager _poolManager, address _oracle)
         Ownable(msg.sender)
     {
@@ -54,48 +50,25 @@ contract RWAComplyHook is IHooks, Ownable {
         oracle = _oracle;
     }
 
-    // -------- PERMISSIONS (CRITICAL FOR V4) --------
-    function getHookPermissions() external pure returns (uint8) {
-        return uint8(
-            (1 << 0) | // beforeInitialize
-            (1 << 1) | // afterInitialize
-            (1 << 2) | // beforeAddLiquidity
-            (1 << 4) | // beforeSwap
-            (1 << 5)   // afterSwap
-        );
+    // 🔥 REQUIRED FOR CREATE2 MATCHING
+    function getHookPermissions() internal pure returns (uint160) {
+        return
+            Hooks.BEFORE_INITIALIZE_FLAG |
+            Hooks.AFTER_INITIALIZE_FLAG |
+            Hooks.BEFORE_ADD_LIQUIDITY_FLAG |
+            Hooks.BEFORE_SWAP_FLAG |
+            Hooks.AFTER_SWAP_FLAG;
     }
-
-    // -------- ADMIN --------
 
     function setTier(address user, uint8 tier) external onlyOwner {
         userTier[user] = tier;
         emit TierUpdated(user, tier);
     }
 
-    function revokeUser(address user) external onlyOwner {
-        userTier[user] = 0;
-        emit TierUpdated(user, 0);
-    }
-
-    function setOracle(address newOracle) external onlyOwner {
-        oracle = newOracle;
-        emit OracleUpdated(newOracle);
-    }
-
-    function setVolatilityThreshold(uint256 newThreshold) external onlyOwner {
-        volatilityThreshold = newThreshold;
-    }
-
-    function setRetailSwapCap(uint256 cap) external onlyOwner {
-        retailSwapCap = cap;
-    }
-
     function setPoolPaused(bool paused) external onlyOwner {
         poolPaused = paused;
         emit PoolPauseUpdated(paused);
     }
-
-    // -------- CORE LOGIC --------
 
     function getDynamicFee(address user) public view returns (uint24) {
         uint8 tier = userTier[user];
@@ -146,7 +119,7 @@ contract RWAComplyHook is IHooks, Ownable {
         address sender,
         PoolKey calldata,
         IPoolManager.SwapParams calldata,
-        BalanceDelta delta,
+        BalanceDelta,
         bytes calldata
     )
         external
@@ -154,11 +127,7 @@ contract RWAComplyHook is IHooks, Ownable {
         onlyPoolManager
         returns (bytes4, int128)
     {
-        int256 raw = int256(delta.amount0());
-        uint256 fee = raw < 0 ? uint256(-raw) : uint256(raw);
-
-        emit FeeAccrued(sender, fee);
-
+        emit FeeAccrued(sender, 0);
         return (IHooks.afterSwap.selector, 0);
     }
 
@@ -173,32 +142,18 @@ contract RWAComplyHook is IHooks, Ownable {
         onlyPoolManager
         returns (bytes4)
     {
-        if (poolPaused) revert PoolPaused();
         if (userTier[sender] == 0) revert AccessDenied();
-
         return IHooks.beforeAddLiquidity.selector;
     }
 
-    // -------- REACTIVE READY --------
-
-    function reactiveUpdate(address user, uint8 newTier, bool pause) external {
-        userTier[user] = newTier;
-        poolPaused = pause;
-
-        emit TierUpdated(user, newTier);
-        emit PoolPauseUpdated(pause);
-    }
-
-    // -------- REQUIRED STUBS --------
-
     function beforeInitialize(address, PoolKey calldata, uint160)
-        external override onlyPoolManager returns (bytes4)
+        external override returns (bytes4)
     {
         return IHooks.beforeInitialize.selector;
     }
 
     function afterInitialize(address, PoolKey calldata, uint160, int24)
-        external override onlyPoolManager returns (bytes4)
+        external override returns (bytes4)
     {
         return IHooks.afterInitialize.selector;
     }
@@ -211,7 +166,7 @@ contract RWAComplyHook is IHooks, Ownable {
         BalanceDelta,
         bytes calldata
     )
-        external override onlyPoolManager returns (bytes4, BalanceDelta)
+        external override returns (bytes4, BalanceDelta)
     {
         return (IHooks.afterAddLiquidity.selector, BalanceDelta.wrap(0));
     }
@@ -222,7 +177,7 @@ contract RWAComplyHook is IHooks, Ownable {
         IPoolManager.ModifyLiquidityParams calldata,
         bytes calldata
     )
-        external override onlyPoolManager returns (bytes4)
+        external override returns (bytes4)
     {
         return IHooks.beforeRemoveLiquidity.selector;
     }
@@ -235,7 +190,7 @@ contract RWAComplyHook is IHooks, Ownable {
         BalanceDelta,
         bytes calldata
     )
-        external override onlyPoolManager returns (bytes4, BalanceDelta)
+        external override returns (bytes4, BalanceDelta)
     {
         return (IHooks.afterRemoveLiquidity.selector, BalanceDelta.wrap(0));
     }
@@ -247,7 +202,7 @@ contract RWAComplyHook is IHooks, Ownable {
         uint256,
         bytes calldata
     )
-        external override onlyPoolManager returns (bytes4)
+        external override returns (bytes4)
     {
         return IHooks.beforeDonate.selector;
     }
@@ -259,7 +214,7 @@ contract RWAComplyHook is IHooks, Ownable {
         uint256,
         bytes calldata
     )
-        external override onlyPoolManager returns (bytes4)
+        external override returns (bytes4)
     {
         return IHooks.afterDonate.selector;
     }
