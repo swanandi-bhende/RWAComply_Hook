@@ -46,6 +46,7 @@ contract RWAComplyTest is Test {
 
     function testRetailFee() public {
         hook.setTier(user, 1);
+        oracle.setVolatility(10);
 
         PoolKey memory key;
 
@@ -58,11 +59,12 @@ contract RWAComplyTest is Test {
 
         (, , uint24 fee) = hook.beforeSwap(user, key, params, "");
 
-        assertTrue(fee > 0);
+        assertTrue(fee == 5000);
     }
 
     function testInstitutionalFee() public {
         hook.setTier(user, 2);
+        oracle.setVolatility(10);
 
         PoolKey memory key;
 
@@ -75,7 +77,7 @@ contract RWAComplyTest is Test {
 
         (, , uint24 fee) = hook.beforeSwap(user, key, params, "");
 
-        assertTrue(fee < 1000);
+        assertTrue(fee == 500);
     }
 
     function testPause() public {
