@@ -8,6 +8,7 @@ import {IPoolManager} from "@uniswap/v4-core/interfaces/IPoolManager.sol";
 
 import "../src/RWAComplyHook.sol";
 import "../src/MockRWAOracle.sol";
+import "../src/MockERC20.sol";
 
 contract DeployFull is Script {
 
@@ -15,6 +16,7 @@ contract DeployFull is Script {
         vm.startBroadcast();
 
         PoolManager poolManager = new PoolManager(address(0));
+
         MockRWAOracle oracle = new MockRWAOracle();
 
         RWAComplyHook hook = new RWAComplyHook(
@@ -22,6 +24,12 @@ contract DeployFull is Script {
             address(oracle),
             msg.sender
         );
+
+        MockERC20 tokenA = new MockERC20("TokenA", "TKA", 1e24);
+        MockERC20 tokenB = new MockERC20("TokenB", "TKB", 1e24);
+
+        tokenA.mint(msg.sender, 1e24);
+        tokenB.mint(msg.sender, 1e24);
 
         vm.stopBroadcast();
     }
