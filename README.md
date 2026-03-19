@@ -10,6 +10,14 @@ It includes:
 - owner-managed hook config updates (oracle address, volatility threshold, retail cap)
 - PoolManager-level integration tests
 
+## Full Workflow
+
+See [full_workflow.txt](full_workflow.txt) for:
+- step-by-step setup
+- end-to-end run instructions
+- frontend interaction guide for all 5 pages
+- troubleshooting and command reference
+
 ## Repository Structure
 
 - src
@@ -352,43 +360,6 @@ forge test -vvvv
   - retail high volatility swap applies fee `5000`
   - institutional high volatility swap applies fee `500`
   - static-fee pool keeps static fee `3000` even when hook computes a different fee
-
-## Frontend Dashboard 🎨
-
-A production-ready, Uniswap-inspired Web3 UI is included in the `frontend/` directory.
-
-### Features
-
-- **Overview Dashboard**: Compliance status, market conditions, quick stats
-- **Swap Interface**: Uniswap-style token trading with dynamic fee display
-- **Liquidity Management**: Add/remove liquidity forms
-- **Admin Controls**: Owner-only parameter updates (volatility threshold, swap cap, pause/unpause)
-- **Transaction History**: Real-time activity tracking
-
-### Tech Stack
-
-- Next.js 14 (React, TypeScript)
-- Tailwind CSS for responsive design
-- Wagmi v2 for contract interaction
-- RainbowKit for wallet connection
-
-### Quick Start
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Then open [http://localhost:3000](http://localhost:3000)
-
-**Prerequisites**: Anvil must be running on `http://localhost:8545`. Ensure contracts are deployed first using:
-
-```bash
-bash script/run_canonical_demo.sh
-```
-
-See [FRONTEND_GUIDE.md](FRONTEND_GUIDE.md) for comprehensive documentation.
 
 ## Troubleshooting
 
