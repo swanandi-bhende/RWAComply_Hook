@@ -23,17 +23,20 @@ export const ERC20_ABI = [
 // RWAComplyHook ABI
 export const HOOK_ABI = [
   "function getBaseFeeForTier(uint8 tier) external view returns (uint24)",
+  "function getDynamicFee(address user) external view returns (uint24)",
+  "function userTier(address user) external view returns (uint8)",
   "function isVerifiedTier1(address user) external view returns (bool)",
   "function isVerifiedTier2(address user) external view returns (bool)",
   "function retailSwapCap() external view returns (uint256)",
   "function volatilityThreshold() external view returns (uint256)",
   "function oracle() external view returns (address)",
   "function owner() external view returns (address)",
+  "function poolPaused() external view returns (bool)",
   "function setVolatilityThreshold(uint256 _threshold) external",
   "function setRetailSwapCap(uint256 _cap) external",
   "function setOracle(address _oracle) external",
-  "function pausePool(bytes32 poolId) external",
-  "function unpausePool(bytes32 poolId) external",
+  "function setTier(address user, uint8 tier) external",
+  "function setPoolPaused(bool paused) external",
 ];
 
 // MockRWAOracle ABI

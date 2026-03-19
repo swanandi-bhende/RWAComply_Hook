@@ -7,6 +7,7 @@ import { LiveComplianceStatus } from '@/components/LiveComplianceStatus';
 import { QuickStats } from '@/components/QuickStats';
 import { TierTester } from '@/components/TierTester';
 import { DynamicFeeVisualizer } from '@/components/DynamicFeeVisualizer';
+import { SwapDemo } from '@/components/SwapDemo';
 import { Providers } from './providers';
 
 type PageId = 'page1' | 'page2' | 'page3' | 'page4' | 'page5';
@@ -126,13 +127,10 @@ export default function Home() {
             </div>
           )}
 
-          {/* Page 4: Swap Demo (Placeholder) */}
+          {/* Page 4: Swap Demo */}
           {currentPage === 'page4' && (
-            <div className="text-center py-20">
-              <div className="text-5xl mb-4">⇄</div>
-              <h2 className="text-3xl font-black text-black mb-4">Live Swap Demo</h2>
-              <p className="text-gray-600 font-semibold mb-8">Coming next...</p>
-              <p className="text-sm text-gray-500">Real on-chain swap with hook integration</p>
+            <div>
+              <SwapDemo />
             </div>
           )}
 
