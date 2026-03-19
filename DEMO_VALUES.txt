@@ -1,0 +1,454 @@
+================================================================================
+RWA COMPLIANCE HOOK - DEMO VALUES & TESTING GUIDE
+================================================================================
+
+📍 DEPLOYMENT INFO (Fresh - March 19, 2026)
+================================================================================
+
+Blockchain: Anvil (Local)
+Chain ID: 31337
+RPC URL: http://127.0.0.1:8545
+Frontend URL: http://localhost:3000
+
+CONTRACT ADDRESSES (Currently Active):
+✅ Hook Address:         0x851eE973e4Ba7E6d19fF1DcfF9406CC6CE1ef8C0
+✅ Pool Manager:         0x1fA02b2d6A771842690194Cf62D91bdd92BfE28d
+✅ Oracle Address:       0xdbC43Ba45381e02825b14322cDdd15eC4B3164E6
+✅ Token A Address:      0x21dF544947ba3E8b3c32561399E88B52Dc8b2823
+✅ Token B Address:      0x2E2Ed0Cfd3AD2f1d34481277b3204d807Ca2F8c2
+✅ Executor Address:     0xDC11f7E700A4c898AE5CAddB1082cFfa76512aDD
+
+================================================================================
+🔑 WALLET SETUP FOR TESTING
+================================================================================
+
+1. MetaMask Network Configuration:
+   Network Name: Anvil
+   RPC URL: http://127.0.0.1:8545
+   Chain ID: 31337
+   Currency Symbol: ETH
+
+2. Account 1 - ADMIN (Hook Owner - DEFAULT)
+   Address:     0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+   Private Key: 0xac0974bec39a17e36ba4a6b4d238ff944bacb476c6b8d6c1f02f1d67e02daeda
+   Balance:     1000 ETH (Anvil default)
+   Role:        Can access Admin tab, update settings
+   Default:     First account created by Anvil
+
+3. Account 2 - TEST USER (Non-Admin)
+   Address:     0x70997970C51812e339D9B73B0245ad59e1190123
+   Private Key: 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d
+   Balance:     1000 ETH (Anvil default)
+   Role:        Regular user, cannot access Admin tab
+   Usage:       Use this account to test swap/liquidity features
+
+To import Account 2 in MetaMask:
+- MetaMask Profile → Import Account
+- Paste the private key above
+- Click Import
+
+================================================================================
+📊 TEST SCENARIO 1: OVERVIEW TAB (No input needed)
+================================================================================
+
+What to see when you load the Overview:
+
+1. Your Compliance Status:
+   ✓ Shows: "Unverified" (when first connected without being in verified list)
+   ✓ Description: "You are unverified. Enhanced trading requires KYC verification."
+   ✓ Tier Badge: Shows "0" in gray circle
+
+2. Current Market Conditions (Oracle Data - Live from contracts):
+   ✓ Current Volatility: 0.00% (Stable) - From oracle.getVolatility()
+   ✓ Fee Trigger Level: 5 (%) - From hook.volatilityThreshold()
+   ✓ Tier 0 Swap Cap: 1000 (tokens) - From hook.retailSwapCap()
+
+3. Quick Stats:
+   ✓ Total Value Locked: $2.5M (mock data for demo)
+   ✓ 24h Volume: $156K (mock data for demo)
+   ✓ Verified Users: 1,234 (mock data for demo)
+   ✓ Avg Fee: 0.15% (mock data for demo)
+
+Expected Behavior:
+- All fields load within 1-2 seconds from contract reads
+- Volatility shows as "Stable" when below threshold
+- No "Loading..." placeholders should remain after 2 seconds
+
+================================================================================
+⇄ TEST SCENARIO 2: SWAP TAB (TOKEN TRADING)
+================================================================================
+
+Demo Input Values:
+┌─────────────────────────────────────────┐
+│ Field                  │ Demo Value      │
+├──────────────────────────────────────────┤
+│ Amount to Swap         │ 10              │
+│ From Token             │ Token A         │
+│ To Token               │ Token B         │
+│ Slippage Tolerance     │ 0.5%            │
+│ Min Price Impact       │ 0.1%            │
+│ Network Fee            │ Variable        │
+└─────────────────────────────────────────┘
+
+Step-by-Step Demo Flow:
+1. Click "Swap" tab at the top
+2. Enter "10" in the "You pay" input field
+3. Verify "Token A" is selected (blue circle with "A")
+4. Observe:
+   - Your balance of Token A should show (e.g., Balance: 1000.0000)
+   - Current Volatility: 0.00% (green "Stable" badge)
+   - Fee Trigger Level: 5% (blue box)
+   - Tier 0 Swap Cap: 1000 (purple box)
+5. Click "MAX" button to fill your entire balance
+6. "Swap Now" button should activate
+7. Click "Swap Now" button
+   Expected: Transaction would execute (currently shows demo alert)
+
+Info Shown During Swap:
+- Your tier: "Tier 0/1" (unverified users)
+- Dynamic fee: "Based on volatility"
+- Exchange rate: Real-time calculation (when wired)
+
+Common Issues & Fixes:
+❌ "Balances show 0.0000"
+   → Make sure wallet is connected to the correct account
+   → Check Anvil network is selected in MetaMask
+
+❌ "Fee values show 'N/A'"
+   → These load from smart contracts (1-2 sec delay)
+   → Not connected to Anvil network
+   → Hard refresh the page (Cmd+Shift+R on Mac)
+
+================================================================================
++ TEST SCENARIO 3: LIQUIDITY TAB (PROVIDE LIQUIDITY)
+================================================================================
+
+Demo Input Values:
+┌─────────────────────────────────────────┐
+│ Field                  │ Demo Value      │
+├──────────────────────────────────────────┤
+│ Token A Amount         │ 50              │
+│ Token B Amount         │ 50              │
+│ Fee Tier               │ 0.30%           │
+│ Slippage Tolerance     │ 1%              │
+│ Price Range            │ -0.50 to +0.50  │
+└─────────────────────────────────────────┘
+
+Step-by-Step Demo Flow:
+1. Click "+ Liquidity" tab
+2. Enter "50" in Token A Amount field
+3. Enter "50" in Token B Amount field
+4. Select Fee Tier: "0.30% - 1.00% Dynamic"
+   (Explanation: Fee adjusts based on market volatility)
+5. Verify balances shown:
+   - Token A Balance: Should match what you have
+   - Token B Balance: Should match what you have
+6. Click "Add Liquidity" button
+   Expected: (Currently wired for future implementation)
+
+Info Shown:
+- Fee Tier: "0.01% - 1.00% Dynamic"
+  (Explains that fees adjust based on volatility)
+- "Fee adjusts based on market volatility"
+- Your Positions section (when connected)
+
+Expected Output After Setup:
+- LP Tokens received: ~50 (calculation depends on pool ratio)
+- Active Ranges: Shows your price range
+- Total Liquidity: Value in USD equivalent
+- Earned Fees: Accumulated on your position
+
+================================================================================
+⚙️ TEST SCENARIO 4: ADMIN TAB (OWNER ONLY)
+================================================================================
+
+⚠️  IMPORTANT: You MUST use the Admin account to access this tab
+    (Account 1 with private key from above)
+
+How to Access Admin Tab:
+1. Import Account 1 (Admin) in MetaMask (see Wallet Setup section)
+2. Make sure MetaMask is selected to the Admin account
+3. Go to http://localhost:3000
+4. Click "Connect Wallet" → Select Admin account
+5. You should now see the Admin (⚙️) tab - ONLY if owner account
+6. Click Admin tab to open Admin Control Panel
+
+Admin Control Panel - Demo Values:
+┌────────────────────────────────────────────────────┐
+│ ACTION 1: Update Volatility Threshold              │
+├────────────────────────────────────────────────────┤
+│ Current Value:  5 (%)                              │
+│ Demo New Value: 7.5 (%)                            │
+│ What it does:   When volatility exceeds this,      │
+│                 dynamic fees are triggered         │
+│ Click:          "Update Threshold" button          │
+│ Expected:       Tx submitted (currently demo)      │
+└────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────┐
+│ ACTION 2: Update Retail Swap Cap                   │
+├────────────────────────────────────────────────────┤
+│ Current Value:  1000 (tokens)                      │
+│ Demo New Value: 500 (tokens)                       │
+│ What it does:   Maximum swap size for Tier 0 users│
+│ Click:          "Update Retail Cap" button         │
+│ Expected:       Tx submitted (currently demo)      │
+└────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────┐
+│ ACTION 3: Pause/Unpause Pool                       │
+├────────────────────────────────────────────────────┤
+│ Current Status: Active (ready to trade)            │
+│ Button:         "Pause Pool"                       │
+│ What it does:   Prevents all swaps temporarily     │
+│ Demo Flow:      Click "Pause Pool"                 │
+│ Expected:       (Implementation in progress)       │
+└────────────────────────────────────────────────────┘
+
+Non-Admin Account Access:
+- If you try to access Admin tab with non-admin account
+- You'll see: "Admin access required"
+- Message: "Only the hook owner can modify these settings"
+- No buttons will appear
+
+Troubleshooting Admin Access:
+❌ "I don't see the Admin tab"
+   → Make sure you're using Account 1 (Admin)
+   → Wallet connected? Check top-right corner
+   → Correct network (Anvil 31337)? Check MetaMask
+
+❌ "Admin tab shows red warning"
+   → You're using a non-admin account
+   → Switch to Account 1 in MetaMask
+   → Refresh the page
+
+================================================================================
+📝 TEST SCENARIO 5: HISTORY TAB (TRANSACTION HISTORY)
+================================================================================
+
+What to See:
+- List of recent transactions
+- Each entry shows:
+  ✓ Transaction type (Swap, Add Liquidity, Remove Liquidity, etc.)
+  ✓ Token amounts (e.g., "100 Token A → 100 Token B")
+  ✓ Status (Pending, Completed, Failed)
+  ✓ Timestamp (e.g., "2 hours ago")
+  ✓ Transaction hash (when wired to explorer)
+
+Demo Data Shown:
+The History tab displays 5-10 mock transactions for UI demonstration:
+1. Swap: 50 Token A → 47.5 Token B (Completed, 1 hour ago)
+2. Add Liquidity: 100 Token A + 100 Token B (Completed, 2 hours ago)
+3. Swap: 25 Token B → 26 Token A (Completed, 3 hours ago)
+... more demo transactions
+
+Future Enhancement:
+- This will be wired to show real on-chain transaction events
+- Real-time updates as you perform transactions
+- Filter by transaction type
+- Export transaction history
+
+================================================================================
+🎬 COMPLETE DEMO WORKFLOW (FOR VIDEO FILMING)
+================================================================================
+
+Full 5-minute demo script:
+
+Second 0-10: Setup & Navigation
+  → Show header with "Connect Wallet"
+  → Show wallet connected (top-right shows address)
+  → Highlight the 5 tabs: Overview, Swap, Liquidity, Admin, History
+
+Second 10-20: Overview Tab
+  → Compliance Status: "Unverified" with Tier 0
+  → Oracle data showing: Volatility 0.00%, Threshold 5%, Cap 1000
+  → Quick stats at bottom
+
+Second 20-40: Swap Tab Demo
+  → Enter amount: 10
+  → Show balances updating
+  → Highlight fee information dynamically displayed
+  → Show tier information in swap panel
+  → Click "Swap Now" (will show demo alert currently)
+
+Second 40-60: Liquidity Tab Demo
+  → Enter Token A: 50
+  → Enter Token B: 50
+  → Select fee tier
+  → Highlight fee tier explanation
+  → Click "Add Liquidity" button
+
+Second 60-75: History Tab Demo
+  → Show list of transactions
+  → Highlight status indicators
+  → Show mock data (currently for demo)
+
+Second 75-95: Admin Tab Demo (Switch to Admin Account First!)
+  → Show "Admin Control Panel" header
+  → Update Volatility Threshold to 7.5
+  → Update Retail Cap to 500
+  → Demonstrate parameter update buttons
+
+Second 95-120: Close-up of Data Displays
+  → Show real-time oracle data
+  → Show tier verification display
+  → Show dynamic fee calculation
+  → Final shot of full dashboard
+
+================================================================================
+🧪 TESTING CHECKLIST
+================================================================================
+
+Use this checklist while testing:
+
+General:
+☑ Anvil is running (127.0.0.1:8545)
+☑ Frontend loads at http://localhost:3000
+☑ MetaMask network set to Anvil
+☑ Account connected (shows in top-right)
+
+Overview Tab:
+☑ Compliance status shows correctly
+☑ Volatility loads (not showing "Loading...")
+☑ Threshold loads (not showing "Loading...")
+☑ Swap cap loads (not showing "Loading...")
+☑ All values update within 2 seconds
+
+Swap Tab:
+☑ Token A balance shows
+☑ Token B balance shows
+☑ Can enter amount in input field
+☑ "MAX" button fills with balance
+☑ Fee information displays
+☑ Tier information shows
+☑ "Swap Now" button activates when amount entered
+
+Liquidity Tab:
+☑ Can enter Token A amount
+☑ Can enter Token B amount
+☑ Fee tier dropdown works
+☑ Balances display
+☑ "Add Liquidity" button is clickable
+
+Admin Tab (Admin Account):
+☑ See "Admin Control Panel" header
+☑ Can enter new volatility threshold
+☑ Can enter new retail cap
+☑ Update buttons are clickable
+☑ No red "access required" warning
+
+Admin Tab (Non-Admin Account):
+☑ See "Admin access required" warning in red
+☑ No input fields visible
+☑ No control buttons visible
+☑ Button to switch account visible (implied)
+
+History Tab:
+☑ Transactions display
+☑ Mock data shows correctly
+☑ Timestamps are visible
+☑ Status indicators show
+
+Performance:
+☑ Page loads in < 3 seconds
+☑ Buttons respond instantly on click
+☑ No errors in browser console (F12)
+☑ Network tab shows successful RPC calls
+
+================================================================================
+🔧 TROUBLESHOOTING REFERENCE
+================================================================================
+
+Problem: "Connect Wallet" button doesn't work
+Solution:
+  1. Fresh page reload (Cmd+Shift+R)
+  2. Check MetaMask is installed
+  3. Open MetaMask and verify Anvil network exists
+  4. Try clicking Connect again
+
+Problem: Balances show 0.0000
+Solution:
+  1. Switch to Account 1 (Admin) which has 1000 ETH
+  2. Check MetaMask network is "Anvil" (31337)
+  3. Make sure you're on http://localhost:3000 (not different port)
+  4. Check browser console for errors (F12)
+
+Problem: Oracle values show "N/A" or "Loading..."
+Solution:
+  1. Hard refresh page (Cmd+Shift+R)
+  2. Wait 3-5 seconds for contract calls to finish
+  3. Check Anvil is running (curl http://127.0.0.1:8545)
+  4. Verify contract addresses in frontend/contracts.ts are correct
+  5. Check browser console for network errors
+
+Problem: Admin tab not visible
+Solution:
+  1. Make SURE you're using Account 1 (the admin/owner account)
+     Address: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+  2. Wallet must be connected (icon in top-right)
+  3. Check network is Anvil (Chain ID 31337)
+  4. Refresh page after connecting
+
+Problem: Buttons don't respond when clicked
+Solution:
+  1. Check browser console for errors (F12)
+  2. Make sure account is connected
+  3. Try refreshing page
+  4. Check that Anvil and dev server are still running
+
+Problem: Page is blank/white
+Solution:
+  1. Hard refresh (Cmd+Shift+R)
+  2. Check terminal - is dev server running?
+     Command: ps aux | grep "next dev"
+  3. If not running: cd frontend && npm run dev
+  4. Wait 5-10 seconds for rebuild
+  5. Try again
+
+Problem: MetaMask shows wrong chain
+Solution:
+  1. Open MetaMask
+  2. Click network dropdown (top-left)
+  3. Look for "Anvil" in the list
+  4. If not there, add it manually:
+     - Click "Add Network"
+     - Network: Anvil
+     - RPC: http://127.0.0.1:8545
+     - Chain ID: 31337
+     - Currency: ETH
+     - Click Save
+  5. Select Anvil network
+
+================================================================================
+📚 ADDITIONAL RESOURCES
+================================================================================
+
+Smart Contract Overview:
+- Hook: Enforces compliance checks, dynamic fees, retail caps
+- Oracle: Provides real-time volatility data
+- Pool Manager: Manages token swaps and liquidity
+- Tokens: ERC20 mock tokens for testing
+
+Tier System:
+- Tier 0: Unverified (higher fees, lower swap cap)
+- Tier 1: KYC verified (standard fees, higher cap)
+- Tier 2: Enhanced verification (lower fees, highest cap)
+
+Dynamic Fees:
+- Base fee: 50-100 bps depending on tier
+- Additional fee: Applied when volatility > threshold
+- Formula: base_fee + (volatility - threshold) * fee_multiplier
+
+Key Contract Functions (for reference):
+- hook.isVerifiedTier1(address) → Returns if user is Tier 1
+- hook.isVerifiedTier2(address) → Returns if user is Tier 2
+- oracle.getVolatility() → Current volatility percentage
+- hook.volatilityThreshold() → Triggers dynamic fees
+- hook.retailSwapCap() → Max swap for Tier 0
+
+================================================================================
+END OF DEMO VALUES DOCUMENT
+================================================================================
+
+Last Updated: March 19, 2026
+For issues, check the GitHub README in frontend/ folder
