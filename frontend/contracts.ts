@@ -1,5 +1,7 @@
 // Contract addresses - loaded from environment
 // These are fallbacks; deployment config loader is the source of truth
+import { parseAbi } from 'viem';
+
 export const HOOK_ADDRESS = process.env.NEXT_PUBLIC_HOOK_ADDRESS || "";
 export const POOL_MANAGER_ADDRESS = process.env.NEXT_PUBLIC_POOL_MANAGER || "";
 export const ORACLE_ADDRESS = process.env.NEXT_PUBLIC_ORACLE_ADDRESS || "";
@@ -10,7 +12,7 @@ export const EXECUTOR_ADDRESS = process.env.NEXT_PUBLIC_EXECUTOR_ADDRESS || "";
 export const ANVIL_CHAIN_ID = 31337;
 
 // MockERC20 ABI
-export const ERC20_ABI = [
+export const ERC20_ABI = parseAbi([
   "function balanceOf(address account) external view returns (uint256)",
   "function approve(address spender, uint256 amount) external returns (bool)",
   "function allowance(address owner, address spender) external view returns (uint256)",
@@ -18,10 +20,10 @@ export const ERC20_ABI = [
   "function decimals() external view returns (uint8)",
   "function name() external view returns (string)",
   "function symbol() external view returns (string)",
-];
+]);
 
 // RWAComplyHook ABI
-export const HOOK_ABI = [
+export const HOOK_ABI = parseAbi([
   "function getDynamicFee(address user) external view returns (uint24)",
   "function userTier(address user) external view returns (uint8)",
   "function retailSwapCap() external view returns (uint256)",
@@ -34,18 +36,18 @@ export const HOOK_ABI = [
   "function setOracle(address newOracle) external",
   "function setTier(address user, uint8 tier) external",
   "function setPoolPaused(bool paused) external",
-];
+]);
 
 // MockRWAOracle ABI
-export const ORACLE_ABI = [
+export const ORACLE_ABI = parseAbi([
   "function getVolatility() external view returns (uint256)",
   "function owner() external view returns (address)",
   "function setVolatility(uint256 vol) external",
-];
+]);
 
-export const EXECUTOR_ABI = [
+export const EXECUTOR_ABI = parseAbi([
   "function execute() external",
-];
+]);
 
 // Tier information
 export const TIER_NAMES = {

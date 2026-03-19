@@ -1,8 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { parseAbi } from 'viem';
 import { useAccount, useReadContract } from 'wagmi';
 import { loadDeploymentAddresses } from '@/config/deployments';
+
+const LIVE_REFETCH_MS = 1000;
 
 export function LiveComplianceStatus() {
   const { address } = useAccount();
@@ -25,16 +28,16 @@ export function LiveComplianceStatus() {
   }, []);
 
   // Hook ABI
-  const HOOK_ABI = [
+  const HOOK_ABI = parseAbi([
     'function userTier(address user) external view returns (uint8)',
     'function getDynamicFee(address user) external view returns (uint24)',
     'function volatilityThreshold() external view returns (uint256)',
     'function retailSwapCap() external view returns (uint256)',
-  ];
+  ]);
 
-  const ORACLE_ABI = [
+  const ORACLE_ABI = parseAbi([
     'function getVolatility() external view returns (uint256)',
-  ];
+  ]);
 
   // User tier
   const { data: userTier, isLoading: tierLoading } = useReadContract({
@@ -42,7 +45,7 @@ export function LiveComplianceStatus() {
     abi: HOOK_ABI,
     functionName: 'userTier',
     args: [address!],
-    query: { enabled: !!address && !!addresses?.hook, refetchInterval: 3000 },
+    query: { enabled: !!address && !!addresses?.hook, refetchInterval: LIVE_REFETCH_MS },
   });
 
   const { data: dynamicFee } = useReadContract({
@@ -50,7 +53,7 @@ export function LiveComplianceStatus() {
     abi: HOOK_ABI,
     functionName: 'getDynamicFee',
     args: [address!],
-    query: { enabled: !!address && !!addresses?.hook, refetchInterval: 3000 },
+    query: { enabled: !!address && !!addresses?.hook, refetchInterval: LIVE_REFETCH_MS },
   });
 
   // Volatility threshold
@@ -59,7 +62,7 @@ export function LiveComplianceStatus() {
     abi: HOOK_ABI,
     functionName: 'volatilityThreshold',
     args: [],
-    query: { enabled: !!addresses?.hook, refetchInterval: 3000 },
+    query: { enabled: !!addresses?.hook, refetchInterval: LIVE_REFETCH_MS },
   });
 
   // Current volatility
@@ -68,7 +71,7 @@ export function LiveComplianceStatus() {
     abi: ORACLE_ABI,
     functionName: 'getVolatility',
     args: [],
-    query: { enabled: !!addresses?.oracle, refetchInterval: 3000 },
+    query: { enabled: !!addresses?.oracle, refetchInterval: LIVE_REFETCH_MS },
   });
 
   // Retail swap cap
@@ -77,7 +80,7 @@ export function LiveComplianceStatus() {
     abi: HOOK_ABI,
     functionName: 'retailSwapCap',
     args: [],
-    query: { enabled: !!addresses?.hook, refetchInterval: 3000 },
+    query: { enabled: !!addresses?.hook, refetchInterval: LIVE_REFETCH_MS },
   });
 
   if (deploymentError) {
@@ -127,7 +130,7 @@ export function LiveComplianceStatus() {
       <div className={`border-2 p-6 rounded ${tierColors[tier]}`}>
         <div className="flex items-start justify-between mb-4">
           <div>
-            <p className="text-sm font-bold text-gray-600 mb-1">YOUR COMPLIANCE TIER</p>
+            <p className="text-sm font-bold text-black mb-1">YOUR COMPLIANCE TIER</p>
             <h3 className={`text-2xl font-black ${tierTextColors[tier]}`}>
               {tierNames[tier]}
             </h3>
@@ -156,10 +159,10 @@ export function LiveComplianceStatus() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Volatility Status */}
         <div className="bg-white border-2 border-gray-300 p-4 rounded">
-          <p className="text-xs font-bold text-gray-600 mb-2">MARKET VOLATILITY</p>
+          <p className="text-xs font-bold text-black mb-2">MARKET VOLATILITY</p>
           <div className="flex items-baseline gap-2 mb-2">
             <p className="text-3xl font-black text-black">{currentVolatility}%</p>
-            <p className="text-sm font-bold text-gray-600">
+            <p className="text-sm font-bold text-black">
               {currentVolatility > volatilityThresholdVal ? '(High - Dynamic Fees Active)' : '(Low - Default Fees)'}
             </p>
           </div>
@@ -173,24 +176,24 @@ export function LiveComplianceStatus() {
               style={{ width: `${Math.min(currentVolatility * 2, 100)}%` }}
             />
           </div>
-          <p className="text-xs text-gray-600 mt-2">
+          <p className="text-xs text-black mt-2">
             Threshold: {volatilityThresholdVal}%
           </p>
         </div>
 
         {/* Your Fee Rate */}
         <div className="bg-white border-2 border-gray-300 p-4 rounded">
-          <p className="text-xs font-bold text-gray-600 mb-2">YOUR SWAP FEE</p>
+          <p className="text-xs font-bold text-black mb-2">YOUR SWAP FEE</p>
           <div className="flex items-baseline gap-2 mb-2">
             <p className="text-3xl font-black text-black">{currentFee}</p>
-            <p className="text-lg font-bold text-gray-600">bps</p>
+            <p className="text-lg font-bold text-black">bps</p>
           </div>
           {tier === 0 ? (
             <p className="text-xs text-red-700 font-semibold">
               🔒 Tier 0 users cannot trade
             </p>
           ) : (
-            <p className="text-xs text-gray-600">
+            <p className="text-xs text-black">
               {currentVolatility > volatilityThresholdVal
                 ? `Dynamic fee rule active for Tier ${tier}`
                 : `Default fee rule for Tier ${tier}`}

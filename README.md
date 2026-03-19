@@ -12,7 +12,7 @@ It includes:
 
 ## Full Workflow
 
-See [full_workflow.txt](full_workflow.txt) for:
+See [full_workflow.md](full_workflow.md) for:
 - step-by-step setup
 - end-to-end run instructions
 - frontend interaction guide for all 5 pages

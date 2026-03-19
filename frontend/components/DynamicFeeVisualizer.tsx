@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { parseAbi } from 'viem';
 import { useReadContract } from 'wagmi';
 import { loadDeploymentAddresses } from '@/config/deployments';
 import { calculateDynamicFeeForTier } from '@/lib/hookFee';
@@ -9,12 +10,15 @@ import {
   Legend,
   Line,
   LineChart,
+  ReferenceDot,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts';
+
+const LIVE_REFETCH_MS = 1000;
 
 type FeePoint = {
   volatility: number;
@@ -40,21 +44,21 @@ export function DynamicFeeVisualizer() {
     load();
   }, []);
 
-  const hookAbi = ['function volatilityThreshold() external view returns (uint256)'];
-  const oracleAbi = ['function getVolatility() external view returns (uint256)'];
+  const hookAbi = parseAbi(['function volatilityThreshold() external view returns (uint256)']);
+  const oracleAbi = parseAbi(['function getVolatility() external view returns (uint256)']);
 
   const { data: volThreshold, refetch: refetchThreshold } = useReadContract({
     address: addresses?.hook as `0x${string}`,
     abi: hookAbi,
     functionName: 'volatilityThreshold',
-    query: { enabled: !!addresses?.hook, refetchInterval: 3000 },
+    query: { enabled: !!addresses?.hook, refetchInterval: LIVE_REFETCH_MS },
   });
 
   const { data: currentVol, refetch: refetchVolatility } = useReadContract({
     address: addresses?.oracle as `0x${string}`,
     abi: oracleAbi,
     functionName: 'getVolatility',
-    query: { enabled: !!addresses?.oracle, refetchInterval: 3000 },
+    query: { enabled: !!addresses?.oracle, refetchInterval: LIVE_REFETCH_MS },
   });
 
   const thresholdNum = Number(volThreshold ?? BigInt(5));
@@ -63,7 +67,7 @@ export function DynamicFeeVisualizer() {
   const chartData = useMemo<FeePoint[]>(() => {
     const data: FeePoint[] = [];
 
-    for (let volatility = 0; volatility <= 100; volatility += 5) {
+    for (let volatility = 0; volatility <= 100; volatility += 1) {
       data.push({
         volatility,
         tier1: calculateDynamicFeeForTier(1, volatility, thresholdNum),
@@ -78,6 +82,8 @@ export function DynamicFeeVisualizer() {
   const currentTier2Fee = calculateDynamicFeeForTier(2, currentVolNum, thresholdNum);
   const simulatedTier1Fee = calculateDynamicFeeForTier(1, selectedSimulatedVol, thresholdNum);
   const simulatedTier2Fee = calculateDynamicFeeForTier(2, selectedSimulatedVol, thresholdNum);
+  const simulatedDelta = selectedSimulatedVol - thresholdNum;
+  const simulatedRegime = selectedSimulatedVol > thresholdNum ? 'Stressed regime' : 'Default regime';
 
   if (deploymentError) {
     return (
@@ -148,6 +154,8 @@ export function DynamicFeeVisualizer() {
           <LineChart data={chartData} margin={{ top: 5, right: 24, left: 0, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis
+              type="number"
+              domain={[0, 100]}
               dataKey="volatility"
               label={{ value: 'Volatility (%)', position: 'insideBottomRight', offset: -10 }}
             />
@@ -167,6 +175,13 @@ export function DynamicFeeVisualizer() {
               strokeWidth={2}
               label={{ value: `Current ${currentVolNum}%`, position: 'top' }}
             />
+            <ReferenceLine
+              x={selectedSimulatedVol}
+              stroke="#111"
+              strokeDasharray="4 4"
+              strokeWidth={2}
+              label={{ value: `Scenario ${selectedSimulatedVol}%`, position: 'insideTopRight' }}
+            />
 
             <Line
               type="stepAfter"
@@ -184,6 +199,8 @@ export function DynamicFeeVisualizer() {
               name="Tier 2"
               dot={false}
             />
+            <ReferenceDot x={selectedSimulatedVol} y={simulatedTier1Fee} r={6} fill="#2563eb" stroke="#1d4ed8" />
+            <ReferenceDot x={selectedSimulatedVol} y={simulatedTier2Fee} r={6} fill="#059669" stroke="#047857" />
           </LineChart>
         </ResponsiveContainer>
 
@@ -194,6 +211,10 @@ export function DynamicFeeVisualizer() {
 
       <div className="bg-gray-50 border-2 border-gray-300 p-6 rounded space-y-5">
         <h3 className="text-2xl font-black text-black">Simulate Volatility Scenario</h3>
+        <p className="text-sm text-black">
+          Move the slider to change the scenario marker on the chart. On-chain fee is threshold-based,
+          so the fee tier flips at the threshold while scenario context updates continuously.
+        </p>
 
         <div>
           <label className="text-sm font-bold text-gray-700 mb-3 block">
@@ -211,8 +232,23 @@ export function DynamicFeeVisualizer() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-white border-2 border-gray-300 p-4 rounded">
-            <p className="text-xs font-bold text-gray-600 mb-2">SIM VOL</p>
-            <p className="text-3xl font-black">{selectedSimulatedVol}%</p>
+            <p className="text-xs font-bold text-black mb-2">REGIME</p>
+            <p className="text-xl font-black text-black">{simulatedRegime}</p>
+          </div>
+          <div className="bg-white border-2 border-gray-300 p-4 rounded">
+            <p className="text-xs font-bold text-black mb-2">THRESHOLD DELTA</p>
+            <p className="text-xl font-black text-black">{simulatedDelta >= 0 ? `+${simulatedDelta}` : simulatedDelta}%</p>
+          </div>
+          <div className="bg-white border-2 border-gray-300 p-4 rounded">
+            <p className="text-xs font-bold text-black mb-2">SCENARIO VOL</p>
+            <p className="text-xl font-black text-black">{selectedSimulatedVol}%</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white border-2 border-gray-300 p-4 rounded">
+            <p className="text-xs font-bold text-black mb-2">SIM VOL</p>
+            <p className="text-3xl font-black text-black">{selectedSimulatedVol}%</p>
           </div>
           <div className="bg-blue-50 border-2 border-blue-300 p-4 rounded">
             <p className="text-xs font-bold text-blue-700 mb-2">TIER 1 WOULD PAY</p>

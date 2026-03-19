@@ -487,7 +487,7 @@ export function AdminObservatory() {
                 <p className="font-semibold text-sm text-gray-900">{entry.action}</p>
                 <p className="text-xs text-gray-600 mt-1">value: {entry.value}</p>
                 {entry.hash && <p className="text-xs text-blue-700 font-mono mt-1 break-all">{entry.hash}</p>}
-                {entry.error && <p className="text-xs text-red-700 mt-1 break-words">{entry.error}</p>}
+                {entry.error && <p className="text-xs text-red-700 mt-1 wrap-break-word">{entry.error}</p>}
                 <p className="text-xs text-gray-500 mt-2">
                   {new Date(entry.timestamp).toLocaleTimeString()} • {entry.status}
                 </p>
@@ -521,7 +521,7 @@ function StatCard({
   return (
     <div className="border-2 border-gray-300 rounded-lg p-5 bg-white">
       <p className="text-xs font-bold text-gray-500 mb-2">{label}</p>
-      <p className="text-2xl font-black text-gray-900 break-words">{value}</p>
+      <p className="text-2xl font-black text-gray-900 wrap-break-word">{value}</p>
       {subtext && <p className="text-xs text-gray-500 mt-2">{subtext}</p>}
     </div>
   );

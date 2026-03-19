@@ -33,9 +33,9 @@ export function SwapInterface() {
   const { data: tier, refetch: refetchTier } = useReadContract({
     address: HOOK_ADDRESS as `0x${string}`,
     abi: HOOK_ABI,
-    functionName: 'isVerifiedTier2',
+    functionName: 'userTier',
     args: [address!],
-    query: { enabled: !!address },
+    query: { enabled: !!address, refetchInterval: 1000 },
   });
 
   // Refetch balances and tier when transactions update
@@ -49,6 +49,7 @@ export function SwapInterface() {
 
   const balanceA = tokenABalance ? Number(tokenABalance) / 1e18 : 0;
   const balanceB = tokenBBalance ? Number(tokenBBalance) / 1e18 : 0;
+  const tierNumber = Number(tier ?? BigInt(0));
 
   const handleSwap = async () => {
     if (!inputAmount || !address) return;
@@ -180,7 +181,7 @@ export function SwapInterface() {
         <div className="bg-white border-3 border-black p-4 space-y-3">
           <div className="flex justify-between text-sm font-bold text-black border-b-2 border-black pb-2">
             <span>YOUR TIER</span>
-            <span>{tier ? 'TIER 2' : 'TIER 0/1'}</span>
+            <span>{`TIER ${tierNumber}`}</span>
           </div>
           <div className="flex justify-between text-sm font-bold text-black">
             <span>DYNAMIC FEE</span>

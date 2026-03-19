@@ -1,8 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { parseAbi } from 'viem';
 import { useReadContract } from 'wagmi';
 import { loadDeploymentAddresses } from '@/config/deployments';
+
+const LIVE_REFETCH_MS = 1000;
 
 export function QuickStats() {
   const [addresses, setAddresses] = useState<any>(null);
@@ -22,12 +25,12 @@ export function QuickStats() {
     load();
   }, []);
 
-  const HOOK_ABI = [
+  const HOOK_ABI = parseAbi([
     'function volatilityThreshold() external view returns (uint256)',
     'function retailSwapCap() external view returns (uint256)',
     'function owner() external view returns (address)',
     'function poolPaused() external view returns (bool)',
-  ];
+  ]);
 
   // Volatility threshold
   const { data: volThreshold } = useReadContract({
@@ -35,7 +38,7 @@ export function QuickStats() {
     abi: HOOK_ABI,
     functionName: 'volatilityThreshold',
     args: [],
-    query: { enabled: !!addresses?.hook, refetchInterval: 3000 },
+    query: { enabled: !!addresses?.hook, refetchInterval: LIVE_REFETCH_MS },
   });
 
   // Retail cap
@@ -44,7 +47,7 @@ export function QuickStats() {
     abi: HOOK_ABI,
     functionName: 'retailSwapCap',
     args: [],
-    query: { enabled: !!addresses?.hook, refetchInterval: 3000 },
+    query: { enabled: !!addresses?.hook, refetchInterval: LIVE_REFETCH_MS },
   });
 
   // Hook owner
@@ -53,7 +56,7 @@ export function QuickStats() {
     abi: HOOK_ABI,
     functionName: 'owner',
     args: [],
-    query: { enabled: !!addresses?.hook, refetchInterval: 3000 },
+    query: { enabled: !!addresses?.hook, refetchInterval: LIVE_REFETCH_MS },
   });
 
   // Pool paused
@@ -62,7 +65,7 @@ export function QuickStats() {
     abi: HOOK_ABI,
     functionName: 'poolPaused',
     args: [],
-    query: { enabled: !!addresses?.hook, refetchInterval: 3000 },
+    query: { enabled: !!addresses?.hook, refetchInterval: LIVE_REFETCH_MS },
   });
 
   if (deploymentError) {

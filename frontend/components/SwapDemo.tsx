@@ -14,6 +14,8 @@ import { calculateDynamicFeeForTier } from '@/lib/hookFee';
 
 type SwapPhase = 'idle' | 'approving' | 'executing' | 'success' | 'error';
 
+const LIVE_REFETCH_MS = 1000;
+
 export function SwapDemo() {
   const { address } = useAccount();
   const publicClient = usePublicClient();
@@ -66,35 +68,43 @@ export function SwapDemo() {
     abi: HOOK_ABI,
     functionName: 'userTier',
     args: [address as `0x${string}`],
-    query: { enabled: !!addresses?.hook && !!address, refetchInterval: 3000 },
+    query: { enabled: !!addresses?.hook && !!address, refetchInterval: LIVE_REFETCH_MS },
+  });
+
+  const { data: userDynamicFee } = useReadContract({
+    address: addresses?.hook as `0x${string}`,
+    abi: HOOK_ABI,
+    functionName: 'getDynamicFee',
+    args: [address as `0x${string}`],
+    query: { enabled: !!addresses?.hook && !!address, refetchInterval: LIVE_REFETCH_MS },
   });
 
   const { data: volatility } = useReadContract({
     address: addresses?.oracle as `0x${string}`,
     abi: ORACLE_ABI,
     functionName: 'getVolatility',
-    query: { enabled: !!addresses?.oracle, refetchInterval: 3000 },
+    query: { enabled: !!addresses?.oracle, refetchInterval: LIVE_REFETCH_MS },
   });
 
   const { data: threshold } = useReadContract({
     address: addresses?.hook as `0x${string}`,
     abi: HOOK_ABI,
     functionName: 'volatilityThreshold',
-    query: { enabled: !!addresses?.hook, refetchInterval: 3000 },
+    query: { enabled: !!addresses?.hook, refetchInterval: LIVE_REFETCH_MS },
   });
 
   const { data: poolPaused } = useReadContract({
     address: addresses?.hook as `0x${string}`,
     abi: HOOK_ABI,
     functionName: 'poolPaused',
-    query: { enabled: !!addresses?.hook, refetchInterval: 3000 },
+    query: { enabled: !!addresses?.hook, refetchInterval: LIVE_REFETCH_MS },
   });
 
   const { data: retailSwapCap } = useReadContract({
     address: addresses?.hook as `0x${string}`,
     abi: HOOK_ABI,
     functionName: 'retailSwapCap',
-    query: { enabled: !!addresses?.hook, refetchInterval: 3000 },
+    query: { enabled: !!addresses?.hook, refetchInterval: LIVE_REFETCH_MS },
   });
 
   const { data: executorTier } = useReadContract({
@@ -102,7 +112,7 @@ export function SwapDemo() {
     abi: HOOK_ABI,
     functionName: 'userTier',
     args: [addresses?.executor as `0x${string}`],
-    query: { enabled: !!addresses?.hook && !!addresses?.executor, refetchInterval: 3000 },
+    query: { enabled: !!addresses?.hook && !!addresses?.executor, refetchInterval: LIVE_REFETCH_MS },
   });
 
   const { data: userTokenABalance, refetch: refetchUserTokenABalance } = useReadContract({
@@ -110,7 +120,7 @@ export function SwapDemo() {
     abi: ERC20_ABI,
     functionName: 'balanceOf',
     args: [address as `0x${string}`],
-    query: { enabled: !!addresses?.tokenA && !!address, refetchInterval: 3000 },
+    query: { enabled: !!addresses?.tokenA && !!address, refetchInterval: LIVE_REFETCH_MS },
   });
 
   const { data: userTokenBBalance, refetch: refetchUserTokenBBalance } = useReadContract({
@@ -118,7 +128,7 @@ export function SwapDemo() {
     abi: ERC20_ABI,
     functionName: 'balanceOf',
     args: [address as `0x${string}`],
-    query: { enabled: !!addresses?.tokenB && !!address, refetchInterval: 3000 },
+    query: { enabled: !!addresses?.tokenB && !!address, refetchInterval: LIVE_REFETCH_MS },
   });
 
   const { data: executorTokenABalance, refetch: refetchExecutorTokenABalance } = useReadContract({
@@ -126,7 +136,7 @@ export function SwapDemo() {
     abi: ERC20_ABI,
     functionName: 'balanceOf',
     args: [addresses?.executor as `0x${string}`],
-    query: { enabled: !!addresses?.tokenA && !!addresses?.executor, refetchInterval: 3000 },
+    query: { enabled: !!addresses?.tokenA && !!addresses?.executor, refetchInterval: LIVE_REFETCH_MS },
   });
 
   const { data: executorTokenBBalance, refetch: refetchExecutorTokenBBalance } = useReadContract({
@@ -134,13 +144,18 @@ export function SwapDemo() {
     abi: ERC20_ABI,
     functionName: 'balanceOf',
     args: [addresses?.executor as `0x${string}`],
-    query: { enabled: !!addresses?.tokenB && !!addresses?.executor, refetchInterval: 3000 },
+    query: { enabled: !!addresses?.tokenB && !!addresses?.executor, refetchInterval: LIVE_REFETCH_MS },
   });
 
   const tier = Number(userTier ?? BigInt(0));
   const volNum = Number(volatility ?? BigInt(0));
   const thresholdNum = Number(threshold ?? BigInt(5));
-  const userFee = calculateDynamicFeeForTier((tier === 1 ? 1 : tier === 2 ? 2 : 0) as 0 | 1 | 2, volNum, thresholdNum);
+  const computedFee = calculateDynamicFeeForTier(
+    (tier === 1 ? 1 : tier === 2 ? 2 : 0) as 0 | 1 | 2,
+    volNum,
+    thresholdNum
+  );
+  const userFee = tier === 0 ? 0 : Number((userDynamicFee as bigint | undefined) ?? BigInt(computedFee));
 
   const userABalanceNum = Number(formatEther((userTokenABalance as bigint) ?? BigInt(0)));
   const userBBalanceNum = Number(formatEther((userTokenBBalance as bigint) ?? BigInt(0)));
@@ -272,7 +287,7 @@ export function SwapDemo() {
     <div className="space-y-8">
       <div>
         <h2 className="text-3xl font-bold mb-3">Live Swap Demo</h2>
-        <p className="text-gray-600">
+        <p className="text-black">
           This flow runs real transactions: user approval + canonical executor swap. The hook is
           triggered during executor swap and emits compliance events.
         </p>
@@ -285,64 +300,64 @@ export function SwapDemo() {
 
             <div className="space-y-2 text-sm border-b border-gray-300 pb-4">
               <div className="flex justify-between">
-                <span className="font-semibold text-gray-700">Pool status</span>
+                <span className="font-semibold text-black">Pool status</span>
                 <span className={Boolean(poolPaused) ? 'text-red-700 font-bold' : 'text-green-700 font-bold'}>
                   {Boolean(poolPaused) ? 'Paused' : 'Active'}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="font-semibold text-gray-700">Current price</span>
-                <span className="text-gray-700">~1 Token A : 1 Token B</span>
+                <span className="font-semibold text-black">Current price</span>
+                <span className="text-black">~1 Token A : 1 Token B</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-semibold text-gray-700">Hook swap actor</span>
-                <span className="text-gray-700 font-mono">Executor tier {executorTierNum}</span>
-              </div>
-            </div>
-
-            <div className="space-y-2 text-sm border-b border-gray-300 pb-4">
-              <p className="font-semibold text-gray-700">Your wallet (read-only context)</p>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Tier</span>
-                <span className="font-bold">{tierLabel}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Volatility</span>
-                <span className="font-mono">{volNum}%</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Applicable fee</span>
-                <span className="font-mono">{userFee} bps</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Token A</span>
-                <span className="font-mono">{userABalanceNum.toFixed(4)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Token B</span>
-                <span className="font-mono">{userBBalanceNum.toFixed(4)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Retail cap</span>
-                <span className="font-mono">{retailCapNum.toFixed(4)} tokens</span>
+                <span className="font-semibold text-black">Hook swap actor</span>
+                <span className="text-black font-mono">Executor tier {executorTierNum}</span>
               </div>
             </div>
 
             <div className="space-y-2 text-sm border-b border-gray-300 pb-4">
-              <p className="font-semibold text-gray-700">Executor balances (actual swap actor)</p>
+              <p className="font-semibold text-black">Your wallet (read-only context)</p>
               <div className="flex justify-between">
-                <span className="text-gray-600">Executor Token A</span>
-                <span className="font-mono">{executorABalanceNum.toFixed(4)}</span>
+                <span className="text-black">Tier</span>
+                <span className="font-bold text-black">{tierLabel}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Executor Token B</span>
-                <span className="font-mono">{executorBBalanceNum.toFixed(4)}</span>
+                <span className="text-black">Volatility</span>
+                <span className="font-mono text-black">{volNum}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-black">Applicable fee</span>
+                <span className="font-mono text-black">{userFee} bps</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-black">Token A</span>
+                <span className="font-mono text-black">{userABalanceNum.toFixed(4)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-black">Token B</span>
+                <span className="font-mono text-black">{userBBalanceNum.toFixed(4)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-black">Retail cap</span>
+                <span className="font-mono text-black">{retailCapNum.toFixed(4)} tokens</span>
+              </div>
+            </div>
+
+            <div className="space-y-2 text-sm border-b border-gray-300 pb-4">
+              <p className="font-semibold text-black">Executor balances (actual swap actor)</p>
+              <div className="flex justify-between">
+                <span className="text-black">Executor Token A</span>
+                <span className="font-mono text-black">{executorABalanceNum.toFixed(4)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-black">Executor Token B</span>
+                <span className="font-mono text-black">{executorBBalanceNum.toFixed(4)}</span>
               </div>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Input amount (approval amount)</label>
+                <label className="block text-sm font-semibold text-black mb-2">Input amount (approval amount)</label>
                 <input
                   type="number"
                   value={inputAmount}
@@ -352,7 +367,7 @@ export function SwapDemo() {
                   disabled={phase === 'approving' || phase === 'executing'}
                   className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg font-mono"
                 />
-                <p className="text-xs text-gray-600 mt-2">
+                <p className="text-xs text-black mt-2">
                   Estimated output at displayed fee: {estimatedOut.toFixed(4)} Token B
                 </p>
               </div>
@@ -456,7 +471,7 @@ export function SwapDemo() {
           {phase === 'error' && (
             <div className="border-2 border-red-400 rounded-lg p-6 bg-red-50">
               <h3 className="font-bold text-lg text-red-800 mb-2">Execution Error</h3>
-              <p className="text-sm text-red-700 break-words">{errorMessage || 'Transaction failed'}</p>
+              <p className="text-sm text-red-700 wrap-break-word">{errorMessage || 'Transaction failed'}</p>
               <p className="text-xs text-red-700 mt-3">
                 Tier-0 failures are expected when swap actor tier is unverified, demonstrating
                 hook-level compliance enforcement.
@@ -497,9 +512,9 @@ function StepRow({
     >
       <div className="flex items-center justify-between">
         <p className="font-semibold text-gray-800">{title}</p>
-        <p className="text-xs font-bold">{done ? 'DONE' : running ? 'RUNNING' : 'PENDING'}</p>
+        <p className="text-xs font-bold text-black">{done ? 'DONE' : running ? 'RUNNING' : 'PENDING'}</p>
       </div>
-      <p className="text-xs text-gray-600 mt-1">{description}</p>
+      <p className="text-xs text-black mt-1">{description}</p>
     </div>
   );
 }

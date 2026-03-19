@@ -1,9 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { parseAbi } from 'viem';
 import { useReadContract } from 'wagmi';
 import { loadDeploymentAddresses } from '@/config/deployments';
 import { calculateDynamicFeeForTier, type ComplianceTier } from '@/lib/hookFee';
+
+const LIVE_REFETCH_MS = 1000;
 
 type TierOption = ComplianceTier;
 
@@ -47,32 +50,32 @@ export function TierTester() {
     load();
   }, []);
 
-  const hookAbi = [
+  const hookAbi = parseAbi([
     'function volatilityThreshold() external view returns (uint256)',
     'function retailSwapCap() external view returns (uint256)',
-  ];
+  ]);
 
-  const oracleAbi = ['function getVolatility() external view returns (uint256)'];
+  const oracleAbi = parseAbi(['function getVolatility() external view returns (uint256)']);
 
   const { data: threshold } = useReadContract({
     address: addresses?.hook as `0x${string}`,
     abi: hookAbi,
     functionName: 'volatilityThreshold',
-    query: { enabled: !!addresses?.hook, refetchInterval: 3000 },
+    query: { enabled: !!addresses?.hook, refetchInterval: LIVE_REFETCH_MS },
   });
 
   const { data: retailCap } = useReadContract({
     address: addresses?.hook as `0x${string}`,
     abi: hookAbi,
     functionName: 'retailSwapCap',
-    query: { enabled: !!addresses?.hook, refetchInterval: 3000 },
+    query: { enabled: !!addresses?.hook, refetchInterval: LIVE_REFETCH_MS },
   });
 
   const { data: liveVolatility } = useReadContract({
     address: addresses?.oracle as `0x${string}`,
     abi: oracleAbi,
     functionName: 'getVolatility',
-    query: { enabled: !!addresses?.oracle, refetchInterval: 3000 },
+    query: { enabled: !!addresses?.oracle, refetchInterval: LIVE_REFETCH_MS },
   });
 
   const thresholdNum = Number(threshold ?? BigInt(5));
@@ -96,6 +99,10 @@ export function TierTester() {
     }),
     [simulatedVolatility, thresholdNum]
   );
+
+  const isStressedRegime = simulatedVolatility > thresholdNum;
+  const thresholdDelta = simulatedVolatility - thresholdNum;
+  const normalizedStress = Math.max(0, Math.min(100, Math.round((simulatedVolatility / 100) * 100)));
 
   if (deploymentError) {
     return (
@@ -190,6 +197,10 @@ export function TierTester() {
 
       <div className="bg-white border-2 border-gray-300 p-6 rounded space-y-4">
         <h3 className="text-2xl font-black text-black">Simulate Volatility Impact</h3>
+        <p className="text-sm text-black">
+          The fee rule is threshold-based on-chain. The regime flips when volatility crosses the threshold,
+          while the metrics below provide continuous context as you move the slider.
+        </p>
         <label className="text-sm font-bold text-gray-700 block">
           Simulated Volatility: {simulatedVolatility}%
         </label>
@@ -204,8 +215,23 @@ export function TierTester() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="border border-gray-300 rounded p-3">
-            <p className="text-xs font-bold text-gray-500">TIER 0</p>
-            <p className="text-lg font-black">Blocked</p>
+            <p className="text-xs font-bold text-black">REGIME</p>
+            <p className="text-lg font-black text-black">{isStressedRegime ? 'Stressed' : 'Default'}</p>
+          </div>
+          <div className="border border-gray-300 rounded p-3">
+            <p className="text-xs font-bold text-black">THRESHOLD DELTA</p>
+            <p className="text-lg font-black text-black">{thresholdDelta >= 0 ? `+${thresholdDelta}` : thresholdDelta}%</p>
+          </div>
+          <div className="border border-gray-300 rounded p-3">
+            <p className="text-xs font-bold text-black">VOLATILITY INDEX</p>
+            <p className="text-lg font-black text-black">{normalizedStress}/100</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="border border-gray-300 rounded p-3">
+            <p className="text-xs font-bold text-black">TIER 0</p>
+            <p className="text-lg font-black text-black">Blocked</p>
           </div>
           <div className="border border-blue-300 bg-blue-50 rounded p-3">
             <p className="text-xs font-bold text-blue-600">TIER 1</p>
