@@ -111,6 +111,7 @@ contract RWAComplyIntegrationTest is Test {
     event BeforeSwapCalled(address indexed user, uint8 tier, uint24 fee);
 
     uint160 internal constant SQRT_PRICE_1_1 = 79228162514264337593543950336;
+    uint24 internal constant STATIC_FEE = 3000;
     bytes32 internal constant SWAP_EVENT_SIG =
         keccak256("Swap(bytes32,address,int128,int128,uint160,uint128,int24,uint24)");
 
@@ -239,6 +240,19 @@ contract RWAComplyIntegrationTest is Test {
         unverifiedUser.swap();
     }
 
+    function testTier0AddLiquidityRevertsThroughPoolManager() public {
+        bytes memory expectedError = abi.encodeWithSelector(
+            CustomRevert.WrappedError.selector,
+            address(hook),
+            IHooks.beforeAddLiquidity.selector,
+            abi.encodeWithSelector(RWAComplyHook.AccessDenied.selector),
+            abi.encodeWithSelector(Hooks.HookCallFailed.selector)
+        );
+
+        vm.expectRevert(expectedError);
+        unverifiedUser.addLiquidity();
+    }
+
     function testTier1SwapPassesThroughPoolManager() public {
         vm.expectEmit(true, false, false, true, address(hook));
         emit BeforeSwapCalled(address(retailUser), 1, 1000);
@@ -290,6 +304,44 @@ contract RWAComplyIntegrationTest is Test {
         assertEq(appliedFee, 1000, "full flow executed fee mismatch");
     }
 
+    function testPausedSwapRevertsThroughPoolManager() public {
+        hook.setPoolPaused(true);
+
+        bytes memory expectedError = abi.encodeWithSelector(
+            CustomRevert.WrappedError.selector,
+            address(hook),
+            IHooks.beforeSwap.selector,
+            abi.encodeWithSelector(RWAComplyHook.PoolPaused.selector),
+            abi.encodeWithSelector(Hooks.HookCallFailed.selector)
+        );
+
+        vm.expectRevert(expectedError);
+        retailUser.swap();
+    }
+
+    function testRetailCapExceededRevertsThroughPoolManager() public {
+        hook.setRetailSwapCap(5e17);
+
+        bytes memory expectedError = abi.encodeWithSelector(
+            CustomRevert.WrappedError.selector,
+            address(hook),
+            IHooks.beforeSwap.selector,
+            abi.encodeWithSelector(RWAComplyHook.RetailLimitExceeded.selector),
+            abi.encodeWithSelector(Hooks.HookCallFailed.selector)
+        );
+
+        vm.expectRevert(expectedError);
+        retailUser.swap();
+    }
+
+    function testDynamicFeeAppliedDefaultLowVolatility() public {
+        oracle.setVolatility(1);
+
+        uint24 appliedFee = _swapAndGetAppliedFee(retailUser);
+
+        assertEq(appliedFee, 1000, "default low-vol fee mismatch");
+    }
+
     function testDynamicFeeAppliedRetailHighVolatility() public {
         oracle.setVolatility(10);
 
@@ -304,6 +356,42 @@ contract RWAComplyIntegrationTest is Test {
         uint24 appliedFee = _swapAndGetAppliedFee(institutionalUser);
 
         assertEq(appliedFee, 500, "institutional executed fee mismatch");
+    }
+
+    function testStaticFeePoolIgnoresHookOverride() public {
+        oracle.setVolatility(10);
+
+        MockERC20 tokenE = new MockERC20("TokenE", "TKE", 1e24);
+        MockERC20 tokenF = new MockERC20("TokenF", "TKF", 1e24);
+
+        (address token0, address token1) =
+            address(tokenE) < address(tokenF)
+                ? (address(tokenE), address(tokenF))
+                : (address(tokenF), address(tokenE));
+
+        PoolKey memory staticFeeKey = PoolKey({
+            currency0: Currency.wrap(token0),
+            currency1: Currency.wrap(token1),
+            fee: STATIC_FEE,
+            tickSpacing: 60,
+            hooks: IHooks(address(hook))
+        });
+
+        poolManager.initialize(staticFeeKey, SQRT_PRICE_1_1);
+
+        PoolUser staticFeeUser =
+            new PoolUser(IPoolManager(address(poolManager)), staticFeeKey);
+
+        hook.setTier(address(staticFeeUser), 1);
+
+        tokenE.transfer(address(staticFeeUser), 1e21);
+        tokenF.transfer(address(staticFeeUser), 1e21);
+
+        staticFeeUser.addLiquidity();
+
+        uint24 appliedFee = _swapAndGetAppliedFee(staticFeeUser);
+
+        assertEq(appliedFee, STATIC_FEE, "static pool fee should ignore hook override");
     }
 
     function _swapAndGetAppliedFee(PoolUser user) internal returns (uint24) {

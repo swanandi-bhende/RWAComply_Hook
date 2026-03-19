@@ -151,6 +151,12 @@ Tier 0 revert through PoolManager swap:
 forge test --match-test testTier0SwapRevertsThroughPoolManager -vv
 ```
 
+Tier 0 add liquidity revert through PoolManager path:
+
+```bash
+forge test --match-test testTier0AddLiquidityRevertsThroughPoolManager -vv
+```
+
 Tier 1 pass through PoolManager swap:
 
 ```bash
@@ -181,6 +187,18 @@ Hook rejects zero oracle address:
 forge test --match-test testSetOracleZeroAddressReverts -vv
 ```
 
+Paused pool swap revert through PoolManager path:
+
+```bash
+forge test --match-test testPausedSwapRevertsThroughPoolManager -vv
+```
+
+Retail cap exceeded revert through PoolManager path:
+
+```bash
+forge test --match-test testRetailCapExceededRevertsThroughPoolManager -vv
+```
+
 Full flow integration (initialize -> add liquidity -> swap):
 
 ```bash
@@ -197,6 +215,18 @@ Dynamic fee applied for institutional user on high volatility (executed PoolMana
 
 ```bash
 forge test --match-test testDynamicFeeAppliedInstitutionalHighVolatility -vv
+```
+
+Default fee applied under low volatility:
+
+```bash
+forge test --match-test testDynamicFeeAppliedDefaultLowVolatility -vv
+```
+
+Static-fee pool ignores hook fee override and uses pool fee:
+
+```bash
+forge test --match-test testStaticFeePoolIgnoresHookOverride -vv
 ```
 
 ## Demo Script
@@ -290,12 +320,17 @@ forge test -vvvv
   - real PoolManager integration path
   - full flow succeeds: initialize -> add liquidity -> swap
   - tier 0 swap reverts
+  - tier 0 add liquidity reverts
   - blocked reason surfaced as wrapped `AccessDenied()` in traces
+  - paused swap reverts
+  - retail cap exceeded reverts
   - tier 1 swap succeeds
   - tier 2 swap succeeds
   - executed dynamic fee is validated from PoolManager Swap events
+  - low volatility applies default fee `1000`
   - retail high volatility swap applies fee `5000`
   - institutional high volatility swap applies fee `500`
+  - static-fee pool keeps static fee `3000` even when hook computes a different fee
 
 ## Troubleshooting
 

@@ -3,7 +3,7 @@ RWAComply Hook - Next Action To-Do (Updated: 2026-03-19)
 Current State (verified)
 - Full local flow is working: deploy -> initialize -> add liquidity -> swap.
 - Dynamic fee is applied in executed swaps when pool fee is dynamic.
-- All tests currently pass (17/17).
+- All tests currently pass (22/22).
 
 Priority 1 - Security and Admin Hardening (Do Next)
 [x] Make oracle writes restricted.
@@ -22,11 +22,11 @@ Priority 1 - Security and Admin Hardening (Do Next)
    - Keep event semantics accurate for judges and maintainers.
 
 Priority 2 - Missing Integration Coverage Through PoolManager
-[ ] Add integration test: unverified user addLiquidity should revert.
-[ ] Add integration test: paused pool swap should revert.
-[ ] Add integration test: retail cap exceeded should revert.
-[ ] Add integration test: low volatility applies default fee (1000).
-[ ] Add integration test: static-fee pool ignores hook fee override.
+[x] Add integration test: unverified user addLiquidity should revert.
+[x] Add integration test: paused pool swap should revert.
+[x] Add integration test: retail cap exceeded should revert.
+[x] Add integration test: low volatility applies default fee (1000).
+[x] Add integration test: static-fee pool ignores hook fee override.
 
 Priority 3 - Script and Workflow Reliability
 [ ] Consolidate scripts to one deterministic local demo flow.
