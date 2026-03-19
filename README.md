@@ -1,224 +1,183 @@
-RWAComply Hook (Uniswap v4)
+# RWAComply Hook (Uniswap v4)
 
-Overview
+RWAComply is a Uniswap v4 hook prototype for compliance-aware pools.
 
-RWAComply is a custom Uniswap v4 hook that introduces compliance-aware
-logic for Real-World Asset (RWA) pools. It enforces user access control
-and dynamically adjusts behavior based on user tiers and market
-conditions.
+It includes:
+- tier-based access control (tier 0 blocked, tier 1 retail, tier 2 institutional)
+- retail swap caps
+- oracle-driven dynamic fee selection
+- PoolManager-level integration tests
 
-This project is currently at a working MVP stage with fully tested
-contracts and successful CREATE2-based deployment compatible with
-Uniswap v4 requirements.
+## Repository Structure
 
-------------------------------------------------------------------------
+- src
+  - RWAComplyHook.sol
+  - MockRWAOracle.sol
+  - MockERC20.sol
+  - PoolExecutor.sol
+- script
+  - DeployCore.s.sol
+  - DeployHook.s.sol
+  - DeployFull.s.sol
+  - PoolSetup.s.sol
+- test
+  - Counter.t.sol
+  - RWAComply.t.sol
+  - RWAComplyIntegration.t.sol
 
-Features Implemented
+## Prerequisites
 
-User Tier System
+- Foundry installed (`forge`, `anvil`)
+- Local Anvil node for deployment runs
+- Dependencies present in `lib/`
 
--   Addresses are assigned tiers: Retail (1) Institutional (2)
--   Unverified users (tier = 0) are blocked from swaps and liquidity
-    actions.
+## Setup
 
-Access Control (beforeSwap & beforeAddLiquidity)
+1. Copy env template.
 
--   Transactions are validated before execution.
--   Unauthorized users are reverted.
--   Retail users have a swap cap enforced.
-
-Dynamic Fee Logic
-
--   Fee varies based on:
-    -   User tier
-    -   Market volatility from oracle
--   High volatility:
-    -   Retail → higher fees
-    -   Institutional → lower fees
--   Normal conditions:
-    -   Default fee applied
-
-Post-Swap Tracking
-
--   Emits fee-related events after swaps.
-
-Mock Oracle Integration
-
--   Simulates real-world volatility data for testing fee behavior.
-
-------------------------------------------------------------------------
-
-Tech Stack
-
--   Solidity (0.8.24 / 0.8.26)
--   Foundry (Forge, Anvil)
--   Uniswap v4 Core
--   OpenZeppelin (Ownable)
-
-------------------------------------------------------------------------
-
-Project Structure
-
-src/ RWAComplyHook.sol MockRWAOracle.sol
-
-script/ DeployCore.s.sol DeployHook.s.sol PoolSetup.s.sol
-
-test/ RWAComply.t.sol
-
-lib/ v4-core/ openzeppelin-contracts/
-
-------------------------------------------------------------------------
-
-Contracts
-
-RWAComplyHook.sol
-
--   Main hook contract implementing:
-    -   beforeSwap
-    -   afterSwap
-    -   beforeAddLiquidity
--   Enforces compliance and dynamic fee logic
--   Uses CREATE2-compatible deployment constraints
--   Validates hook permissions (production only)
-
-MockRWAOracle.sol
-
--   Simple contract to:
-    -   Set volatility
-    -   Return current volatility
-
-------------------------------------------------------------------------
-
-Deployment (Local - Anvil)
-
-1.  Start Anvil
-
-anvil
-
-------------------------------------------------------------------------
-
-2.  Set Environment Variables
-
-Create .env:
-
-PRIVATE_KEY=0x`<anvil_private_key>`{=html}
-
-------------------------------------------------------------------------
-
-3.  Deploy PoolManager
-
-forge script script/DeployCore.s.sol\
---rpc-url http://127.0.0.1:8545\
---broadcast
-
-Add: POOL_MANAGER=
-```{=html}
-<address>
+```bash
+cp .env.example .env
 ```
 
-------------------------------------------------------------------------
+2. Edit `.env` and set at minimum:
 
-4.  Deploy Hook + Oracle (CREATE2)
+```dotenv
+PRIVATE_KEY=0x...
+POOL_MANAGER=0x...
+HOOK_ADDRESS=0x...
+TOKEN_A=0x...
+TOKEN_B=0x...
+```
 
-forge script script/DeployHook.s.sol\
---rpc-url http://127.0.0.1:8545\
---broadcast
+Notes:
+- `TOKEN_A` and `TOKEN_B` must be ERC20 token addresses.
+- `TOKEN_A` and `TOKEN_B` must not be `POOL_MANAGER` or `HOOK_ADDRESS`.
+- Scripts already fail fast on missing/invalid env values.
 
--   Salt is brute-forced automatically
--   Hook address satisfies Uniswap v4 permission mask
+## Local End-to-End Run (Fresh Anvil)
 
-------------------------------------------------------------------------
+This run proves: deploy -> initialize -> add liquidity -> swap.
 
-Testing
+1. Start Anvil.
 
-Tests located in: test/RWAComply.t.sol
+```bash
+anvil
+```
 
-Covered cases:
+2. Deploy PoolManager.
 
--   Unverified users cannot swap
--   Retail fee logic under high volatility
--   Institutional fee logic under high volatility
--   Pool pause behavior
+```bash
+forge script script/DeployCore.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
+```
 
-Run tests:
+3. Set `POOL_MANAGER` in `.env` from script output.
 
+4. Deploy Hook + Oracle.
+
+```bash
+forge script script/DeployHook.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
+```
+
+5. Set `HOOK_ADDRESS` in `.env` from script output.
+
+6. Deploy two mock ERC20 tokens and capture the two deployed addresses.
+
+```bash
+source .env
+forge create src/MockERC20.sol:MockERC20 --rpc-url http://127.0.0.1:8545 --private-key "$PRIVATE_KEY" --constructor-args "TokenA" "TKA" 1000000000000000000000000
+forge create src/MockERC20.sol:MockERC20 --rpc-url http://127.0.0.1:8545 --private-key "$PRIVATE_KEY" --constructor-args "TokenB" "TKB" 1000000000000000000000000
+```
+
+7. Set `TOKEN_A` and `TOKEN_B` in `.env` from the deploy outputs.
+
+8. Run full flow.
+
+```bash
+forge script script/DeployFull.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
+```
+
+Expected script logs include:
+- `beforeAddLiquidity called`
+- `beforeSwap called`
+- `afterSwap called`
+
+## Test Guide
+
+### Run all tests
+
+```bash
 forge test
+```
 
-All tests are currently passing.
+### Run specific suites
 
-------------------------------------------------------------------------
+Hook unit tests:
 
-Special Implementation Details
+```bash
+forge test --match-path test/RWAComply.t.sol -vv
+```
 
-CREATE2 Deployment
+Compliance integration tests via PoolManager swap path:
 
--   Hook must satisfy: hookAddress & ALL_HOOK_MASK == permissions
--   Salt is brute-forced to achieve valid address
--   Uses canonical CREATE2 deployer (0x4e59...)
+```bash
+forge test --match-path test/RWAComplyIntegration.t.sol -vv
+```
 
-Ownership Fix
+Counter sample tests:
 
--   Owner passed explicitly in constructor
--   Avoids CREATE2 msg.sender issue
+```bash
+forge test --match-path test/Counter.t.sol -vv
+```
 
-Test vs Production Handling
+### Run focused compliance assertions
 
--   Hook validation skipped in test environment
--   onlyPoolManager relaxed in tests
--   Fully enforced in production
+Tier 0 revert through PoolManager swap:
 
-------------------------------------------------------------------------
+```bash
+forge test --match-test testTier0SwapRevertsThroughPoolManager -vv
+```
 
-Current Status
+Tier 1 pass through PoolManager swap:
 
--   Contracts compile successfully
--   CREATE2 hook deployment working correctly
--   Permission bits matched exactly
--   Ownership correctly handled
--   Oracle integrated and functional
--   All tests passing
--   Hook logic validated in isolation
+```bash
+forge test --match-test testTier1SwapPassesThroughPoolManager -vv
+```
 
-------------------------------------------------------------------------
+Tier 2 pass through PoolManager swap:
 
-Not Yet Implemented
+```bash
+forge test --match-test testTier2SwapPassesThroughPoolManager -vv
+```
 
--   Pool creation with hook attached
--   Token deployment and liquidity provisioning
--   Swap execution via PoolManager
--   NFT-based fee accrual
--   Chainlink oracle integration
--   Reactive Network integration
--   Frontend interface
+### Optional test output modes
 
-------------------------------------------------------------------------
+Gas report:
 
-Next Steps
+```bash
+forge test --gas-report
+```
 
-1.  Deploy mock ERC20 tokens
-2.  Create Uniswap v4 pool with hook
-3.  Initialize pool
-4.  Add liquidity
-5.  Execute swaps to trigger:
-    -   beforeSwap
-    -   afterSwap
-6.  Validate dynamic fee behavior on-chain
+Very verbose traces:
 
-------------------------------------------------------------------------
+```bash
+forge test -vvvv
+```
 
-Notes
+## What the Current Tests Prove
 
--   Hook does not custody funds (secure design)
--   All logic executed via PoolManager callbacks
--   CREATE2 is mandatory for Uniswap v4 hooks
--   Broadcast and cache folders should be gitignored
+- `test/RWAComply.t.sol`
+  - direct hook-level checks for fee logic, pause behavior, and unverified access control
+- `test/RWAComplyIntegration.t.sol`
+  - real PoolManager integration path
+  - tier 0 swap reverts
+  - tier 1 swap succeeds
+  - tier 2 swap succeeds
 
-------------------------------------------------------------------------
+## Troubleshooting
 
-Goal
-
-To build a compliant liquidity layer for RWAs by combining:
-
--   On-chain identity (user tiers)
--   Oracle-driven adaptability
--   Hook-based enforcement in Uniswap v4
+- `HookAddressNotValid(...)`:
+  - run `DeployHook.s.sol`; it brute-forces a valid CREATE2 salt for required hook flags
+- `CurrencyNotSettled()`:
+  - ensure you are using current `PoolExecutor` logic with `sync + settle` and `take`
+- stale env values after redeploy:
+  - if `POOL_MANAGER` changes, redeploy hook and update `HOOK_ADDRESS` before running `DeployFull`
