@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAccount, useReadContract } from 'wagmi';
 import { HOOK_ADDRESS, HOOK_ABI } from '@/contracts';
 
@@ -16,12 +16,16 @@ export function AdminDashboard() {
     functionName: 'owner',
   });
 
+  const ownerAddress = typeof owner === 'string' ? owner : undefined;
+
   // Check if connected user is owner
-  React.useEffect(() => {
-    if (owner && address && owner.toLowerCase() === address.toLowerCase()) {
+  useEffect(() => {
+    if (ownerAddress && address && ownerAddress.toLowerCase() === address.toLowerCase()) {
       setIsOwner(true);
+    } else {
+      setIsOwner(false);
     }
-  }, [owner, address]);
+  }, [ownerAddress, address]);
 
   if (!address) {
     return (
@@ -43,7 +47,7 @@ export function AdminDashboard() {
   return (
     <div className="space-y-6">
       {/* Admin Header */}
-      <div className="bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-200 rounded-lg p-6">
+      <div className="bg-linear-to-r from-red-50 to-orange-50 border-2 border-red-200 rounded-lg p-6">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-red-200 rounded-full flex items-center justify-center">
             <span className="text-red-700 font-bold">⚙️</span>
@@ -74,7 +78,7 @@ export function AdminDashboard() {
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-400 focus:outline-none"
             />
           </div>
-          <button className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold py-3 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all">
+          <button className="w-full bg-linear-to-r from-blue-500 to-blue-600 text-white font-bold py-3 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all">
             Update Threshold
           </button>
         </div>
@@ -99,7 +103,7 @@ export function AdminDashboard() {
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-400 focus:outline-none"
             />
           </div>
-          <button className="w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white font-bold py-3 rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all">
+          <button className="w-full bg-linear-to-r from-purple-500 to-purple-600 text-white font-bold py-3 rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all">
             Update Cap
           </button>
         </div>
