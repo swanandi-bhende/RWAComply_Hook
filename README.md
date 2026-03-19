@@ -167,6 +167,72 @@ Dynamic fee applied for institutional user on high volatility (executed PoolMana
 forge test --match-test testDynamicFeeAppliedInstitutionalHighVolatility -vv
 ```
 
+## Demo Script
+
+Run these three commands in order for a concise live demo:
+
+1. Unverified swap is blocked (tier 0):
+
+```bash
+forge test --match-test testTier0SwapRevertsThroughPoolManager -vvvv
+```
+
+2. Retail swap executes with high-volatility fee:
+
+```bash
+forge test --match-test testDynamicFeeAppliedRetailHighVolatility -vv
+```
+
+3. Institutional swap executes with high-volatility fee:
+
+```bash
+forge test --match-test testDynamicFeeAppliedInstitutionalHighVolatility -vv
+```
+
+Expected demo outcomes:
+- blocked reason: `AccessDenied()` (wrapped by PoolManager)
+- tier used + fee selected for successful swaps from `BeforeSwapCalled`
+- executed fee values from PoolManager `Swap` event decoding in integration tests
+
+### Recorded Terminal Output Snippets
+
+Unverified swap blocked (`tier: 0` and `AccessDenied` in trace):
+
+```text
+$ forge test --match-test testTier0SwapRevertsThroughPoolManager -vvvv
+[PASS] testTier0SwapRevertsThroughPoolManager()
+Logs:
+  beforeSwap called
+  tier: 0
+...
+└─ ← [Revert] AccessDenied()
+└─ ← [Revert] WrappedError(...)
+```
+
+Retail high-volatility swap success (`tier: 1`, `fee: 5000`):
+
+```text
+$ forge test --match-test testDynamicFeeAppliedRetailHighVolatility -vv
+[PASS] testDynamicFeeAppliedRetailHighVolatility()
+Logs:
+  beforeSwap called
+  tier: 1
+  fee: 5000
+  afterSwap called
+```
+
+Institutional high-volatility swap success (`tier: 2`, `fee: 500`):
+
+```text
+$ forge test --match-test testDynamicFeeAppliedInstitutionalHighVolatility -vv
+[PASS] testDynamicFeeAppliedInstitutionalHighVolatility()
+Logs:
+  beforeSwap called
+  tier: 2
+  fee: 500
+  afterSwap called
+```
+
 ### Optional test output modes
 
 Gas report:
@@ -189,6 +255,7 @@ forge test -vvvv
   - real PoolManager integration path
   - full flow succeeds: initialize -> add liquidity -> swap
   - tier 0 swap reverts
+  - blocked reason surfaced as wrapped `AccessDenied()` in traces
   - tier 1 swap succeeds
   - tier 2 swap succeeds
   - executed dynamic fee is validated from PoolManager Swap events
