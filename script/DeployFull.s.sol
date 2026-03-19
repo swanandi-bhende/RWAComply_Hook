@@ -17,7 +17,6 @@ contract DeployFull is Script {
     function run() external {
 
         uint256 pk = vm.envUint("PRIVATE_KEY");
-        address sender = vm.addr(pk);
 
         vm.startBroadcast(pk);
 
@@ -32,7 +31,6 @@ contract DeployFull is Script {
         MockERC20 tokenA = MockERC20(tokenAAddr);
         MockERC20 tokenB = MockERC20(tokenBAddr);
 
-        // approve PoolManager
         tokenA.approve(address(poolManager), type(uint256).max);
         tokenB.approve(address(poolManager), type(uint256).max);
 
@@ -48,6 +46,12 @@ contract DeployFull is Script {
             tickSpacing: 60,
             hooks: IHooks(hookAddr)
         });
+
+        
+        poolManager.initialize(
+            key,
+            79228162514264337593543950336 // sqrtPriceX96 = 1:1
+        );
 
         PoolExecutor executor = new PoolExecutor(poolManager, key);
 

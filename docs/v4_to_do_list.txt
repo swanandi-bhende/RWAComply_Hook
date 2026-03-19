@@ -1,0 +1,123 @@
+
+
+PHASE 1 (1.5 hrs) — MAKE HOOK ACTUALLY RUN IN POOL
+
+1. Deploy 2 Mock ERC20 tokens
+2. Approve PoolManager to spend tokens
+3. Create PoolKey with:
+   - token0, token1
+   - fee
+   - tickSpacing
+   - hook address
+
+4. Initialize pool using PoolManager.initialize()
+
+5. Add liquidity using modifyLiquidity()
+   - Ensure hook executes
+
+6. Perform swap using swap()
+   - Confirm:
+     - beforeSwap runs (tier check)
+     - afterSwap runs
+
+7. Test 3 cases:
+   - tier = 0 → revert
+   - retail → high fee
+   - institutional → low fee
+
+
+(Reference: this is explicitly your next required step) :contentReference[oaicite:1]{index=1}
+
+
+==============================
+PHASE 2 (45 mins) — LOGS + DEMO PROOF
+==============================
+
+8. Add console logs / events:
+   - Tier detected
+   - Fee applied
+   - Swap allowed/blocked
+
+9. Run script and capture:
+   - revert case
+   - successful swap
+   - fee difference
+
+10. Save terminal outputs (for demo)
+
+
+==============================
+PHASE 3 (1 hr) — SIMPLE BUT IMPRESSIVE UI
+==============================
+
+Build MINIMAL Next.js UI (do NOT overbuild)
+
+Pages:
+
+1. Wallet connect (wagmi)
+2. Show:
+   - user tier
+   - current volatility
+   - expected fee
+
+3. Swap section:
+   - input amount
+   - button: Swap
+
+4. Admin section:
+   - setTier(address, tier)
+   - change volatility
+
+UI Goal:
+- Clean dashboard
+- Show "Retail vs Institutional difference clearly"
+
+DO NOT:
+- build full charts
+- build full LP UI
+- build NFT system
+
+👉 Just make interaction visible
+
+
+==============================
+PHASE 4 (30 mins) — README FIX
+==============================
+
+11. Update README:
+   - What problem (RWA compliance)
+   - How hook works (beforeSwap, oracle, tiers)
+   - Demo flow:
+       - unverified blocked
+       - retail high fee
+       - institutional low fee
+
+12. Clearly mention:
+   - Uniswap v4 hook
+   - Oracle integration
+   - Compliance logic
+
+
+==============================
+OPTIONAL (IF TIME LEFT)
+==============================
+
+- Improve UI styling (dark theme + cards)
+- Add badges:
+   - "Retail"
+   - "Institutional"
+- Add "Fee Preview" before swap
+
+
+==============================
+SUCCESS CRITERIA
+==============================
+
+You WIN if:
+
+✔ Hook executes inside real pool
+✔ Swap clearly shows compliance + dynamic fee
+✔ Demo video is clear
+✔ UI makes it easy to understand
+
+==============================

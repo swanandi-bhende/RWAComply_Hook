@@ -66,8 +66,9 @@ contract RWAComplyHook is IHooks, Ownable {
 
     function getHookPermissions() public pure returns (Hooks.Permissions memory) {
         return Hooks.Permissions({
-            beforeInitialize: true,
-            afterInitialize: true,
+            beforeInitialize: false,
+            afterInitialize: false,
+
             beforeAddLiquidity: true,
             afterAddLiquidity: false,
             beforeRemoveLiquidity: false,
@@ -76,6 +77,7 @@ contract RWAComplyHook is IHooks, Ownable {
             afterSwap: true,
             beforeDonate: false,
             afterDonate: false,
+
             beforeSwapReturnDelta: false,
             afterSwapReturnDelta: false,
             afterAddLiquidityReturnDelta: false,
@@ -183,17 +185,30 @@ contract RWAComplyHook is IHooks, Ownable {
         return IHooks.beforeAddLiquidity.selector;
     }
 
-    function beforeInitialize(address, PoolKey calldata, uint160)
-        external override returns (bytes4)
+    // ✅ CRITICAL FIX — clean, NO logs, NO logic
+    function beforeInitialize(
+        address,
+        PoolKey calldata,
+        uint160
+    )
+        external
+        override
+        returns (bytes4)
     {
-        console.log("beforeInitialize called");
         return IHooks.beforeInitialize.selector;
     }
 
-    function afterInitialize(address, PoolKey calldata, uint160, int24)
-        external override returns (bytes4)
+    // ✅ CRITICAL FIX — clean, NO logs, NO logic
+    function afterInitialize(
+        address,
+        PoolKey calldata,
+        uint160,
+        int24
+    )
+        external
+        override
+        returns (bytes4)
     {
-        console.log("afterInitialize called");
         return IHooks.afterInitialize.selector;
     }
 
