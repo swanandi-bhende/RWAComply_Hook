@@ -1,0 +1,183 @@
+Page 1: Hero/Compliance Dashboard (Home)
+Goal: Immediately show what makes this hook different
+
+Above the fold:
+
+Bold title: "RWA Compliance Hook for Uniswap v4"
+Subtitle: "Regulatory-ready trading with dynamic fees"
+3-card visual summary:
+Tier-Based Access (show 3 tiers with examples)
+Oracle-Driven Fees (volatility → fee mapping)
+Hook Integration (how it plugs into PoolManager)
+Live Compliance Status (populated from chain):
+
+Your wallet's tier (fetched from userTier mapping)
+Current oracle volatility
+Active pool fee structure
+Applicable swap cap for you
+Quick Stats (from actual contracts):
+
+volatilityThreshold value
+retailSwapCap in tokens
+Hook owner address
+Pool paused status
+
+Page 2: Interactive Tier Tester
+Goal: Make judges understand the access control immediately
+
+Visual Flow:
+
+Select a tier (0, 1, or 2)
+Show: "What happens if YOU try to swap?"
+Tier 0: ❌ Access Denied (show the error: AccessDenied())
+Tier 1: ✅ Allowed – Retail Fee Applied (show fee calculation)
+Tier 2: ✅ Allowed – Institutional Rate (show lower fee)
+Contract Reality Check (read-only):
+
+Show code snippet of beforeSwap() tier check
+Display actual getBaseFeeForTier(tier) values from contract
+Explain in plain English: "Tier 2 pays 10 bps, Tier 1 pays 30 bps"
+Optional Interaction:
+
+User can modify their tier (via backend simulation UI explaining permissions)
+See fee change in real time
+
+Page 3: Dynamic Fee Visualizer
+Goal: Show the oracle-driven fee system
+
+Interactive Chart:
+
+X-axis: Volatility (0-100%)
+Y-axis: Fee (bps)
+Show 2 curves: Tier 1 (retail) vs Tier 2 (institutional)
+volatilityThreshold marked on chart
+Live oracle volatility indicator
+Contract Data Displayed:
+
+Current oracle volatility (from MockRWAOracle.getVolatility)
+Volatility threshold (from hook.volatilityThreshold)
+Fee tiers at current volatility
+Explain: "When volatility exceeds 5%, dynamic fees kick in"
+Simulated Scenario:
+
+Slider to adjust simulated volatility
+Shows fee that would apply at that volatility
+Include comparison to static-fee pools
+
+Page 4: Live Swap Demo
+Goal: Real contract interaction showing the hook in action
+
+Before Swap (Preparation):
+
+Show pool state: tick, liquidity, current price
+Show your balances (read from MockERC20)
+Show your tier (read from hook)
+Show applicable fee (calculated)
+Execute Swap:
+
+Input amount
+Real on-chain approval+swap (not simulated)
+Show transaction breakdown:
+Hook beforeSwap called? ✅
+Tier check passed? ✅
+Fee applied? ✅ (show bps)
+Swap executed? ✅
+After Swap (Results):
+
+Updated balances
+Amount out with fee deduction highlighted
+Transaction hash linked to etherscan/anvil explorer
+Hook events emitted (BeforeSwapCalled, etc.)
+Error Showcase (Optional):
+
+Try swapping as Tier 0
+Show AccessDenied() error in real time
+Explain: "This is the hook protecting compliance"
+
+Page 5: Admin Observatory
+Goal: Show owner controls + teach how to manage the hook
+
+Read-Only View of Current State:
+
+Hook owner address
+Oracle address
+Volatility threshold
+Retail swap cap
+Pool paused status
+Base fee per tier
+Interactive Admin Panel (if user is owner):
+
+Set volatility threshold slider
+Set retail cap
+See live changes in fees above (Page 3 chart updates)
+Write events to transaction log
+Security Highlight:
+
+Show onlyOwner modifier explanation
+Show zero-address validation in setOracle
+Explain Ownable pattern
+Oracle Control:
+
+If owner is also oracle owner, allow setVolatility
+Trigger a fee change and show it ripple through Page 3
+
+--
+🎨 Visual/UX Principles
+Contract-Centric Code Snippets:
+
+On each page, show relevant contract code snippet
+Highlight the specific function being demonstrated
+Example: On Page 2, show beforeSwap() with tier check highlighted
+Transparency via Live Reads:
+
+Every static value should be fetched from contracts, not hardcoded
+Display what's actually on-chain
+Error-Driven Teaching:
+
+Don't hide errors; use them to teach
+Examples: "Tier 0 gets AccessDenied()" shown as educational feature
+Judicial Appeal:
+
+Each page has a "Why This Matters for Uniswap" callout box
+Example: Page 1 → "Enables KYC/AML-compliant token swaps on Uniswap"
+Example: Page 3 → "Hook plugs directly into PoolManager for regulatory pricing"
+No Fake Data:
+
+Remove all mock transaction simulation
+All interactions are real contract calls
+Build fails clearly if deployment is stale
+--
+📊 Execution Roadmap
+Phase 1: Scaffold Core Pages (30 min)
+
+Create page structure: Hero → Tiers → Chart → Swap → Admin
+Wire up contract ABIs and calls
+Display live on-chain data
+
+
+Phase 2: Interactive Tier Tester (20 min)
+
+Tier selector radio buttons
+Render tier → fee mapping from contract
+Show tier check logic as code snippet
+
+
+Phase 3: Dynamic Fee Chart (25 min)
+
+Build volatility slider
+Plot fee curves for both tiers
+Link to oracle volatility
+
+
+Phase 4: Real Swap Interface (30 min)
+
+Replace fake simulation with real calls
+Approval + swap execution
+Show hook events in real time
+
+
+Phase 5: Polish & Deploy (15 min)
+
+Remove generic Uniswap styling
+Add contract code explanations
+Test end-to-end on fresh anvil

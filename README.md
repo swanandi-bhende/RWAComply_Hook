@@ -28,11 +28,12 @@ It includes:
   - Counter.t.sol
   - RWAComply.t.sol
   - RWAComplyIntegration.t.sol
-- **frontend/** (NEW - Next.js 14 Uniswap-inspired UI)
-  - Production-ready Web3 dashboard
-  - Swap, liquidity, and admin interfaces
-  - Real-time contract integration
-  - See [FRONTEND_GUIDE.md](FRONTEND_GUIDE.md) for details
+- **frontend/** (NEW - Next.js 14 Contract Showcase UI)
+  - **Contract-first design**: Every display is a real contract read
+  - **Narrative flow**: Hero → Compliance Status → Fee Visualization → Swap Demo → Admin
+  - **Educational**: shows `beforeSwap()`, `beforeAddLiquidity()` code alongside UI
+  - **Deployment-aware**: Validates and reads addresses from broadcast data, fails fast if stale
+  - See [SETUP_GUIDE.md](frontend/SETUP_GUIDE.md) for setup details
 
 ## Prerequisites
 
@@ -92,6 +93,31 @@ Expected script logs include:
 - `beforeAddLiquidity called`
 - `beforeSwap called`
 - `afterSwap called`
+
+## Frontend Dashboard
+
+After deployment, view the hook in action via the Web3 UI:
+
+```bash
+# 1. Ensure anvil is running and contracts deployed
+bash script/run_canonical_demo.sh
+
+# 2. Setup frontend environment
+cd frontend
+cp .env.example .env.local
+# Edit .env.local with addresses from docs/demo_run_log.txt
+
+# 3. Start dev server
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000). The dashboard displays:
+- **Your compliance tier** (from `userTier` mapping)
+- **Active fee rates** (from `getBaseFeeForTier()`)
+- **Oracle volatility** (from `MockRWAOracle.getVolatility()`)
+- **Contract configuration** (threshold, cap, owner, paused status)
+- **All reads are live** from the deployed contracts on Anvil
 
 ## Legacy Split Flow (Deprecated)
 

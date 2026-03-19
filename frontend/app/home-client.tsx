@@ -1,185 +1,153 @@
 'use client';
 
-import { useState } from 'react';
 import { Header } from '@/components/Header';
-import { ComplianceStatus } from '@/components/ComplianceStatus';
-import { OracleStatus } from '@/components/OracleStatus';
-import { SwapInterface } from '@/components/SwapInterface';
-import { AddLiquidity } from '@/components/AddLiquidity';
-import { AdminDashboard } from '@/components/AdminDashboard';
-import { TransactionHistory } from '@/components/TransactionHistory';
+import { HeroSection } from '@/components/HeroSection';
+import { LiveComplianceStatus } from '@/components/LiveComplianceStatus';
+import { QuickStats } from '@/components/QuickStats';
 import { Providers } from './providers';
 
-type Tab = 'overview' | 'swap' | 'liquidity' | 'admin' | 'history';
-
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<Tab>('overview');
-
-  const tabs: { id: Tab; label: string; icon: string }[] = [
-    { id: 'overview', label: 'Overview', icon: '📊' },
-    { id: 'swap', label: 'Swap', icon: '⇄' },
-    { id: 'liquidity', label: 'Liquidity', icon: '+' },
-    { id: 'admin', label: 'Admin', icon: '⚙️' },
-    { id: 'history', label: 'History', icon: '📝' },
-  ];
-
   return (
     <Providers>
       <Header />
       
-      <main className="flex-1">
-        {/* Top Navigation */}
-        <div className="border-b-4 border-black bg-white sticky top-16 z-40">
+      <main className="flex-1 bg-white">
+        {/* Page 1: Hero Section */}
+        <HeroSection />
+
+        {/* Page 1: Main Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left: Compliance Status */}
+            <div className="lg:col-span-2">
+              <div className="mb-8">
+                <h2 className="text-3xl font-black text-black mb-6">YOUR COMPLIANCE STATUS</h2>
+                <LiveComplianceStatus />
+              </div>
+            </div>
+
+            {/* Right: Quick Stats */}
+            <div>
+              <QuickStats />
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Section: How It Works */}
+        <div className="bg-black text-white border-t-2 border-black py-12 mt-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex space-x-1 overflow-x-auto">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-4 border-b-4 font-bold text-sm transition-colors whitespace-nowrap ${
-                    activeTab === tab.id
-                      ? 'border-black text-black bg-gray-100'
-                      : 'border-transparent text-black hover:bg-gray-50'
-                  }`}
-                >
-                  {tab.icon} {tab.label}
-                </button>
-              ))}
+            <h2 className="text-3xl font-black mb-8">HOW THE HOOK WORKS</h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {/* Step 1: Access Control */}
+              <div className="border-2 border-white p-6">
+                <div className="text-3xl font-black mb-3">1️⃣</div>
+                <h3 className="text-lg font-bold mb-2">Access Control</h3>
+                <p className="text-sm text-gray-300">
+                  User connects wallet. Hook checks compliance tier against{' '}
+                  <code className="bg-gray-800 px-1">userTier</code> mapping.
+                </p>
+              </div>
+
+              {/* Step 2: Fee Calculation */}
+              <div className="border-2 border-white p-6">
+                <div className="text-3xl font-black mb-3">2️⃣</div>
+                <h3 className="text-lg font-bold mb-2">Fee Calculation</h3>
+                <p className="text-sm text-gray-300">
+                  Oracle volatility is queried. If above threshold, dynamic fee applies. Otherwise, base fee.
+                </p>
+              </div>
+
+              {/* Step 3: Swap Execution */}
+              <div className="border-2 border-white p-6">
+                <div className="text-3xl font-black mb-3">3️⃣</div>
+                <h3 className="text-lg font-bold mb-2">Swap Execution</h3>
+                <p className="text-sm text-gray-300">
+                  PoolManager executes swap at calculated fee. Hook emits{' '}
+                  <code className="bg-gray-800 px-1">BeforeSwapCalled</code> event.
+                </p>
+              </div>
+
+              {/* Step 4: Compliance Logged */}
+              <div className="border-2 border-white p-6">
+                <div className="text-3xl font-black mb-3">4️⃣</div>
+                <h3 className="text-lg font-bold mb-2">Compliance Logged</h3>
+                <p className="text-sm text-gray-300">
+                  All transactions are tied to verified user tiers, enabling regulatory audit trails.
+                </p>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Content Area */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Overview Tab */}
-          {activeTab === 'overview' && (
-            <div className="space-y-8">
-              <section>
-                <h2 className="text-2xl font-bold text-black mb-4">YOUR COMPLIANCE STATUS</h2>
-                <ComplianceStatus />
-              </section>
+        {/* Technical Specs */}
+        <div className="bg-white border-b-2 border-black py-12">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 className="text-3xl font-black text-black mb-8">TECHNICAL SPECIFICATIONS</h2>
 
-              <section>
-                <h2 className="text-2xl font-bold text-black mb-4">MARKET CONDITIONS</h2>
-                <OracleStatus />
-              </section>
-
-              {/* Quick Stats */}
-              <section>
-                <h2 className="text-2xl font-bold text-black mb-4">QUICK STATS</h2>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="bg-white border-3 border-black p-6">
-                    <p className="text-black text-sm font-bold mb-2">TOTAL VALUE LOCKED</p>
-                    <h3 className="text-2xl font-bold text-black">$2.5M</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Left: Hook Permissions */}
+              <div className="bg-gray-50 border-2 border-gray-300 p-6 rounded">
+                <h3 className="text-lg font-bold text-black mb-4">Hook Permissions</h3>
+                <div className="space-y-2 text-sm font-mono text-gray-800">
+                  <div>
+                    <span className="text-green-600">✓</span> beforeAddLiquidity
                   </div>
-                  <div className="bg-white border-3 border-black p-6">
-                    <p className="text-black text-sm font-bold mb-2">24H VOLUME</p>
-                    <h3 className="text-2xl font-bold text-black">$156K</h3>
+                  <div>
+                    <span className="text-green-600">✓</span> beforeSwap
                   </div>
-                  <div className="bg-white border-3 border-black p-6">
-                    <p className="text-black text-sm font-bold mb-2">VERIFIED USERS</p>
-                    <h3 className="text-2xl font-bold text-black">1,234</h3>
+                  <div>
+                    <span className="text-green-600">✓</span> afterSwap
                   </div>
-                  <div className="bg-white border-3 border-black p-6">
-                    <p className="text-black text-sm font-bold mb-2">AVG FEE</p>
-                    <h3 className="text-2xl font-bold text-black">0.15%</h3>
+                  <div>
+                    <span className="text-gray-400">✗</span> afterAddLiquidity
                   </div>
-                </div>
-              </section>
-            </div>
-          )}
-
-          {/* Swap Tab */}
-          {activeTab === 'swap' && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2">
-                <SwapInterface />
-              </div>
-              <div className="space-y-6">
-                <div className="bg-white border-3 border-black p-6">
-                  <h3 className="font-bold text-black mb-4">SWAP INFO</h3>
-                  <div className="space-y-3 text-sm font-bold text-black border-t-2 border-black pt-3">
-                    <p><span>Min. Price Impact:</span> <span>0.5%</span></p>
-                    <p><span>Slippage Tolerance:</span> <span>0.5%</span></p>
-                    <p><span>Network Fee:</span> <span>~$2-5</span></p>
+                  <div>
+                    <span className="text-gray-400">✗</span> beforeRemoveLiquidity
                   </div>
-                </div>
-                <OracleStatus />
-              </div>
-            </div>
-          )}
-
-          {/* Liquidity Tab */}
-          {activeTab === 'liquidity' && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2">
-                <AddLiquidity />
-              </div>
-              <div className="space-y-6">
-                <div className="bg-white border-3 border-black p-6">
-                  <h3 className="font-bold text-black mb-4">YOUR POSITIONS</h3>
-                  <p className="text-black font-bold text-sm mb-4">Connect wallet to view positions</p>
-                  <div className="space-y-2 text-sm font-bold text-black border-t-2 border-black pt-3">
-                    <p><span>Active Ranges: </span><span>0</span></p>
-                    <p><span>Total Liquidity: </span><span>-</span></p>
-                    <p><span>Earned Fees: </span><span>-</span></p>
+                  <div>
+                    <span className="text-gray-400">✗</span> afterRemoveLiquidity
                   </div>
                 </div>
               </div>
-            </div>
-          )}
 
-          {/* Admin Tab */}
-          {activeTab === 'admin' && (
-            <div className="max-w-2xl">
-              <AdminDashboard />
-            </div>
-          )}
-
-          {/* History Tab */}
-          {activeTab === 'history' && (
-            <TransactionHistory />
-          )}
-        </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="bg-black border-t-4 border-black mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <h3 className="font-bold text-white mb-3">ABOUT</h3>
-              <p className="text-sm font-semibold text-white">RWA Compliance Hook for Uniswap v4</p>
-            </div>
-            <div>
-              <h3 className="font-bold text-white mb-3">LINKS</h3>
-              <ul className="space-y-2 text-sm font-semibold text-white">
-                <li><a href="#" className="hover:underline">Documentation</a></li>
-                <li><a href="#" className="hover:underline">GitHub</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-bold text-white mb-3">SUPPORT</h3>
-              <ul className="space-y-2 text-sm font-semibold text-white">
-                <li><a href="#" className="hover:underline">Help Center</a></li>
-                <li><a href="#" className="hover:underline">Contact</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-bold text-white mb-3">LEGAL</h3>
-              <ul className="space-y-2 text-sm font-semibold text-white">
-                <li><a href="#" className="hover:underline">Terms</a></li>
-                <li><a href="#" className="hover:underline">Privacy</a></li>
-              </ul>
+              {/* Right: Key Features */}
+              <div className="bg-gray-50 border-2 border-gray-300 p-6 rounded">
+                <h3 className="text-lg font-bold text-black mb-4">Key Features</h3>
+                <div className="space-y-2 text-sm text-gray-800">
+                  <div>
+                    <span className="font-bold">Tier System:</span> 3-tier compliance model
+                  </div>
+                  <div>
+                    <span className="font-bold">Oracle Integration:</span> Real-time volatility feeds
+                  </div>
+                  <div>
+                    <span className="font-bold">Dynamic Fees:</span> Volatility-based pricing
+                  </div>
+                  <div>
+                    <span className="font-bold">Retail Caps:</span> Risk management limits
+                  </div>
+                  <div>
+                    <span className="font-bold">Owner Control:</span> Ownable pattern with events
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <div className="border-t-2 border-white pt-8">
-            <p className="text-center text-sm font-bold text-white">
-              © 2026 RWA Compliance Hook. Built for UHI8 Hookathon.
+        </div>
+
+        {/* Footer CTA */}
+        <footer className="bg-black border-t-2 border-black py-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <p className="text-white text-center text-sm font-semibold">
+              🔬 Explore the hook in action: See how tiers affect fees and access on the next pages.
+            </p>
+            <p className="text-gray-400 text-center text-xs mt-4">
+              Uniswap v4 Hookathon 2026 • RWA Compliance Hook
             </p>
           </div>
-        </div>
-      </footer>
+        </footer>
+      </main>
     </Providers>
   );
 }

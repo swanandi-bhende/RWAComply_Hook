@@ -1,10 +1,11 @@
-// Contract addresses and ABIs
-export const HOOK_ADDRESS = "0x851eE973e4Ba7E6d19fF1DcfF9406CC6CE1ef8C0";
-export const POOL_MANAGER_ADDRESS = "0x1fA02b2d6A771842690194Cf62D91bdd92BfE28d";
-export const ORACLE_ADDRESS = "0xdbC43Ba45381e02825b14322cDdd15eC4B3164E6";
-export const TOKEN_A_ADDRESS = "0x21dF544947ba3E8b3c32561399E88B52Dc8b2823";
-export const TOKEN_B_ADDRESS = "0x2E2Ed0Cfd3AD2f1d34481277b3204d807Ca2F8c2";
-export const EXECUTOR_ADDRESS = "0xDC11f7E700A4c898AE5CAddB1082cFfa76512aDD";
+// Contract addresses - loaded from environment
+// These are fallbacks; deployment config loader is the source of truth
+export const HOOK_ADDRESS = process.env.NEXT_PUBLIC_HOOK_ADDRESS || "";
+export const POOL_MANAGER_ADDRESS = process.env.NEXT_PUBLIC_POOL_MANAGER || "";
+export const ORACLE_ADDRESS = process.env.NEXT_PUBLIC_ORACLE_ADDRESS || "";
+export const TOKEN_A_ADDRESS = process.env.NEXT_PUBLIC_TOKEN_A_ADDRESS || "";
+export const TOKEN_B_ADDRESS = process.env.NEXT_PUBLIC_TOKEN_B_ADDRESS || "";
+export const EXECUTOR_ADDRESS = process.env.NEXT_PUBLIC_EXECUTOR_ADDRESS || "";
 
 export const ANVIL_CHAIN_ID = 31337;
 
