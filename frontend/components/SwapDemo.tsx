@@ -11,6 +11,8 @@ import { formatEther, parseEther } from 'viem';
 import { loadDeploymentAddresses } from '@/config/deployments';
 import { ERC20_ABI, EXECUTOR_ABI, HOOK_ABI, ORACLE_ABI } from '@/contracts';
 import { calculateDynamicFeeForTier } from '@/lib/hookFee';
+import { useTransactions } from '@/app/TransactionContext';
+import { TransactionHistory } from './TransactionHistory';
 
 type SwapPhase = 'idle' | 'approving' | 'executing' | 'success' | 'error';
 
@@ -46,6 +48,7 @@ export function SwapDemo() {
   const { address } = useAccount();
   const publicClient = usePublicClient();
   const { writeContractAsync } = useWriteContract();
+  const { addTransaction } = useTransactions();
 
   const [addresses, setAddresses] = useState<{
     hook: string;
@@ -295,6 +298,27 @@ export function SwapDemo() {
         captureAfterBalances(),
       ]);
 
+      const deltaA = Number(formatEther(beforeExecutorA)) - Number(formatEther(afterExecutorA));
+      const deltaB = Number(formatEther(afterExecutorB)) - Number(formatEther(beforeExecutorB));
+      const feeRate = userFee / 10000;
+      const feePercent = feeRate * 100;
+
+      addTransaction({
+        type: 'swap',
+        tokenIn: 'Token A',
+        tokenOut: 'Token B',
+        amountIn: Math.abs(deltaA),
+        amountOut: deltaB,
+        fee: feePercent,
+        timestamp: new Date().toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+        }),
+        status: 'success',
+        hash: executeHash,
+      });
+
       setPhase('success');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Swap execution failed';
@@ -539,6 +563,10 @@ export function SwapDemo() {
           (pause state, caps, threshold, oracle volatility) immediately affect this flow through live
           reads.
         </p>
+      </div>
+
+      <div className="mt-12">
+        <TransactionHistory />
       </div>
     </div>
   );
