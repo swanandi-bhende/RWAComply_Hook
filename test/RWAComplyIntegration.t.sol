@@ -12,6 +12,7 @@ import {IHooks} from "@uniswap/v4-core/interfaces/IHooks.sol";
 import {IERC20Minimal} from "@uniswap/v4-core/interfaces/external/IERC20Minimal.sol";
 import {Hooks} from "@uniswap/v4-core/libraries/Hooks.sol";
 import {CustomRevert} from "@uniswap/v4-core/libraries/CustomRevert.sol";
+import {LPFeeLibrary} from "@uniswap/v4-core/libraries/LPFeeLibrary.sol";
 
 import "../src/RWAComplyHook.sol";
 import "../src/MockRWAOracle.sol";
@@ -110,6 +111,8 @@ contract RWAComplyIntegrationTest is Test {
     event BeforeSwapCalled(address indexed user, uint8 tier, uint24 fee);
 
     uint160 internal constant SQRT_PRICE_1_1 = 79228162514264337593543950336;
+    bytes32 internal constant SWAP_EVENT_SIG =
+        keccak256("Swap(bytes32,address,int128,int128,uint160,uint128,int24,uint24)");
 
     PoolManager internal poolManager;
     RWAComplyHook internal hook;
@@ -141,7 +144,7 @@ contract RWAComplyIntegrationTest is Test {
         key = PoolKey({
             currency0: Currency.wrap(token0),
             currency1: Currency.wrap(token1),
-            fee: 3000,
+            fee: LPFeeLibrary.DYNAMIC_FEE_FLAG,
             tickSpacing: 60,
             hooks: IHooks(address(hook))
         });
@@ -248,6 +251,48 @@ contract RWAComplyIntegrationTest is Test {
         emit BeforeSwapCalled(address(institutionalUser), 2, 1000);
 
         institutionalUser.swap();
+    }
+
+    function testDynamicFeeAppliedRetailHighVolatility() public {
+        oracle.setVolatility(10);
+
+        uint24 appliedFee = _swapAndGetAppliedFee(retailUser);
+
+        assertEq(appliedFee, 5000, "retail executed fee mismatch");
+    }
+
+    function testDynamicFeeAppliedInstitutionalHighVolatility() public {
+        oracle.setVolatility(10);
+
+        uint24 appliedFee = _swapAndGetAppliedFee(institutionalUser);
+
+        assertEq(appliedFee, 500, "institutional executed fee mismatch");
+    }
+
+    function _swapAndGetAppliedFee(PoolUser user) internal returns (uint24) {
+        vm.recordLogs();
+        user.swap();
+
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+
+        for (uint256 i = logs.length; i > 0; i--) {
+            Vm.Log memory logEntry = logs[i - 1];
+
+            if (
+                logEntry.emitter == address(poolManager)
+                    && logEntry.topics.length == 3
+                    && logEntry.topics[0] == SWAP_EVENT_SIG
+                    && logEntry.topics[2] == bytes32(uint256(uint160(address(user))))
+            ) {
+                (, , , , , uint24 fee) = abi.decode(
+                    logEntry.data,
+                    (int128, int128, uint160, uint128, int24, uint24)
+                );
+                return fee;
+            }
+        }
+
+        revert("Swap event not found");
     }
 
     function _fund(address user, uint256 amount) internal {

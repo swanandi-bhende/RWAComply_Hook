@@ -7,6 +7,7 @@ import {IPoolManager} from "@uniswap/v4-core/interfaces/IPoolManager.sol";
 import {PoolKey} from "@uniswap/v4-core/types/PoolKey.sol";
 import {Currency} from "@uniswap/v4-core/types/Currency.sol";
 import {IHooks} from "@uniswap/v4-core/interfaces/IHooks.sol";
+import {LPFeeLibrary} from "@uniswap/v4-core/libraries/LPFeeLibrary.sol";
 
 import "../src/MockERC20.sol";
 import "../src/PoolExecutor.sol";
@@ -60,7 +61,7 @@ contract DeployFull is Script {
         PoolKey memory key = PoolKey({
             currency0: Currency.wrap(token0),
             currency1: Currency.wrap(token1),
-            fee: 3000,
+            fee: LPFeeLibrary.DYNAMIC_FEE_FLAG,
             tickSpacing: 60,
             hooks: IHooks(hookAddr)
         });

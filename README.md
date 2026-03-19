@@ -149,6 +149,18 @@ Tier 2 pass through PoolManager swap:
 forge test --match-test testTier2SwapPassesThroughPoolManager -vv
 ```
 
+Dynamic fee applied for retail user on high volatility (executed PoolManager swap fee):
+
+```bash
+forge test --match-test testDynamicFeeAppliedRetailHighVolatility -vv
+```
+
+Dynamic fee applied for institutional user on high volatility (executed PoolManager swap fee):
+
+```bash
+forge test --match-test testDynamicFeeAppliedInstitutionalHighVolatility -vv
+```
+
 ### Optional test output modes
 
 Gas report:
@@ -172,6 +184,9 @@ forge test -vvvv
   - tier 0 swap reverts
   - tier 1 swap succeeds
   - tier 2 swap succeeds
+  - executed dynamic fee is validated from PoolManager Swap events
+  - retail high volatility swap applies fee `5000`
+  - institutional high volatility swap applies fee `500`
 
 ## Troubleshooting
 

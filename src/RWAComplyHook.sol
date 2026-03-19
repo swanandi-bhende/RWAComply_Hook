@@ -12,6 +12,7 @@ import {BalanceDelta} from "@uniswap/v4-core/types/BalanceDelta.sol";
 import {BeforeSwapDelta, BeforeSwapDeltaLibrary} from "@uniswap/v4-core/types/BeforeSwapDelta.sol";
 
 import {Hooks} from "@uniswap/v4-core/libraries/Hooks.sol";
+import {LPFeeLibrary} from "@uniswap/v4-core/libraries/LPFeeLibrary.sol";
 
 import "./MockRWAOracle.sol";
 
@@ -108,7 +109,7 @@ contract RWAComplyHook is IHooks, Ownable {
 
     function beforeSwap(
         address sender,
-        PoolKey calldata,
+        PoolKey calldata key,
         IPoolManager.SwapParams calldata params,
         bytes calldata
     )
@@ -141,10 +142,15 @@ contract RWAComplyHook is IHooks, Ownable {
 
         emit BeforeSwapCalled(sender, tier, fee);
 
+        uint24 feeForSwap = fee;
+        if (key.fee == LPFeeLibrary.DYNAMIC_FEE_FLAG) {
+            feeForSwap = fee | LPFeeLibrary.OVERRIDE_FEE_FLAG;
+        }
+
         return (
             IHooks.beforeSwap.selector,
             BeforeSwapDeltaLibrary.ZERO_DELTA,
-            fee
+            feeForSwap
         );
     }
 

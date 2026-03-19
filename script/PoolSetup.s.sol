@@ -15,6 +15,7 @@ import "@uniswap/v4-core/types/PoolKey.sol";
 import "@uniswap/v4-core/types/Currency.sol";
 
 import "@uniswap/v4-core/libraries/Hooks.sol";
+import "@uniswap/v4-core/libraries/LPFeeLibrary.sol";
 
 contract PoolSetup is Script {
 
@@ -120,7 +121,7 @@ contract PoolSetup is Script {
         PoolKey memory key = PoolKey({
             currency0: Currency.wrap(token0),
             currency1: Currency.wrap(token1),
-            fee: 3000,
+            fee: LPFeeLibrary.DYNAMIC_FEE_FLAG,
             tickSpacing: 60,
             hooks: IHooks(address(hook))
         });
