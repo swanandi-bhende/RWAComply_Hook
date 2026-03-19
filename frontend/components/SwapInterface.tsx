@@ -97,9 +97,9 @@ export function SwapInterface() {
 
   if (!address) {
     return (
-      <div className="bg-white rounded-2xl border-2 border-gray-200 p-8 text-center">
-        <p className="text-gray-600 mb-4">Connect your wallet to swap</p>
-        <button className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-2 rounded-lg font-medium">
+      <div className="bg-white border-3 border-black rounded p-8 text-center">
+        <p className="text-black font-bold mb-4">Connect your wallet to swap</p>
+        <button className="bg-black text-white px-6 py-3 font-bold rounded border-2 border-black hover:bg-white hover:text-black">
           Connect Wallet
         </button>
       </div>
@@ -107,88 +107,84 @@ export function SwapInterface() {
   }
 
   return (
-    <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg overflow-hidden">
+    <div className="bg-white border-3 border-black overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200 px-6 py-4">
-        <h2 className="text-xl font-bold text-gray-900">Swap</h2>
-        <p className="text-sm text-gray-600">Trade between tokens</p>
+      <div className="bg-black border-b-3 border-black px-6 py-4">
+        <h2 className="text-2xl font-bold text-white">SWAP</h2>
+        <p className="text-sm font-semibold text-white">Trade between tokens</p>
       </div>
 
       {/* Body */}
       <div className="p-6 space-y-4">
         {/* Input Token */}
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">You pay</label>
+          <label className="block text-sm font-bold text-black">YOU PAY</label>
           <div className="relative w-full">
             <input
               type="number"
               value={inputAmount}
               onChange={(e) => setInputAmount(e.target.value)}
               placeholder="0.0"
-              className="w-full px-4 py-3 text-lg font-semibold border-2 border-gray-200 rounded-lg focus:border-blue-400 focus:outline-none bg-gray-50"
+              className="w-full px-4 py-3 text-lg font-bold border-3 border-black focus:outline-none bg-white text-black"
             />
             <button
               onClick={handleMax}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold bg-black text-white px-2 py-1 border border-black hover:bg-white hover:text-black"
             >
               MAX
             </button>
           </div>
-          <div className="flex justify-between items-center px-4 py-3 bg-gray-50 rounded-lg">
+          <div className="flex justify-between items-center px-4 py-3 bg-white border-2 border-black">
             <button
               onClick={() => setSelectedInput(selectedInput === 'A' ? 'B' : 'A')}
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-2 font-bold text-black"
             >
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-sm font-bold text-blue-600">
+              <div className="w-8 h-8 border-2 border-black flex items-center justify-center text-sm font-bold text-black bg-white">
                 {selectedInput}
               </div>
-              <span className="font-medium text-gray-900">Token {selectedInput}</span>
+              <span>TOKEN {selectedInput}</span>
             </button>
-            <span className="text-xs text-gray-600">
-              Balance: {aLoading || bLoading ? '...' : (selectedInput === 'A' ? balanceA.toFixed(4) : balanceB.toFixed(4))}
+            <span className="text-xs font-bold text-black">
+              BAL: {aLoading || bLoading ? '...' : (selectedInput === 'A' ? balanceA.toFixed(4) : balanceB.toFixed(4))}
             </span>
           </div>
         </div>
 
         {/* Swap Button */}
         <div className="flex justify-center">
-          <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 w-12 h-12 rounded-full flex items-center justify-center transition-colors">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-            </svg>
+          <button className="bg-black text-white border-2 border-black w-12 h-12 flex items-center justify-center font-bold hover:bg-white hover:text-black transition-colors">
+            ⇅
           </button>
         </div>
 
         {/* Output Token */}
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">You receive</label>
-          <div className="px-4 py-3 text-lg font-semibold border-2 border-gray-200 rounded-lg bg-gray-50 text-gray-500">
+          <label className="block text-sm font-bold text-black">YOU RECEIVE</label>
+          <div className="px-4 py-3 text-lg font-bold border-3 border-black bg-white text-gray-500">
             Enter amount to see estimate
           </div>
-          <div className="flex justify-between items-center px-4 py-3 bg-gray-50 rounded-lg">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-sm font-bold text-purple-600">
+          <div className="flex justify-between items-center px-4 py-3 bg-white border-2 border-black">
+            <div className="flex items-center space-x-2 font-bold text-black">
+              <div className="w-8 h-8 border-2 border-black flex items-center justify-center text-sm font-bold text-black bg-white">
                 {selectedInput === 'A' ? 'B' : 'A'}
               </div>
-              <span className="font-medium text-gray-900">Token {selectedInput === 'A' ? 'B' : 'A'}</span>
+              <span>TOKEN {selectedInput === 'A' ? 'B' : 'A'}</span>
             </div>
-            <span className="text-xs text-gray-600">
-              Balance: {aLoading || bLoading ? '...' : (selectedInput === 'A' ? balanceB.toFixed(4) : balanceA.toFixed(4))}
+            <span className="text-xs font-bold text-black">
+              BAL: {aLoading || bLoading ? '...' : (selectedInput === 'A' ? balanceB.toFixed(4) : balanceA.toFixed(4))}
             </span>
           </div>
         </div>
 
         {/* Price Impact and Details */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Your tier</span>
-            <span className="font-semibold text-gray-900">
-              {tier ? 'Tier 2' : 'Tier 0/1'}
-            </span>
+        <div className="bg-white border-3 border-black p-4 space-y-3">
+          <div className="flex justify-between text-sm font-bold text-black border-b-2 border-black pb-2">
+            <span>YOUR TIER</span>
+            <span>{tier ? 'TIER 2' : 'TIER 0/1'}</span>
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Dynamic fee</span>
-            <span className="font-semibold text-gray-900">Based on volatility</span>
+          <div className="flex justify-between text-sm font-bold text-black">
+            <span>DYNAMIC FEE</span>
+            <span>Based on volatility</span>
           </div>
         </div>
 
@@ -196,18 +192,14 @@ export function SwapInterface() {
         <button
           onClick={handleSwap}
           disabled={!inputAmount || swapLoading}
-          className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 rounded-lg hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          className="w-full bg-black text-white font-bold py-3 border-3 border-black hover:bg-white hover:text-black disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         >
-          {swapLoading ? 'Processing...' : (inputAmount ? 'Swap Now' : 'Enter an amount')}
+          {swapLoading ? 'PROCESSING...' : (inputAmount ? 'SWAP NOW' : 'ENTER AN AMOUNT')}
         </button>
         
         {/* Status Message */}
         {swapMessage && (
-          <div className={`p-3 rounded-lg text-sm font-medium ${
-            swapMessage.includes('✅')
-              ? 'bg-green-50 text-green-700 border border-green-200'
-              : 'bg-blue-50 text-blue-700 border border-blue-200'
-          }`}>
+          <div className="p-4 bg-white border-3 border-black text-sm font-bold text-black">
             {swapMessage}
           </div>
         )}

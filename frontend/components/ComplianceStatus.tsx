@@ -35,8 +35,8 @@ export function ComplianceStatus() {
 
   if (!address) {
     return (
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
-        <p className="text-gray-700 font-medium">Connect wallet to view compliance status</p>
+      <div className="bg-white border-3 border-black rounded-lg p-6">
+        <p className="text-black font-bold text-lg">Connect wallet to view compliance status</p>
       </div>
     );
   }
@@ -46,41 +46,25 @@ export function ComplianceStatus() {
   else if (isTier1) tier = 1;
 
   return (
-    <div className={`rounded-lg p-6 border-2 ${
-      tier === 2
-        ? 'bg-purple-50 border-purple-200'
-        : tier === 1
-        ? 'bg-blue-50 border-blue-200'
-        : 'bg-gray-50 border-gray-200'
-    }`}>
+    <div className="bg-white border-3 border-black rounded-lg p-6">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-gray-600 text-sm font-medium mb-1">Your Verification Tier</p>
-          <h3 className={`text-2xl font-bold ${
-            tier === 2
-              ? 'text-purple-600'
-              : tier === 1
-              ? 'text-blue-600'
-              : 'text-gray-600'
-          }`}>
+          <p className="text-black text-sm font-bold mb-2">YOUR VERIFICATION TIER</p>
+          <h3 className="text-3xl font-bold text-black">
             {TIER_NAMES[tier as 0 | 1 | 2]}
           </h3>
         </div>
-        <div className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold ${
-          tier === 2
-            ? 'bg-purple-200 text-purple-700'
-            : tier === 1
-            ? 'bg-blue-200 text-blue-700'
-            : 'bg-gray-200 text-gray-700'
-        }`}>
+        <div className="w-20 h-20 rounded border-3 border-black flex items-center justify-center text-3xl font-bold bg-black text-white">
           {tier}
         </div>
       </div>
-      <p className="text-xs text-gray-600 mt-4">
-        {tier === 0 && 'You are unverified. Enhanced trading requires KYC verification.'}
-        {tier === 1 && 'You have basic KYC verification. Upgrade to Tier 2 for higher limits.'}
-        {tier === 2 && 'You have enhanced verification. Enjoy maximum trading benefits.'}
-      </p>
+      <div className="border-t-2 border-black mt-4 pt-4">
+        <p className="text-sm font-semibold text-black">
+          {tier === 0 && '⚠️ UNVERIFIED: Enhanced trading requires KYC verification.'}
+          {tier === 1 && '✓ TIER 1: Basic KYC verification active. Upgrade to Tier 2 for higher limits.'}
+          {tier === 2 && '✓ TIER 2: Enhanced verification active. Full trading benefits available.'}
+        </p>
+      </div>
     </div>
   );
 }

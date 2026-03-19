@@ -102,70 +102,70 @@ export function AddLiquidity() {
 
   if (!address) {
     return (
-      <div className="bg-white rounded-2xl border-2 border-gray-200 p-8 text-center">
-        <p className="text-gray-600 mb-4">Connect your wallet to add liquidity</p>
+      <div className="bg-white border-3 border-black p-8 text-center">
+        <p className="text-black font-bold">Connect your wallet to add liquidity</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg overflow-hidden">
+    <div className="bg-white border-3 border-black overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-b border-gray-200 px-6 py-4">
-        <h2 className="text-xl font-bold text-gray-900">Add Liquidity</h2>
-        <p className="text-sm text-gray-600">Provide liquidity to earn fees</p>
+      <div className="bg-black border-b-3 border-black px-6 py-4">
+        <h2 className="text-2xl font-bold text-white">ADD LIQUIDITY</h2>
+        <p className="text-sm font-semibold text-white">Provide liquidity to earn fees</p>
       </div>
 
       {/* Body */}
       <div className="p-6 space-y-6">
         {/* Token A Input */}
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">Token A Amount</label>
+          <label className="block text-sm font-bold text-black">TOKEN A AMOUNT</label>
           <input
             type="number"
             value={amountA}
             onChange={(e) => setAmountA(e.target.value)}
             placeholder="0.0"
-            className="w-full px-4 py-3 text-lg font-semibold border-2 border-gray-200 rounded-lg focus:border-green-400 focus:outline-none bg-gray-50"
+            className="w-full px-4 py-3 text-lg font-bold border-3 border-black focus:outline-none bg-white text-black"
           />
-          <div className="flex justify-between items-center px-4 py-3 bg-gray-50 rounded-lg">
-            <span className="font-medium text-gray-900">Token A</span>
-            <span className="text-xs text-gray-600">
-              Balance: {aLoading || bLoading ? '...' : balanceAmountA.toFixed(4)}
+          <div className="flex justify-between items-center px-4 py-3 bg-white border-2 border-black">
+            <span className="font-bold text-black">TOKEN A</span>
+            <span className="text-xs font-bold text-black">
+              BAL: {aLoading || bLoading ? '...' : balanceAmountA.toFixed(4)}
             </span>
           </div>
         </div>
 
         {/* Plus Icon */}
         <div className="flex justify-center">
-          <div className="bg-gray-100 text-gray-700 w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold">
+          <div className="bg-black text-white border-2 border-black w-12 h-12 rounded flex items-center justify-center text-2xl font-bold">
             +
           </div>
         </div>
 
         {/* Token B Input */}
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">Token B Amount</label>
+          <label className="block text-sm font-bold text-black">TOKEN B AMOUNT</label>
           <input
             type="number"
             value={amountB}
             onChange={(e) => setAmountB(e.target.value)}
             placeholder="0.0"
-            className="w-full px-4 py-3 text-lg font-semibold border-2 border-gray-200 rounded-lg focus:border-green-400 focus:outline-none bg-gray-50"
+            className="w-full px-4 py-3 text-lg font-bold border-3 border-black focus:outline-none bg-white text-black"
           />
-          <div className="flex justify-between items-center px-4 py-3 bg-gray-50 rounded-lg">
-            <span className="font-medium text-gray-900">Token B</span>
-            <span className="text-xs text-gray-600">
-              Balance: {aLoading || bLoading ? '...' : balanceAmountB.toFixed(4)}
+          <div className="flex justify-between items-center px-4 py-3 bg-white border-2 border-black">
+            <span className="font-bold text-black">TOKEN B</span>
+            <span className="text-xs font-bold text-black">
+              BAL: {aLoading || bLoading ? '...' : balanceAmountB.toFixed(4)}
             </span>
           </div>
         </div>
 
         {/* Fee Tier Indicator */}
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <p className="text-sm text-gray-600 mb-2">Fee Tier</p>
-          <p className="text-lg font-bold text-green-600">0.01% - 1.00% Dynamic</p>
-          <p className="text-xs text-gray-600 mt-2">Fee adjusts based on market volatility</p>
+        <div className="bg-white border-3 border-black p-4">
+          <p className="text-sm font-bold text-black mb-2">FEE TIER</p>
+          <p className="text-lg font-bold text-black">0.01% - 1.00% DYNAMIC</p>
+          <p className="text-xs font-semibold text-black mt-2">Fee adjusts based on market volatility</p>
         </div>
 
         {/* Action Buttons */}
@@ -173,26 +173,22 @@ export function AddLiquidity() {
           <button 
             onClick={handleAddLiquidity}
             disabled={!amountA || !amountB || liquidityLoading}
-            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-3 rounded-lg hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="w-full bg-black text-white font-bold py-3 border-3 border-black hover:bg-white hover:text-black disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
-            {liquidityLoading ? 'Processing...' : (amountA && amountB ? 'Add Liquidity' : 'Enter amounts')}
+            {liquidityLoading ? 'PROCESSING...' : (amountA && amountB ? 'ADD LIQUIDITY' : 'ENTER AMOUNTS')}
           </button>
           <button 
             onClick={handleViewPoolStats}
             disabled={poolStatsLoading}
-            className="w-full bg-white border-2 border-gray-200 text-gray-700 font-bold py-3 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full bg-white border-3 border-black text-black font-bold py-3 hover:bg-black hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
-            {poolStatsLoading ? 'Loading...' : 'View Pool Stats'}
+            {poolStatsLoading ? 'LOADING...' : 'VIEW POOL STATS'}
           </button>
         </div>
         
         {/* Status Message */}
         {statusMessage && (
-          <div className={`p-3 rounded-lg text-sm font-medium ${
-            statusMessage.includes('✅')
-              ? 'bg-green-50 text-green-700 border border-green-200'
-              : 'bg-blue-50 text-blue-700 border border-blue-200'
-          }`}>
+          <div className="p-4 bg-white border-3 border-black text-sm font-bold text-black">
             {statusMessage}
           </div>
         )}

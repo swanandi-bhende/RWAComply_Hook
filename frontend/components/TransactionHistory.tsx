@@ -62,75 +62,63 @@ export function TransactionHistory() {
 
   if (!address) {
     return (
-      <div className="bg-white rounded-2xl border-2 border-gray-200 p-8 text-center">
-        <p className="text-gray-600 mb-4">Connect wallet to view transactions</p>
+      <div className="bg-white border-3 border-black p-8 text-center">
+        <p className="text-black font-bold">Connect wallet to view transactions</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-lg overflow-hidden">
+    <div className="bg-white border-3 border-black overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-50 to-blue-50 border-b border-gray-200 px-6 py-4">
-        <h2 className="text-xl font-bold text-gray-900">Transaction History</h2>
-        <p className="text-sm text-gray-600">Your recent activity</p>
+      <div className="bg-black border-b-3 border-black px-6 py-4">
+        <h2 className="text-2xl font-bold text-white">TRANSACTION HISTORY</h2>
+        <p className="text-sm font-semibold text-white">Your recent activity</p>
       </div>
 
       {/* Body */}
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200">
+          <thead className="bg-white border-b-3 border-black">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase">Type</th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase">Details</th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase">Fee</th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase">Time</th>
-              <th className="px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-bold text-black uppercase border-r-2 border-black">Type</th>
+              <th className="px-6 py-3 text-left text-xs font-bold text-black uppercase border-r-2 border-black">Details</th>
+              <th className="px-6 py-3 text-left text-xs font-bold text-black uppercase border-r-2 border-black">Fee</th>
+              <th className="px-6 py-3 text-left text-xs font-bold text-black uppercase border-r-2 border-black">Time</th>
+              <th className="px-6 py-3 text-left text-xs font-bold text-black uppercase">Status</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y-2 divide-black">
             {transactions && transactions.length > 0 ? (
               transactions.map((tx) => (
-                <tr key={tx.id} className="hover:bg-gray-50 transition-colors">
+                <tr key={tx.id} className="hover:bg-gray-100 transition-colors border-b-2 border-black">
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${
-                      tx.type === 'swap'
-                        ? 'bg-blue-100 text-blue-700'
-                        : tx.type === 'add'
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-red-100 text-red-700'
-                    }`}>
+                    <span className="inline-flex items-center px-3 py-1 border-2 border-black text-xs font-bold bg-black text-white">
                       {tx.type === 'swap' ? '⇄' : tx.type === 'add' ? '+' : '-'} {tx.type.toUpperCase()}
                     </span>
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm">
-                      <p className="font-semibold text-gray-900">
+                      <p className="font-bold text-black">
                         {tx.amountIn} {tx.tokenIn} → {tx.amountOut} {tx.tokenOut}
                       </p>
-                      <p className="text-xs text-gray-600 mt-1">{tx.hash}</p>
+                      <p className="text-xs font-semibold text-black mt-1">{tx.hash}</p>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm font-semibold text-gray-900">
+                  <td className="px-6 py-4 text-sm font-bold text-black">
                     {tx.fee > 0 ? `${tx.fee}%` : '—'}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{tx.timestamp}</td>
+                  <td className="px-6 py-4 text-sm font-bold text-black">{tx.timestamp}</td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${
-                      tx.status === 'success'
-                        ? 'bg-green-100 text-green-700'
-                        : tx.status === 'pending'
-                        ? 'bg-yellow-100 text-yellow-700'
-                        : 'bg-red-100 text-red-700'
-                    }`}>
-                      {tx.status === 'success' ? '✓' : tx.status === 'pending' ? '⏳' : '✕'} {tx.status}
+                    <span className="inline-flex items-center px-3 py-1 border-2 border-black text-xs font-bold bg-white text-black">
+                      {tx.status === 'success' ? '✓' : tx.status === 'pending' ? '⏳' : '✕'} {tx.status.toUpperCase()}
                     </span>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-gray-600">
+                <td colSpan={5} className="px-6 py-8 text-center text-black font-bold">
                   No transactions yet. Perform a swap or add liquidity to see them here.
                 </td>
               </tr>

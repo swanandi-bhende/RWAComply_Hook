@@ -29,17 +29,17 @@ export default function Home() {
       
       <main className="flex-1">
         {/* Top Navigation */}
-        <div className="border-b border-gray-200 bg-white sticky top-16 z-40">
+        <div className="border-b-4 border-black bg-white sticky top-16 z-40">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex space-x-1 overflow-x-auto">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-4 border-b-2 font-medium text-sm transition-colors whitespace-nowrap ${
+                  className={`px-4 py-4 border-b-4 font-bold text-sm transition-colors whitespace-nowrap ${
                     activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-600 hover:text-gray-900'
+                      ? 'border-black text-black bg-gray-100'
+                      : 'border-transparent text-black hover:bg-gray-50'
                   }`}
                 >
                   {tab.icon} {tab.label}
@@ -55,34 +55,34 @@ export default function Home() {
           {activeTab === 'overview' && (
             <div className="space-y-8">
               <section>
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Your Compliance Status</h2>
+                <h2 className="text-2xl font-bold text-black mb-4">YOUR COMPLIANCE STATUS</h2>
                 <ComplianceStatus />
               </section>
 
               <section>
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Market Conditions</h2>
+                <h2 className="text-2xl font-bold text-black mb-4">MARKET CONDITIONS</h2>
                 <OracleStatus />
               </section>
 
               {/* Quick Stats */}
               <section>
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Quick Stats</h2>
+                <h2 className="text-2xl font-bold text-black mb-4">QUICK STATS</h2>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="bg-white rounded-lg border-2 border-gray-200 p-6">
-                    <p className="text-gray-600 text-sm font-medium mb-2">Total Value Locked</p>
-                    <h3 className="text-2xl font-bold text-gray-900">$2.5M</h3>
+                  <div className="bg-white border-3 border-black p-6">
+                    <p className="text-black text-sm font-bold mb-2">TOTAL VALUE LOCKED</p>
+                    <h3 className="text-2xl font-bold text-black">$2.5M</h3>
                   </div>
-                  <div className="bg-white rounded-lg border-2 border-gray-200 p-6">
-                    <p className="text-gray-600 text-sm font-medium mb-2">24h Volume</p>
-                    <h3 className="text-2xl font-bold text-gray-900">$156K</h3>
+                  <div className="bg-white border-3 border-black p-6">
+                    <p className="text-black text-sm font-bold mb-2">24H VOLUME</p>
+                    <h3 className="text-2xl font-bold text-black">$156K</h3>
                   </div>
-                  <div className="bg-white rounded-lg border-2 border-gray-200 p-6">
-                    <p className="text-gray-600 text-sm font-medium mb-2">Verified Users</p>
-                    <h3 className="text-2xl font-bold text-gray-900">1,234</h3>
+                  <div className="bg-white border-3 border-black p-6">
+                    <p className="text-black text-sm font-bold mb-2">VERIFIED USERS</p>
+                    <h3 className="text-2xl font-bold text-black">1,234</h3>
                   </div>
-                  <div className="bg-white rounded-lg border-2 border-gray-200 p-6">
-                    <p className="text-gray-600 text-sm font-medium mb-2">Avg Fee</p>
-                    <h3 className="text-2xl font-bold text-gray-900">0.15%</h3>
+                  <div className="bg-white border-3 border-black p-6">
+                    <p className="text-black text-sm font-bold mb-2">AVG FEE</p>
+                    <h3 className="text-2xl font-bold text-black">0.15%</h3>
                   </div>
                 </div>
               </section>
@@ -96,12 +96,12 @@ export default function Home() {
                 <SwapInterface />
               </div>
               <div className="space-y-6">
-                <div className="bg-white rounded-lg border-2 border-gray-200 p-6">
-                  <h3 className="font-bold text-gray-900 mb-4">Swap Info</h3>
-                  <div className="space-y-3 text-sm">
-                    <p><span className="text-gray-600">Min. Price Impact:</span> <span className="font-semibold">0.5%</span></p>
-                    <p><span className="text-gray-600">Slippage Tolerance:</span> <span className="font-semibold">0.5%</span></p>
-                    <p><span className="text-gray-600">Network Fee:</span> <span className="font-semibold">~$2-5</span></p>
+                <div className="bg-white border-3 border-black p-6">
+                  <h3 className="font-bold text-black mb-4">SWAP INFO</h3>
+                  <div className="space-y-3 text-sm font-bold text-black border-t-2 border-black pt-3">
+                    <p><span>Min. Price Impact:</span> <span>0.5%</span></p>
+                    <p><span>Slippage Tolerance:</span> <span>0.5%</span></p>
+                    <p><span>Network Fee:</span> <span>~$2-5</span></p>
                   </div>
                 </div>
                 <OracleStatus />
@@ -116,13 +116,13 @@ export default function Home() {
                 <AddLiquidity />
               </div>
               <div className="space-y-6">
-                <div className="bg-white rounded-lg border-2 border-gray-200 p-6">
-                  <h3 className="font-bold text-gray-900 mb-4">Your Positions</h3>
-                  <p className="text-gray-600 text-sm mb-4">Connect wallet to view positions</p>
-                  <div className="space-y-2 text-sm">
-                    <p><span className="text-gray-600">Active Ranges: </span><span className="font-semibold">0</span></p>
-                    <p><span className="text-gray-600">Total Liquidity: </span><span className="font-semibold">-</span></p>
-                    <p><span className="text-gray-600">Earned Fees: </span><span className="font-semibold text-green-600">-</span></p>
+                <div className="bg-white border-3 border-black p-6">
+                  <h3 className="font-bold text-black mb-4">YOUR POSITIONS</h3>
+                  <p className="text-black font-bold text-sm mb-4">Connect wallet to view positions</p>
+                  <div className="space-y-2 text-sm font-bold text-black border-t-2 border-black pt-3">
+                    <p><span>Active Ranges: </span><span>0</span></p>
+                    <p><span>Total Liquidity: </span><span>-</span></p>
+                    <p><span>Earned Fees: </span><span>-</span></p>
                   </div>
                 </div>
               </div>
@@ -144,37 +144,37 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 mt-12">
+      <footer className="bg-black border-t-4 border-black mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             <div>
-              <h3 className="font-bold text-gray-900 mb-3">About</h3>
-              <p className="text-sm text-gray-600">RWA Compliance Hook for Uniswap v4</p>
+              <h3 className="font-bold text-white mb-3">ABOUT</h3>
+              <p className="text-sm font-semibold text-white">RWA Compliance Hook for Uniswap v4</p>
             </div>
             <div>
-              <h3 className="font-bold text-gray-900 mb-3">Links</h3>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li><a href="#" className="hover:text-blue-600">Documentation</a></li>
-                <li><a href="#" className="hover:text-blue-600">GitHub</a></li>
+              <h3 className="font-bold text-white mb-3">LINKS</h3>
+              <ul className="space-y-2 text-sm font-semibold text-white">
+                <li><a href="#" className="hover:underline">Documentation</a></li>
+                <li><a href="#" className="hover:underline">GitHub</a></li>
               </ul>
             </div>
             <div>
-              <h3 className="font-bold text-gray-900 mb-3">Support</h3>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li><a href="#" className="hover:text-blue-600">Help Center</a></li>
-                <li><a href="#" className="hover:text-blue-600">Contact</a></li>
+              <h3 className="font-bold text-white mb-3">SUPPORT</h3>
+              <ul className="space-y-2 text-sm font-semibold text-white">
+                <li><a href="#" className="hover:underline">Help Center</a></li>
+                <li><a href="#" className="hover:underline">Contact</a></li>
               </ul>
             </div>
             <div>
-              <h3 className="font-bold text-gray-900 mb-3">Legal</h3>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li><a href="#" className="hover:text-blue-600">Terms</a></li>
-                <li><a href="#" className="hover:text-blue-600">Privacy</a></li>
+              <h3 className="font-bold text-white mb-3">LEGAL</h3>
+              <ul className="space-y-2 text-sm font-semibold text-white">
+                <li><a href="#" className="hover:underline">Terms</a></li>
+                <li><a href="#" className="hover:underline">Privacy</a></li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-200 pt-8">
-            <p className="text-center text-sm text-gray-600">
+          <div className="border-t-2 border-white pt-8">
+            <p className="text-center text-sm font-bold text-white">
               © 2026 RWA Compliance Hook. Built for UHI8 Hookathon.
             </p>
           </div>
