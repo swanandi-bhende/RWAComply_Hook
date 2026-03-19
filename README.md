@@ -149,6 +149,12 @@ Tier 2 pass through PoolManager swap:
 forge test --match-test testTier2SwapPassesThroughPoolManager -vv
 ```
 
+Full flow integration (initialize -> add liquidity -> swap):
+
+```bash
+forge test --match-test testFullFlowInitializeAddLiquidityAndSwap -vv
+```
+
 Dynamic fee applied for retail user on high volatility (executed PoolManager swap fee):
 
 ```bash
@@ -181,6 +187,7 @@ forge test -vvvv
   - direct hook-level checks for fee logic, pause behavior, and unverified access control
 - `test/RWAComplyIntegration.t.sol`
   - real PoolManager integration path
+  - full flow succeeds: initialize -> add liquidity -> swap
   - tier 0 swap reverts
   - tier 1 swap succeeds
   - tier 2 swap succeeds

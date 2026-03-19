@@ -253,6 +253,43 @@ contract RWAComplyIntegrationTest is Test {
         institutionalUser.swap();
     }
 
+    function testFullFlowInitializeAddLiquidityAndSwap() public {
+        MockERC20 tokenC = new MockERC20("TokenC", "TKC", 1e24);
+        MockERC20 tokenD = new MockERC20("TokenD", "TKD", 1e24);
+
+        (address token0, address token1) =
+            address(tokenC) < address(tokenD)
+                ? (address(tokenC), address(tokenD))
+                : (address(tokenD), address(tokenC));
+
+        PoolKey memory fullFlowKey = PoolKey({
+            currency0: Currency.wrap(token0),
+            currency1: Currency.wrap(token1),
+            fee: LPFeeLibrary.DYNAMIC_FEE_FLAG,
+            tickSpacing: 60,
+            hooks: IHooks(address(hook))
+        });
+
+        poolManager.initialize(fullFlowKey, SQRT_PRICE_1_1);
+
+        PoolUser fullFlowUser =
+            new PoolUser(IPoolManager(address(poolManager)), fullFlowKey);
+
+        hook.setTier(address(fullFlowUser), 2);
+
+        tokenC.transfer(address(fullFlowUser), 1e21);
+        tokenD.transfer(address(fullFlowUser), 1e21);
+
+        fullFlowUser.addLiquidity();
+
+        vm.expectEmit(true, false, false, true, address(hook));
+        emit BeforeSwapCalled(address(fullFlowUser), 2, 1000);
+
+        uint24 appliedFee = _swapAndGetAppliedFee(fullFlowUser);
+
+        assertEq(appliedFee, 1000, "full flow executed fee mismatch");
+    }
+
     function testDynamicFeeAppliedRetailHighVolatility() public {
         oracle.setVolatility(10);
 
