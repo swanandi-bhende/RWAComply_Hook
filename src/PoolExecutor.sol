@@ -5,8 +5,7 @@ import {IPoolManager} from "@uniswap/v4-core/interfaces/IPoolManager.sol";
 import {PoolKey} from "@uniswap/v4-core/types/PoolKey.sol";
 import {Currency} from "@uniswap/v4-core/types/Currency.sol";
 import {BalanceDelta} from "@uniswap/v4-core/types/BalanceDelta.sol";
-
-import "../src/MockERC20.sol";
+import {IERC20Minimal} from "@uniswap/v4-core/interfaces/external/IERC20Minimal.sol";
 
 contract PoolExecutor {
 
@@ -43,7 +42,7 @@ contract PoolExecutor {
             (BalanceDelta delta,) =
                 poolManager.modifyLiquidity(key, params, "");
 
-            _settleLiquidity(delta);
+            _settleAndTake(delta);
 
         } else if (action == keccak256("SWAP")) {
 
@@ -57,7 +56,7 @@ contract PoolExecutor {
             BalanceDelta delta =
                 poolManager.swap(key, swapParams, "");
 
-            _settleSwap(delta);
+            _settleAndTake(delta);
 
         } else {
             revert UnsupportedAction();
@@ -66,47 +65,29 @@ contract PoolExecutor {
         return "";
     }
 
-    function _settleLiquidity(BalanceDelta delta) internal {
-        address token0 = Currency.unwrap(key.currency0);
-        address token1 = Currency.unwrap(key.currency1);
+    function _settleAndTake(BalanceDelta delta) internal {
+        _settleOrTake(key.currency0, delta.amount0());
+        _settleOrTake(key.currency1, delta.amount1());
+    }
 
-        int256 amt0 = delta.amount0();
-        int256 amt1 = delta.amount1();
+    function _settleOrTake(Currency currency, int256 amount) internal {
+        if (amount < 0) {
+            uint256 amountToPay = uint256(-amount);
 
-        if (amt0 < 0) {
-            MockERC20(token0).transfer(
-                address(poolManager),
-                uint256(-amt0)
-            );
-        }
-
-        if (amt1 < 0) {
-            MockERC20(token1).transfer(
-                address(poolManager),
-                uint256(-amt1)
-            );
+            if (Currency.unwrap(currency) == address(0)) {
+                poolManager.settle{value: amountToPay}();
+            } else {
+                poolManager.sync(currency);
+                IERC20Minimal(Currency.unwrap(currency)).transfer(
+                    address(poolManager),
+                    amountToPay
+                );
+                poolManager.settle();
+            }
+        } else if (amount > 0) {
+            poolManager.take(currency, address(this), uint256(amount));
         }
     }
 
-    function _settleSwap(BalanceDelta delta) internal {
-        address token0 = Currency.unwrap(key.currency0);
-        address token1 = Currency.unwrap(key.currency1);
-
-        int256 amt0 = delta.amount0();
-        int256 amt1 = delta.amount1();
-
-        if (amt0 > 0) {
-            MockERC20(token0).transfer(
-                address(poolManager),
-                uint256(amt0)
-            );
-        }
-
-        if (amt1 > 0) {
-            MockERC20(token1).transfer(
-                address(poolManager),
-                uint256(amt1)
-            );
-        }
-    }
+    receive() external payable {}
 }
