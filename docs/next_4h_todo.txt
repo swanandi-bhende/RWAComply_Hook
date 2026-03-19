@@ -1,0 +1,64 @@
+4-Hour Execution To-Do (Make RWA Hook Demo Fully Functional)
+
+Goal
+- Prove end-to-end flow on local Anvil: deploy -> create pool -> add liquidity -> swap -> show compliance + fee behavior.
+
+0:00-0:30 (Stabilize config and scripts)
+1) Update root foundry.toml to match v4-core compile profile:
+   - via_ir = true
+   - optimizer_runs = 44444444
+   - solc = 0.8.26
+   - evm_version = cancun
+2) Fix .env addresses after every fresh deployment:
+   - POOL_MANAGER from DeployCore
+   - HOOK_ADDRESS from DeployHook/PoolSetup
+   - TOKEN_A and TOKEN_B must be ERC20 addresses (never PoolManager)
+3) Fix DeployFull flow bug:
+   - remove duplicate initialize path (keep only one initialize call)
+   - either initialize in DeployFull OR in executor INIT branch, not both.
+
+0:30-1:45 (Get first successful end-to-end run)
+4) Run DeployCore.
+5) Run DeployHook.
+6) Deploy two mock ERC20 tokens and record addresses.
+7) Run full flow script:
+   - initialize pool
+   - add liquidity via unlock callback
+   - run swap via unlock callback
+8) Confirm no revert and capture tx hashes + logs.
+
+1:45-2:45 (Make compliance + fee logic visibly correct)
+9) Ensure tier checks are applied in real pool swaps:
+   - tier 0 user swap should revert
+   - tier 1 and tier 2 should pass
+10) Ensure dynamic fee actually applies in pool execution:
+    - switch PoolKey fee to dynamic-fee mode if override is required
+    - verify fee output differs for retail vs institutional under high volatility
+11) Add/clean events for demo clarity:
+    - swap blocked reason
+    - tier used
+    - fee selected
+
+2:45-3:30 (Integration test coverage)
+12) Add one true integration test (not direct hook calls):
+    - deploy contracts
+    - create pool
+    - add liquidity
+    - execute swap
+    - assert events/reverts for tier behavior
+13) Keep existing unit tests, but add at least one test path through PoolManager.
+
+3:30-4:00 (Demo and submission readiness)
+14) Update README with exact run commands and expected outcomes.
+15) Add a short "Demo Script" section:
+    - unverified swap revert
+    - retail swap and fee
+    - institutional swap and fee
+16) Record terminal output snippets (or screenshots) showing success and reverts.
+
+Definition of Done (must be true before deadline)
+- Full flow script executes without revert on fresh Anvil.
+- Compliance enforcement proven through PoolManager swap.
+- Dynamic fee behavior proven in executed swaps (not only return values).
+- At least 1 integration test passes for end-to-end path.
+- README documents exact reproducible steps.

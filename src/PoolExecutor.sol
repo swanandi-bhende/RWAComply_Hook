@@ -10,6 +10,8 @@ import "../src/MockERC20.sol";
 
 contract PoolExecutor {
 
+    error UnsupportedAction();
+
     IPoolManager public poolManager;
     PoolKey public key;
 
@@ -19,7 +21,6 @@ contract PoolExecutor {
     }
 
     function execute() external {
-        poolManager.unlock("INIT");
         poolManager.unlock("ADD_LIQ");
         poolManager.unlock("SWAP");
     }
@@ -29,14 +30,7 @@ contract PoolExecutor {
 
         bytes32 action = keccak256(data);
 
-        if (action == keccak256("INIT")) {
-
-            // ✅ Set initial price = 1:1
-            uint160 sqrtPriceX96 = 79228162514264337593543950336;
-
-            poolManager.initialize(key, sqrtPriceX96);
-
-        } else if (action == keccak256("ADD_LIQ")) {
+        if (action == keccak256("ADD_LIQ")) {
 
             IPoolManager.ModifyLiquidityParams memory params =
                 IPoolManager.ModifyLiquidityParams({
@@ -51,7 +45,7 @@ contract PoolExecutor {
 
             _settleLiquidity(delta);
 
-        } else {
+        } else if (action == keccak256("SWAP")) {
 
             IPoolManager.SwapParams memory swapParams =
                 IPoolManager.SwapParams({
@@ -64,6 +58,9 @@ contract PoolExecutor {
                 poolManager.swap(key, swapParams, "");
 
             _settleSwap(delta);
+
+        } else {
+            revert UnsupportedAction();
         }
 
         return "";

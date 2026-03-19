@@ -21,15 +21,18 @@ contract PoolSetup is Script {
     function run() external {
 
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        require(deployerPrivateKey != 0, "PRIVATE_KEY missing");
+
+        address poolManagerAddr = vm.envAddress("POOL_MANAGER");
+        require(poolManagerAddr != address(0), "POOL_MANAGER missing");
+
         address deployerEOA = vm.addr(deployerPrivateKey);
 
         vm.startBroadcast(deployerPrivateKey);
 
         // ---------------- DEPLOY CORE ----------------
 
-        IPoolManager poolManager = IPoolManager(
-            vm.envAddress("POOL_MANAGER")
-        );
+        IPoolManager poolManager = IPoolManager(poolManagerAddr);
 
         MockRWAOracle oracle = new MockRWAOracle();
 

@@ -2,6 +2,10 @@
 src = "src"
 out = "out"
 libs = ["lib"]
+via_ir = true
+optimizer_runs = 44444444
+solc = "0.8.26"
+evm_version = "cancun"
 
 remappings = [
     "@uniswap/v4-core/=lib/v4-core/src/",

@@ -11,6 +11,7 @@ contract DeployCore is Script {
     function run() external {
 
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        require(deployerPrivateKey != 0, "PRIVATE_KEY missing");
 
         vm.startBroadcast(deployerPrivateKey);
 

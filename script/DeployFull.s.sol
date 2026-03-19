@@ -14,19 +14,37 @@ import "../src/RWAComplyHook.sol";
 
 contract DeployFull is Script {
 
+    uint160 internal constant SQRT_PRICE_1_1 = 79228162514264337593543950336;
+
     function run() external {
 
         uint256 pk = vm.envUint("PRIVATE_KEY");
+        require(pk != 0, "PRIVATE_KEY missing");
 
-        vm.startBroadcast(pk);
-
-        IPoolManager poolManager =
-            IPoolManager(vm.envAddress("POOL_MANAGER"));
-
+        address poolManagerAddr = vm.envAddress("POOL_MANAGER");
         address hookAddr = vm.envAddress("HOOK_ADDRESS");
-
         address tokenAAddr = vm.envAddress("TOKEN_A");
         address tokenBAddr = vm.envAddress("TOKEN_B");
+
+        require(poolManagerAddr != address(0), "POOL_MANAGER missing");
+        require(hookAddr != address(0), "HOOK_ADDRESS missing");
+        require(tokenAAddr != address(0), "TOKEN_A missing");
+        require(tokenBAddr != address(0), "TOKEN_B missing");
+
+        require(hookAddr != poolManagerAddr, "HOOK is PoolManager");
+        require(tokenAAddr != tokenBAddr, "TOKEN_A == TOKEN_B");
+        require(
+            tokenAAddr != poolManagerAddr && tokenBAddr != poolManagerAddr,
+            "TOKEN is PoolManager"
+        );
+        require(
+            tokenAAddr != hookAddr && tokenBAddr != hookAddr,
+            "TOKEN is hook"
+        );
+
+        IPoolManager poolManager = IPoolManager(poolManagerAddr);
+
+        vm.startBroadcast(pk);
 
         MockERC20 tokenA = MockERC20(tokenAAddr);
         MockERC20 tokenB = MockERC20(tokenBAddr);
@@ -47,10 +65,9 @@ contract DeployFull is Script {
             hooks: IHooks(hookAddr)
         });
 
-        
         poolManager.initialize(
             key,
-            79228162514264337593543950336 // sqrtPriceX96 = 1:1
+            SQRT_PRICE_1_1
         );
 
         PoolExecutor executor = new PoolExecutor(poolManager, key);
