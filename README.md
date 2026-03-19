@@ -7,6 +7,7 @@ It enforces tier-based access, retail caps, volatility-aware dynamic fees, and a
 
 - Demo video: (https://youtu.be/oxLZlcRivwM)
 - Full workflow: [full_workflow.md](full_workflow.md)
+- Detailed test reference with all cases, commands: [docs/test_cases.md](docs/test_cases.md)
 
 ## Core Features
 
@@ -66,15 +67,6 @@ npm run dev
 ```bash
 forge test
 ```
-
-Detailed test reference with all cases, commands:
-
-- [docs/TEST_CASES.md](docs/TEST_CASES.md)
-
-## Additional Docs
-
-- [full_workflow.md](full_workflow.md)
-- [docs/TEST_CASES.md](docs/TEST_CASES.md)
 
 ## License
 
