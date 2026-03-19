@@ -1,8 +1,10 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useReadContract } from 'wagmi';
 import { ORACLE_ADDRESS, ORACLE_ABI, HOOK_ADDRESS, HOOK_ABI } from '@/contracts';
 import { formatEther, parseEther } from 'viem';
+import { useTransactions } from '@/app/TransactionContext';
 
 function LoadingSkeleton() {
   return (
@@ -13,23 +15,32 @@ function LoadingSkeleton() {
 }
 
 export function OracleStatus() {
-  const { data: volatility, isLoading: volatilityLoading } = useReadContract({
+  const { transactions } = useTransactions();
+
+  const { data: volatility, isLoading: volatilityLoading, refetch: refetchVolatility } = useReadContract({
     address: ORACLE_ADDRESS as `0x${string}`,
     abi: ORACLE_ABI,
     functionName: 'getVolatility',
   });
 
-  const { data: volatilityThreshold, isLoading: thresholdLoading } = useReadContract({
+  const { data: volatilityThreshold, isLoading: thresholdLoading, refetch: refetchThreshold } = useReadContract({
     address: HOOK_ADDRESS as `0x${string}`,
     abi: HOOK_ABI,
     functionName: 'volatilityThreshold',
   });
 
-  const { data: retailSwapCap, isLoading: capLoading } = useReadContract({
+  const { data: retailSwapCap, isLoading: capLoading, refetch: refetchCap } = useReadContract({
     address: HOOK_ADDRESS as `0x${string}`,
     abi: HOOK_ABI,
     functionName: 'retailSwapCap',
   });
+
+  // Refetch when transactions update
+  useEffect(() => {
+    refetchVolatility();
+    refetchThreshold();
+    refetchCap();
+  }, [transactions, refetchVolatility, refetchThreshold, refetchCap]);
 
   const volatilityPercent = volatility ? Number(volatility) / 100 : 0;
   const isHighVolatility = volatility && volatilityThreshold 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAccount, useReadContract } from 'wagmi';
 import { TOKEN_A_ADDRESS, TOKEN_B_ADDRESS, ERC20_ABI, HOOK_ADDRESS, HOOK_ABI } from '@/contracts';
 import { parseEther } from 'viem';
@@ -8,13 +8,13 @@ import { useTransactions } from '@/app/TransactionContext';
 
 export function SwapInterface() {
   const { address } = useAccount();
-  const { addTransaction } = useTransactions();
+  const { addTransaction, transactions } = useTransactions();
   const [inputAmount, setInputAmount] = useState('');
   const [selectedInput, setSelectedInput] = useState('A');
   const [swapLoading, setSwapLoading] = useState(false);
   const [swapMessage, setSwapMessage] = useState('');
 
-  const { data: tokenABalance, isLoading: aLoading } = useReadContract({
+  const { data: tokenABalance, isLoading: aLoading, refetch: refetchTokenA } = useReadContract({
     address: TOKEN_A_ADDRESS as `0x${string}`,
     abi: ERC20_ABI,
     functionName: 'balanceOf',
@@ -22,7 +22,7 @@ export function SwapInterface() {
     query: { enabled: !!address },
   });
 
-  const { data: tokenBBalance, isLoading: bLoading } = useReadContract({
+  const { data: tokenBBalance, isLoading: bLoading, refetch: refetchTokenB } = useReadContract({
     address: TOKEN_B_ADDRESS as `0x${string}`,
     abi: ERC20_ABI,
     functionName: 'balanceOf',
@@ -30,13 +30,22 @@ export function SwapInterface() {
     query: { enabled: !!address },
   });
 
-  const { data: tier } = useReadContract({
+  const { data: tier, refetch: refetchTier } = useReadContract({
     address: HOOK_ADDRESS as `0x${string}`,
     abi: HOOK_ABI,
     functionName: 'isVerifiedTier2',
     args: [address!],
     query: { enabled: !!address },
   });
+
+  // Refetch balances and tier when transactions update
+  useEffect(() => {
+    if (address) {
+      refetchTokenA();
+      refetchTokenB();
+      refetchTier();
+    }
+  }, [transactions, address, refetchTokenA, refetchTokenB, refetchTier]);
 
   const balanceA = tokenABalance ? Number(tokenABalance) / 1e18 : 0;
   const balanceB = tokenBBalance ? Number(tokenBBalance) / 1e18 : 0;

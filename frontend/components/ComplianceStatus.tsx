@@ -1,12 +1,15 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useAccount, useReadContract } from 'wagmi';
 import { HOOK_ADDRESS, HOOK_ABI, TIER_NAMES, TIER_COLORS } from '@/contracts';
+import { useTransactions } from '@/app/TransactionContext';
 
 export function ComplianceStatus() {
   const { address } = useAccount();
+  const { transactions } = useTransactions();
 
-  const { data: isTier1 } = useReadContract({
+  const { data: isTier1, refetch: refetchTier1 } = useReadContract({
     address: HOOK_ADDRESS as `0x${string}`,
     abi: HOOK_ABI,
     functionName: 'isVerifiedTier1',
@@ -14,13 +17,21 @@ export function ComplianceStatus() {
     query: { enabled: !!address },
   });
 
-  const { data: isTier2 } = useReadContract({
+  const { data: isTier2, refetch: refetchTier2 } = useReadContract({
     address: HOOK_ADDRESS as `0x${string}`,
     abi: HOOK_ABI,
     functionName: 'isVerifiedTier2',
     args: [address!],
     query: { enabled: !!address },
   });
+
+  // Refetch when transactions update
+  useEffect(() => {
+    if (address) {
+      refetchTier1();
+      refetchTier2();
+    }
+  }, [transactions, address, refetchTier1, refetchTier2]);
 
   if (!address) {
     return (

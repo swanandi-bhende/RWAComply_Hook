@@ -1,20 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAccount, useReadContract } from 'wagmi';
 import { TOKEN_A_ADDRESS, TOKEN_B_ADDRESS, ERC20_ABI } from '@/contracts';
 import { useTransactions } from '@/app/TransactionContext';
 
 export function AddLiquidity() {
   const { address } = useAccount();
-  const { addTransaction } = useTransactions();
+  const { addTransaction, transactions } = useTransactions();
   const [amountA, setAmountA] = useState('');
   const [amountB, setAmountB] = useState('');
   const [liquidityLoading, setLiquidityLoading] = useState(false);
   const [poolStatsLoading, setPoolStatsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
 
-  const { data: balanceA, isLoading: aLoading } = useReadContract({
+  const { data: balanceA, isLoading: aLoading, refetch: refetchBalanceA } = useReadContract({
     address: TOKEN_A_ADDRESS as `0x${string}`,
     abi: ERC20_ABI,
     functionName: 'balanceOf',
@@ -22,13 +22,21 @@ export function AddLiquidity() {
     query: { enabled: !!address },
   });
 
-  const { data: balanceB, isLoading: bLoading } = useReadContract({
+  const { data: balanceB, isLoading: bLoading, refetch: refetchBalanceB } = useReadContract({
     address: TOKEN_B_ADDRESS as `0x${string}`,
     abi: ERC20_ABI,
     functionName: 'balanceOf',
     args: [address!],
     query: { enabled: !!address },
   });
+
+  // Refetch balances when transactions update
+  useEffect(() => {
+    if (address) {
+      refetchBalanceA();
+      refetchBalanceB();
+    }
+  }, [transactions, address, refetchBalanceA, refetchBalanceB]);
 
   const balanceAmountA = balanceA ? Number(balanceA) / 1e18 : 0;
   const balanceAmountB = balanceB ? Number(balanceB) / 1e18 : 0;
