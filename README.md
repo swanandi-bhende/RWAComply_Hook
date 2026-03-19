@@ -10,7 +10,21 @@ It includes:
 - owner-managed hook config updates (oracle address, volatility threshold, retail cap)
 - PoolManager-level integration tests
 
-## Full Workflow
+## 📊 Project Presentation & Demo Guide
+
+**Start here for demos:** [docs/PROJECT_PRESENTATION.md](docs/PROJECT_PRESENTATION.md)
+
+This is a comprehensive guide covering:
+- The problem we solve
+- How our system works
+- Architecture & contract flow
+- How Uniswap/developers can use this
+- 15-minute demo walkthrough
+- Key talking points for different audiences
+
+Perfect for explaining the project in a demo video or presentation.
+
+## 📖 Full Workflow
 
 See [full_workflow.md](full_workflow.md) for:
 - step-by-step setup

@@ -9,9 +9,10 @@ import { TierTester } from '@/components/TierTester';
 import { DynamicFeeVisualizer } from '@/components/DynamicFeeVisualizer';
 import { SwapDemo } from '@/components/SwapDemo';
 import { AdminObservatory } from '@/components/AdminObservatory';
+import { ProjectPresentation } from '@/components/ProjectPresentation';
 import { Providers } from './providers';
 
-type PageId = 'page1' | 'page2' | 'page3' | 'page4' | 'page5';
+type PageId = 'page1' | 'page2' | 'page3' | 'page4' | 'page5' | 'page6';
 
 const PAGES: { id: PageId; label: string; number: number }[] = [
   { id: 'page1', label: 'Dashboard', number: 1 },
@@ -19,6 +20,7 @@ const PAGES: { id: PageId; label: string; number: number }[] = [
   { id: 'page3', label: 'Fee Curves', number: 3 },
   { id: 'page4', label: 'Swap Demo', number: 4 },
   { id: 'page5', label: 'Admin', number: 5 },
+  { id: 'page6', label: 'Presentation', number: 6 },
 ];
 
 export default function Home() {
@@ -139,6 +141,13 @@ export default function Home() {
           {currentPage === 'page5' && (
             <div>
               <AdminObservatory />
+            </div>
+          )}
+
+          {/* Page 6: Project Presentation */}
+          {currentPage === 'page6' && (
+            <div>
+              <ProjectPresentation />
             </div>
           )}
         </div>
