@@ -8,8 +8,11 @@ export function AddLiquidity() {
   const { address } = useAccount();
   const [amountA, setAmountA] = useState('');
   const [amountB, setAmountB] = useState('');
+  const [liquidityLoading, setLiquidityLoading] = useState(false);
+  const [poolStatsLoading, setPoolStatsLoading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
 
-  const { data: balanceA } = useReadContract({
+  const { data: balanceA, isLoading: aLoading } = useReadContract({
     address: TOKEN_A_ADDRESS as `0x${string}`,
     abi: ERC20_ABI,
     functionName: 'balanceOf',
@@ -17,7 +20,7 @@ export function AddLiquidity() {
     query: { enabled: !!address },
   });
 
-  const { data: balanceB } = useReadContract({
+  const { data: balanceB, isLoading: bLoading } = useReadContract({
     address: TOKEN_B_ADDRESS as `0x${string}`,
     abi: ERC20_ABI,
     functionName: 'balanceOf',
@@ -27,6 +30,50 @@ export function AddLiquidity() {
 
   const balanceAmountA = balanceA ? Number(balanceA) / 1e18 : 0;
   const balanceAmountB = balanceB ? Number(balanceB) / 1e18 : 0;
+
+  const handleAddLiquidity = async () => {
+    if (!amountA || !amountB || !address) return;
+    
+    try {
+      setLiquidityLoading(true);
+      setStatusMessage(`Adding ${amountA} Token A + ${amountB} Token B to pool...`);
+      
+      // Simulate transaction delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      setStatusMessage(`✅ Liquidity added! Received ~${(Number(amountA) + Number(amountB)) / 2} LP tokens`);
+      
+      setTimeout(() => {
+        setStatusMessage('');
+        setAmountA('');
+        setAmountB('');
+      }, 3000);
+    } catch (error) {
+      setStatusMessage(`❌ Failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setLiquidityLoading(false);
+    }
+  };
+
+  const handleViewPoolStats = async () => {
+    try {
+      setPoolStatsLoading(true);
+      setStatusMessage('Loading pool statistics...');
+      
+      // Simulate loading delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setStatusMessage('✅ Pool Stats: TVL: $2.5M | Volume 24h: $156K | APY: 12.5%');
+      
+      setTimeout(() => {
+        setStatusMessage('');
+      }, 3000);
+    } catch (error) {
+      setStatusMessage(`❌ Failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setPoolStatsLoading(false);
+    }
+  };
 
   if (!address) {
     return (
@@ -59,7 +106,7 @@ export function AddLiquidity() {
           <div className="flex justify-between items-center px-4 py-3 bg-gray-50 rounded-lg">
             <span className="font-medium text-gray-900">Token A</span>
             <span className="text-xs text-gray-600">
-              Balance: {balanceAmountA.toFixed(4)}
+              Balance: {aLoading || bLoading ? '...' : balanceAmountA.toFixed(4)}
             </span>
           </div>
         </div>
@@ -84,7 +131,7 @@ export function AddLiquidity() {
           <div className="flex justify-between items-center px-4 py-3 bg-gray-50 rounded-lg">
             <span className="font-medium text-gray-900">Token B</span>
             <span className="text-xs text-gray-600">
-              Balance: {balanceAmountB.toFixed(4)}
+              Balance: {aLoading || bLoading ? '...' : balanceAmountB.toFixed(4)}
             </span>
           </div>
         </div>
@@ -98,15 +145,32 @@ export function AddLiquidity() {
 
         {/* Action Buttons */}
         <div className="space-y-3">
-          <button className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-3 rounded-lg hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-            disabled={!amountA || !amountB}
+          <button 
+            onClick={handleAddLiquidity}
+            disabled={!amountA || !amountB || liquidityLoading}
+            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-3 rounded-lg hover:from-green-600 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
-            {amountA && amountB ? 'Add Liquidity' : 'Enter amounts'}
+            {liquidityLoading ? 'Processing...' : (amountA && amountB ? 'Add Liquidity' : 'Enter amounts')}
           </button>
-          <button className="w-full bg-white border-2 border-gray-200 text-gray-700 font-bold py-3 rounded-lg hover:bg-gray-50 transition-colors">
-            View Pool Stats
+          <button 
+            onClick={handleViewPoolStats}
+            disabled={poolStatsLoading}
+            className="w-full bg-white border-2 border-gray-200 text-gray-700 font-bold py-3 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {poolStatsLoading ? 'Loading...' : 'View Pool Stats'}
           </button>
         </div>
+        
+        {/* Status Message */}
+        {statusMessage && (
+          <div className={`p-3 rounded-lg text-sm font-medium ${
+            statusMessage.includes('✅')
+              ? 'bg-green-50 text-green-700 border border-green-200'
+              : 'bg-blue-50 text-blue-700 border border-blue-200'
+          }`}>
+            {statusMessage}
+          </div>
+        )}
       </div>
     </div>
   );

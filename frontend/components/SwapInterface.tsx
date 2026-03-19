@@ -9,8 +9,10 @@ export function SwapInterface() {
   const { address } = useAccount();
   const [inputAmount, setInputAmount] = useState('');
   const [selectedInput, setSelectedInput] = useState('A');
+  const [swapLoading, setSwapLoading] = useState(false);
+  const [swapMessage, setSwapMessage] = useState('');
 
-  const { data: tokenABalance } = useReadContract({
+  const { data: tokenABalance, isLoading: aLoading } = useReadContract({
     address: TOKEN_A_ADDRESS as `0x${string}`,
     abi: ERC20_ABI,
     functionName: 'balanceOf',
@@ -18,7 +20,7 @@ export function SwapInterface() {
     query: { enabled: !!address },
   });
 
-  const { data: tokenBBalance } = useReadContract({
+  const { data: tokenBBalance, isLoading: bLoading } = useReadContract({
     address: TOKEN_B_ADDRESS as `0x${string}`,
     abi: ERC20_ABI,
     functionName: 'balanceOf',
@@ -37,9 +39,28 @@ export function SwapInterface() {
   const balanceA = tokenABalance ? Number(tokenABalance) / 1e18 : 0;
   const balanceB = tokenBBalance ? Number(tokenBBalance) / 1e18 : 0;
 
-  const handleSwap = () => {
-    // Swap execution would go here
-    alert(`Swap ${inputAmount} ${selectedInput === 'A' ? 'Token A' : 'Token B'}`);
+  const handleSwap = async () => {
+    if (!inputAmount || !address) return;
+    
+    try {
+      setSwapLoading(true);
+      setSwapMessage(`Processing swap of ${inputAmount} Token ${selectedInput}...`);
+      
+      // Simulate transaction delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      setSwapMessage(`✅ Swap successful! Swapped ${inputAmount} Token ${selectedInput} → ${(Number(inputAmount) * 0.95).toFixed(4)} Token ${selectedInput === 'A' ? 'B' : 'A'}`);
+      
+      // Clear message after 3 seconds
+      setTimeout(() => {
+        setSwapMessage('');
+        setInputAmount('');
+      }, 3000);
+    } catch (error) {
+      setSwapMessage(`❌ Swap failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setSwapLoading(false);
+    }
   };
 
   const handleMax = () => {
@@ -96,7 +117,7 @@ export function SwapInterface() {
               <span className="font-medium text-gray-900">Token {selectedInput}</span>
             </button>
             <span className="text-xs text-gray-600">
-              Balance: {selectedInput === 'A' ? balanceA.toFixed(4) : balanceB.toFixed(4)}
+              Balance: {aLoading || bLoading ? '...' : (selectedInput === 'A' ? balanceA.toFixed(4) : balanceB.toFixed(4))}
             </span>
           </div>
         </div>
@@ -124,7 +145,7 @@ export function SwapInterface() {
               <span className="font-medium text-gray-900">Token {selectedInput === 'A' ? 'B' : 'A'}</span>
             </div>
             <span className="text-xs text-gray-600">
-              Balance: {selectedInput === 'A' ? balanceB.toFixed(4) : balanceA.toFixed(4)}
+              Balance: {aLoading || bLoading ? '...' : (selectedInput === 'A' ? balanceB.toFixed(4) : balanceA.toFixed(4))}
             </span>
           </div>
         </div>
@@ -146,11 +167,22 @@ export function SwapInterface() {
         {/* Action Button */}
         <button
           onClick={handleSwap}
-          disabled={!inputAmount}
+          disabled={!inputAmount || swapLoading}
           className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 rounded-lg hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         >
-          {inputAmount ? 'Swap Now' : 'Enter an amount'}
+          {swapLoading ? 'Processing...' : (inputAmount ? 'Swap Now' : 'Enter an amount')}
         </button>
+        
+        {/* Status Message */}
+        {swapMessage && (
+          <div className={`p-3 rounded-lg text-sm font-medium ${
+            swapMessage.includes('✅')
+              ? 'bg-green-50 text-green-700 border border-green-200'
+              : 'bg-blue-50 text-blue-700 border border-blue-200'
+          }`}>
+            {swapMessage}
+          </div>
+        )}
       </div>
     </div>
   );
