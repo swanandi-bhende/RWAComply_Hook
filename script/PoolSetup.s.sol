@@ -35,7 +35,7 @@ contract PoolSetup is Script {
 
         IPoolManager poolManager = IPoolManager(poolManagerAddr);
 
-        MockRWAOracle oracle = new MockRWAOracle();
+        MockRWAOracle oracle = new MockRWAOracle(deployerEOA);
 
         // ---------------- FIND VALID HOOK ADDRESS ----------------
 

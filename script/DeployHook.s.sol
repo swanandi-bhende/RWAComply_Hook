@@ -24,7 +24,7 @@ contract DeployHook is Script {
 
         vm.startBroadcast(deployerPrivateKey);
 
-        MockRWAOracle oracle = new MockRWAOracle();
+        MockRWAOracle oracle = new MockRWAOracle(deployerEOA);
 
         IPoolManager poolManager = IPoolManager(poolManagerAddr);
 

@@ -6,6 +6,8 @@ It includes:
 - tier-based access control (tier 0 blocked, tier 1 retail, tier 2 institutional)
 - retail swap caps
 - oracle-driven dynamic fee selection
+- owner-only oracle volatility updates
+- owner-managed hook config updates (oracle address, volatility threshold, retail cap)
 - PoolManager-level integration tests
 
 ## Repository Structure
@@ -53,6 +55,7 @@ Notes:
 - `TOKEN_A` and `TOKEN_B` must be ERC20 token addresses.
 - `TOKEN_A` and `TOKEN_B` must not be `POOL_MANAGER` or `HOOK_ADDRESS`.
 - Scripts already fail fast on missing/invalid env values.
+- In deployment scripts, the deployer EOA is owner of `MockRWAOracle` and `RWAComplyHook`.
 
 ## Local End-to-End Run (Fresh Anvil)
 
@@ -101,6 +104,17 @@ Expected script logs include:
 - `beforeSwap called`
 - `afterSwap called`
 
+## Admin Controls (Owner Only)
+
+- `MockRWAOracle.setVolatility(uint256)` is restricted to oracle owner.
+- `RWAComplyHook.setVolatilityThreshold(uint256)` updates dynamic-fee threshold.
+- `RWAComplyHook.setRetailSwapCap(uint256)` updates retail swap cap.
+- `RWAComplyHook.setOracle(address)` updates oracle address and rejects zero address.
+- Config updates emit dedicated events:
+  - `VolatilityThresholdUpdated(oldThreshold, newThreshold)`
+  - `RetailSwapCapUpdated(oldCap, newCap)`
+  - `OracleUpdated(oldOracle, newOracle)`
+
 ## Test Guide
 
 ### Run all tests
@@ -147,6 +161,24 @@ Tier 2 pass through PoolManager swap:
 
 ```bash
 forge test --match-test testTier2SwapPassesThroughPoolManager -vv
+```
+
+Oracle write access restricted to owner:
+
+```bash
+forge test --match-test testOnlyOwnerCanSetVolatility -vv
+```
+
+Hook config setters restricted to owner:
+
+```bash
+forge test --match-test testNonOwnerCannotUpdateHookConfig -vv
+```
+
+Hook rejects zero oracle address:
+
+```bash
+forge test --match-test testSetOracleZeroAddressReverts -vv
 ```
 
 Full flow integration (initialize -> add liquidity -> swap):
@@ -251,6 +283,9 @@ forge test -vvvv
 
 - `test/RWAComply.t.sol`
   - direct hook-level checks for fee logic, pause behavior, and unverified access control
+  - oracle owner-only write restriction
+  - hook owner-only config setter restriction
+  - zero-address guard on oracle updates
 - `test/RWAComplyIntegration.t.sol`
   - real PoolManager integration path
   - full flow succeeds: initialize -> add liquidity -> swap

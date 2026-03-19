@@ -129,7 +129,7 @@ contract RWAComplyIntegrationTest is Test {
 
     function setUp() public {
         poolManager = new PoolManager(address(0));
-        oracle = new MockRWAOracle();
+        oracle = new MockRWAOracle(address(this));
 
         hook = _deployHookWithValidAddress();
 

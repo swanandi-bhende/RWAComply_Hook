@@ -1,0 +1,77 @@
+RWAComply Hook - Next Action To-Do (Updated: 2026-03-19)
+
+Current State (verified)
+- Full local flow is working: deploy -> initialize -> add liquidity -> swap.
+- Dynamic fee is applied in executed swaps when pool fee is dynamic.
+- All tests currently pass (17/17).
+
+Priority 1 - Security and Admin Hardening (Do Next)
+[x] Make oracle writes restricted.
+   - Add Ownable to MockRWAOracle.
+   - Make setVolatility onlyOwner.
+   - Add tests for unauthorized volatility updates reverting.
+
+[x] Add missing admin controls in hook.
+   - Add setVolatilityThreshold(uint256).
+   - Add setRetailSwapCap(uint256).
+   - Add setOracle(address) with zero-address guard.
+   - Emit events for each config update.
+
+[x] Replace placeholder fee event usage.
+   - Either remove FeeAccrued if not implemented, or emit real accrued values.
+   - Keep event semantics accurate for judges and maintainers.
+
+Priority 2 - Missing Integration Coverage Through PoolManager
+[ ] Add integration test: unverified user addLiquidity should revert.
+[ ] Add integration test: paused pool swap should revert.
+[ ] Add integration test: retail cap exceeded should revert.
+[ ] Add integration test: low volatility applies default fee (1000).
+[ ] Add integration test: static-fee pool ignores hook fee override.
+
+Priority 3 - Script and Workflow Reliability
+[ ] Consolidate scripts to one deterministic local demo flow.
+   - Prefer one script that deploys core/hook/oracle/tokens and runs add liquidity + swap.
+   - Print all resulting addresses clearly for quick reuse.
+
+[ ] Remove deployment ambiguity.
+   - Keep one canonical flow between PoolSetup.s.sol and DeployFull.s.sol.
+   - Mark non-canonical scripts as deprecated in README.
+
+[ ] Add a helper output file for demo reproducibility.
+   - Save addresses and transaction hashes after each run.
+
+Priority 4 - Cleanup Before Submission
+[ ] Remove debug-only console.log calls from production hook code.
+[ ] Remove deprecated env template duplicate (.env example.txt).
+[ ] Decide on sample scaffold files:
+   - Counter.sol / Counter.t.sol / Counter.s.sol
+   - Keep only if explicitly needed, otherwise remove from README and repo.
+
+[ ] Decide on ComplianceNFT status.
+   - Integrate it into fee/compliance flow, or mark clearly as future scope.
+
+Priority 5 - Demo and Documentation Polish
+[ ] Add architecture diagram (Hook + PoolManager + Oracle + Users).
+[ ] Add "Known Limitations" section in README.
+[ ] Add exact demo checklist for live presentation:
+   - tier 0 blocked
+   - tier 1 high-vol fee
+   - tier 2 high-vol fee
+   - pause/unpause behavior
+
+[ ] Create docs/demo_run_log.txt with:
+   - command used
+   - tx hashes
+   - expected output line for each demo step
+
+Execution Order (Recommended)
+1) Security/admin hardening
+2) Integration tests for missing revert/success cases
+3) Script consolidation
+4) Cleanup and submission polish
+
+Definition of Done for Next Milestone
+- Oracle and hook config cannot be modified by unauthorized accounts.
+- Integration tests cover pause, cap, unverified addLiquidity, and static-vs-dynamic fee behavior.
+- One canonical script runs the full local demo with clear outputs.
+- README and demo logs are consistent with actual current behavior.

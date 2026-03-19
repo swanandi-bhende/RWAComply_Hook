@@ -22,6 +22,7 @@ contract RWAComplyHook is IHooks, Ownable {
     error PoolPaused();
     error RetailLimitExceeded();
     error OnlyPoolManager();
+    error ZeroAddress();
 
     uint8 constant RETAIL = 1;
     uint8 constant INSTITUTIONAL = 2;
@@ -36,7 +37,9 @@ contract RWAComplyHook is IHooks, Ownable {
     bool public poolPaused;
 
     event TierUpdated(address indexed user, uint8 tier);
-    event FeeAccrued(address indexed user, uint256 amount);
+    event VolatilityThresholdUpdated(uint256 oldThreshold, uint256 newThreshold);
+    event RetailSwapCapUpdated(uint256 oldCap, uint256 newCap);
+    event OracleUpdated(address indexed oldOracle, address indexed newOracle);
     event BeforeSwapCalled(address indexed user, uint8 tier, uint24 fee);
     event AfterSwapCalled(address indexed user);
 
@@ -54,6 +57,8 @@ contract RWAComplyHook is IHooks, Ownable {
     )
         Ownable(owner_)
     {
+        if (_oracle == address(0)) revert ZeroAddress();
+
         poolManager = _poolManager;
         oracle = _oracle;
 
@@ -93,6 +98,26 @@ contract RWAComplyHook is IHooks, Ownable {
 
     function setPoolPaused(bool paused) external onlyOwner {
         poolPaused = paused;
+    }
+
+    function setVolatilityThreshold(uint256 newThreshold) external onlyOwner {
+        uint256 oldThreshold = volatilityThreshold;
+        volatilityThreshold = newThreshold;
+        emit VolatilityThresholdUpdated(oldThreshold, newThreshold);
+    }
+
+    function setRetailSwapCap(uint256 newCap) external onlyOwner {
+        uint256 oldCap = retailSwapCap;
+        retailSwapCap = newCap;
+        emit RetailSwapCapUpdated(oldCap, newCap);
+    }
+
+    function setOracle(address newOracle) external onlyOwner {
+        if (newOracle == address(0)) revert ZeroAddress();
+
+        address oldOracle = oracle;
+        oracle = newOracle;
+        emit OracleUpdated(oldOracle, newOracle);
     }
 
     function getDynamicFee(address user) public view returns (uint24) {
@@ -169,7 +194,6 @@ contract RWAComplyHook is IHooks, Ownable {
         console.log("afterSwap called");
 
         emit AfterSwapCalled(sender);
-        emit FeeAccrued(sender, 0);
 
         return (IHooks.afterSwap.selector, 0);
     }
