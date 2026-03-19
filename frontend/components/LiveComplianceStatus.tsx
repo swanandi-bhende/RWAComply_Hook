@@ -27,6 +27,7 @@ export function LiveComplianceStatus() {
   // Hook ABI
   const HOOK_ABI = [
     'function userTier(address user) external view returns (uint8)',
+    'function getDynamicFee(address user) external view returns (uint24)',
     'function volatilityThreshold() external view returns (uint256)',
     'function retailSwapCap() external view returns (uint256)',
   ];
@@ -41,7 +42,15 @@ export function LiveComplianceStatus() {
     abi: HOOK_ABI,
     functionName: 'userTier',
     args: [address!],
-    query: { enabled: !!address && !!addresses?.hook },
+    query: { enabled: !!address && !!addresses?.hook, refetchInterval: 3000 },
+  });
+
+  const { data: dynamicFee } = useReadContract({
+    address: addresses?.hook as `0x${string}`,
+    abi: HOOK_ABI,
+    functionName: 'getDynamicFee',
+    args: [address!],
+    query: { enabled: !!address && !!addresses?.hook, refetchInterval: 3000 },
   });
 
   // Volatility threshold
@@ -50,7 +59,7 @@ export function LiveComplianceStatus() {
     abi: HOOK_ABI,
     functionName: 'volatilityThreshold',
     args: [],
-    query: { enabled: !!addresses?.hook },
+    query: { enabled: !!addresses?.hook, refetchInterval: 3000 },
   });
 
   // Current volatility
@@ -59,7 +68,7 @@ export function LiveComplianceStatus() {
     abi: ORACLE_ABI,
     functionName: 'getVolatility',
     args: [],
-    query: { enabled: !!addresses?.oracle },
+    query: { enabled: !!addresses?.oracle, refetchInterval: 3000 },
   });
 
   // Retail swap cap
@@ -68,7 +77,7 @@ export function LiveComplianceStatus() {
     abi: HOOK_ABI,
     functionName: 'retailSwapCap',
     args: [],
-    query: { enabled: !!addresses?.hook },
+    query: { enabled: !!addresses?.hook, refetchInterval: 3000 },
   });
 
   if (deploymentError) {
@@ -108,14 +117,7 @@ export function LiveComplianceStatus() {
   ];
   const tierTextColors = ['text-red-700', 'text-blue-700', 'text-green-700'];
 
-  // Fee mapping based on tier
-  const baseFees: { [key: number]: number } = {
-    0: 0,      // Blocked
-    1: 30,     // Tier 1 retail
-    2: 10,     // Tier 2 institutional
-  };
-
-  const currentFee = baseFees[tier] || 0;
+  const currentFee = Number(dynamicFee || 0);
   const currentVolatility = Number(currentVol) || 0;
   const volatilityThresholdVal = Number(volThreshold) || 5;
 
@@ -190,8 +192,8 @@ export function LiveComplianceStatus() {
           ) : (
             <p className="text-xs text-gray-600">
               {currentVolatility > volatilityThresholdVal
-                ? `Dynamic fee tier for Tier ${tier}`
-                : `Base fee for Tier ${tier}`}
+                ? `Dynamic fee rule active for Tier ${tier}`
+                : `Default fee rule for Tier ${tier}`}
             </p>
           )}
         </div>
@@ -217,9 +219,7 @@ export function LiveComplianceStatus() {
 {`if (userTier[msg.sender] == 0) 
   revert AccessDenied();
   
-uint24 fee = getBaseFeeForTier(
-  userTier[msg.sender]
-);`}
+uint24 fee = getDynamicFee(msg.sender);`}
         </pre>
       </div>
     </div>

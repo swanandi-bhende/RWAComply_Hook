@@ -1,100 +1,106 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useReadContract } from 'wagmi';
 import { loadDeploymentAddresses } from '@/config/deployments';
+import { calculateDynamicFeeForTier, type ComplianceTier } from '@/lib/hookFee';
 
-type TierOption = 0 | 1 | 2;
+type TierOption = ComplianceTier;
 
-const TIER_INFO = {
+const TIER_INFO: Record<TierOption, { name: string; icon: string; description: string }> = {
   0: {
     name: 'Tier 0 (Unverified)',
     icon: '🚫',
-    color: 'bg-red-50 border-red-300',
-    textColor: 'text-red-700',
-    status: 'Access Denied',
-    description: 'Unverified users cannot participate in swaps.',
-    explanation: 'The hook checks userTier and reverts with AccessDenied()',
+    description: 'beforeSwap reverts with AccessDenied().',
   },
   1: {
-    name: 'Tier 1 (Retail KYC)',
+    name: 'Tier 1 (Retail)',
     icon: '✅',
-    color: 'bg-blue-50 border-blue-300',
-    textColor: 'text-blue-700',
-    status: 'Allowed',
-    description: 'Retail users can trade at standard rates.',
-    explanation: 'Fee is fetched from getBaseFeeForTier(1)',
+    description: 'Allowed, but retail cap and higher stressed-market fee apply.',
   },
   2: {
     name: 'Tier 2 (Institutional)',
     icon: '💎',
-    color: 'bg-green-50 border-green-300',
-    textColor: 'text-green-700',
-    status: 'Allowed',
-    description: 'Institutional users get premium rates.',
-    explanation: 'Fee is fetched from getBaseFeeForTier(2)',
+    description: 'Allowed with preferential fee under high volatility.',
   },
 };
 
 export function TierTester() {
   const [selectedTier, setSelectedTier] = useState<TierOption>(1);
-  const [addresses, setAddresses] = useState<any>(null);
+  const [simulatedVolatility, setSimulatedVolatility] = useState(5);
+  const [addresses, setAddresses] = useState<{
+    hook: string;
+    oracle: string;
+  } | null>(null);
   const [deploymentError, setDeploymentError] = useState<string | null>(null);
 
-  // Load addresses
   useEffect(() => {
     const load = async () => {
       try {
         const addr = await loadDeploymentAddresses();
-        setAddresses(addr);
+        setAddresses({ hook: addr.hook, oracle: addr.oracle });
       } catch (error) {
-        setDeploymentError(
-          error instanceof Error ? error.message : 'Failed to load deployment'
-        );
+        setDeploymentError(error instanceof Error ? error.message : 'Failed to load deployment');
       }
     };
+
     load();
   }, []);
 
-  const HOOK_ABI = [
-    'function getBaseFeeForTier(uint8 tier) external view returns (uint24)',
+  const hookAbi = [
+    'function volatilityThreshold() external view returns (uint256)',
+    'function retailSwapCap() external view returns (uint256)',
   ];
 
-  // Get fees for all tiers
-  const { data: tier0Fee } = useReadContract({
+  const oracleAbi = ['function getVolatility() external view returns (uint256)'];
+
+  const { data: threshold } = useReadContract({
     address: addresses?.hook as `0x${string}`,
-    abi: HOOK_ABI,
-    functionName: 'getBaseFeeForTier',
-    args: [0],
-    query: { enabled: !!addresses?.hook },
+    abi: hookAbi,
+    functionName: 'volatilityThreshold',
+    query: { enabled: !!addresses?.hook, refetchInterval: 3000 },
   });
 
-  const { data: tier1Fee } = useReadContract({
+  const { data: retailCap } = useReadContract({
     address: addresses?.hook as `0x${string}`,
-    abi: HOOK_ABI,
-    functionName: 'getBaseFeeForTier',
-    args: [1],
-    query: { enabled: !!addresses?.hook },
+    abi: hookAbi,
+    functionName: 'retailSwapCap',
+    query: { enabled: !!addresses?.hook, refetchInterval: 3000 },
   });
 
-  const { data: tier2Fee } = useReadContract({
-    address: addresses?.hook as `0x${string}`,
-    abi: HOOK_ABI,
-    functionName: 'getBaseFeeForTier',
-    args: [2],
-    query: { enabled: !!addresses?.hook },
+  const { data: liveVolatility } = useReadContract({
+    address: addresses?.oracle as `0x${string}`,
+    abi: oracleAbi,
+    functionName: 'getVolatility',
+    query: { enabled: !!addresses?.oracle, refetchInterval: 3000 },
   });
 
-  const tierFees = {
-    0: tier0Fee ? Number(tier0Fee) : 0,
-    1: tier1Fee ? Number(tier1Fee) : 30,
-    2: tier2Fee ? Number(tier2Fee) : 10,
-  };
+  const thresholdNum = Number(threshold ?? BigInt(5));
+  const liveVolNum = Number(liveVolatility ?? BigInt(0));
+  const retailCapNum = Number(retailCap ?? BigInt(0)) / 1e18;
+
+  const liveFees = useMemo(
+    () => ({
+      0: calculateDynamicFeeForTier(0, liveVolNum, thresholdNum),
+      1: calculateDynamicFeeForTier(1, liveVolNum, thresholdNum),
+      2: calculateDynamicFeeForTier(2, liveVolNum, thresholdNum),
+    }),
+    [liveVolNum, thresholdNum]
+  );
+
+  const simulatedFees = useMemo(
+    () => ({
+      0: calculateDynamicFeeForTier(0, simulatedVolatility, thresholdNum),
+      1: calculateDynamicFeeForTier(1, simulatedVolatility, thresholdNum),
+      2: calculateDynamicFeeForTier(2, simulatedVolatility, thresholdNum),
+    }),
+    [simulatedVolatility, thresholdNum]
+  );
 
   if (deploymentError) {
     return (
       <div className="bg-red-50 border-2 border-red-600 p-6 rounded">
-        <p className="text-red-600 font-bold mb-2">⚠️ Deployment Error</p>
+        <p className="text-red-600 font-bold mb-2">Deployment Error</p>
         <p className="text-red-600 text-sm">{deploymentError}</p>
       </div>
     );
@@ -108,227 +114,123 @@ export function TierTester() {
     );
   }
 
-  const selectedInfo = TIER_INFO[selectedTier];
-  const selectedFee = tierFees[selectedTier];
-
   return (
     <div className="space-y-6">
-      {/* Hero Title */}
-      <div className="mb-8">
+      <div>
         <h2 className="text-4xl font-black text-black mb-2">TIER ACCESS CONTROL</h2>
         <p className="text-lg text-gray-700 font-semibold">
-          Pick a tier to see what happens when that user tries to swap.
+          Pick a tier to see exactly what the hook does before a swap.
         </p>
       </div>
 
-      {/* Tier Selection Buttons */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {([0, 1, 2] as TierOption[]).map((tier) => {
-          const info = TIER_INFO[tier];
-          const fee = tierFees[tier];
           const isSelected = selectedTier === tier;
+          const info = TIER_INFO[tier];
+          const fee = liveFees[tier];
 
           return (
             <button
               key={tier}
               onClick={() => setSelectedTier(tier)}
-              className={`p-6 rounded border-2 transition-all transform hover:scale-105 ${
+              className={`p-6 rounded border-2 text-left transition-all ${
                 isSelected
-                  ? `${info.color} border-2 border-black ring-2 ring-black`
-                  : 'bg-white border-gray-300 hover:border-gray-500'
+                  ? 'border-black ring-2 ring-black bg-gray-50'
+                  : 'border-gray-300 bg-white hover:border-gray-500'
               }`}
             >
-              <div className="text-4xl mb-2">{info.icon}</div>
-              <h3 className="text-lg font-bold text-black mb-2">{info.name}</h3>
-              <div className={`text-2xl font-black ${info.textColor} mb-2`}>
-                {fee} bps
-              </div>
-              <p className="text-sm text-gray-600">{info.description}</p>
+              <p className="text-3xl mb-2">{info.icon}</p>
+              <p className="font-bold text-lg text-black mb-1">{info.name}</p>
+              <p className="text-sm text-gray-700 mb-2">{info.description}</p>
+              <p className="text-xs font-bold text-gray-500">LIVE EFFECTIVE FEE</p>
+              <p className="text-2xl font-black text-black">
+                {tier === 0 ? 'Blocked' : `${fee} bps`}
+              </p>
             </button>
           );
         })}
       </div>
 
-      {/* Outcome Display */}
-      <div className={`border-2 p-8 rounded ${selectedInfo.color}`}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Left: Outcome */}
-          <div>
-            <p className="text-sm font-bold text-gray-600 mb-2">OUTCOME FOR THIS TIER</p>
-            <div className="flex items-center gap-4 mb-6">
-              <div className="text-5xl">{selectedInfo.icon}</div>
-              <div>
-                <h3 className={`text-3xl font-black ${selectedInfo.textColor}`}>
-                  {selectedInfo.status}
-                </h3>
-                <p className={`text-sm font-semibold ${selectedInfo.textColor}`}>
-                  {selectedInfo.explanation}
-                </p>
-              </div>
-            </div>
+      <div className="border-2 border-gray-300 rounded p-6 bg-white">
+        <p className="text-sm font-bold text-gray-600 mb-3">LIVE MARKET CONTEXT</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="border border-gray-300 rounded p-3">
+            <p className="text-xs font-bold text-gray-500">ORACLE VOLATILITY</p>
+            <p className="text-2xl font-black">{liveVolNum}%</p>
+          </div>
+          <div className="border border-gray-300 rounded p-3">
+            <p className="text-xs font-bold text-gray-500">THRESHOLD</p>
+            <p className="text-2xl font-black">{thresholdNum}%</p>
+          </div>
+          <div className="border border-gray-300 rounded p-3">
+            <p className="text-xs font-bold text-gray-500">RETAIL CAP</p>
+            <p className="text-2xl font-black">{retailCapNum.toFixed(2)}</p>
+            <p className="text-xs text-gray-500">tokens/swap</p>
+          </div>
+        </div>
+      </div>
 
-            {selectedTier === 0 && (
-              <div className="bg-red-100 border-2 border-red-400 p-4 rounded">
-                <p className="text-sm font-bold text-red-700 mb-2">❌ Transaction Fails</p>
-                <p className="text-xs font-mono text-red-700 bg-white p-2 rounded">
-                  Error: AccessDenied()
-                </p>
-              </div>
-            )}
-
+      <div className="border-2 border-black rounded p-6 bg-gray-50">
+        <p className="text-sm font-bold text-gray-600 mb-2">OUTCOME FOR SELECTED TIER</p>
+        {selectedTier === 0 ? (
+          <div className="bg-red-100 border-2 border-red-400 rounded p-4">
+            <p className="font-bold text-red-700">Transaction Fails</p>
+            <p className="text-xs font-mono text-red-700 mt-2">AccessDenied()</p>
+          </div>
+        ) : (
+          <div className="bg-green-100 border-2 border-green-400 rounded p-4 space-y-2">
+            <p className="font-bold text-green-700">Swap Allowed</p>
+            <p className="text-sm text-green-800">Effective fee now: {liveFees[selectedTier]} bps</p>
             {selectedTier === 1 && (
-              <div className="bg-blue-100 border-2 border-blue-400 p-4 rounded">
-                <p className="text-sm font-bold text-blue-700 mb-2">✅ Swap Executes</p>
-                <div className="space-y-2 text-xs font-semibold text-blue-700">
-                  <div>
-                    <span className="text-gray-700">Swap Fee:</span> {selectedFee} bps
-                  </div>
-                  <div>
-                    <span className="text-gray-700">Retail Cap:</span> ~1,000 tokens
-                  </div>
-                  <div>
-                    <span className="text-gray-700">Status:</span> Standard rate applied
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {selectedTier === 2 && (
-              <div className="bg-green-100 border-2 border-green-400 p-4 rounded">
-                <p className="text-sm font-bold text-green-700 mb-2">💎 Premium Swap</p>
-                <div className="space-y-2 text-xs font-semibold text-green-700">
-                  <div>
-                    <span className="text-gray-700">Swap Fee:</span> {selectedFee} bps
-                    <span className="ml-2 bg-green-200 px-2 py-1 rounded text-xs">
-                      Lowest rate
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-gray-700">Cap:</span> Unlimited
-                  </div>
-                  <div>
-                    <span className="text-gray-700">Status:</span> Premium rate applied
-                  </div>
-                </div>
-              </div>
+              <p className="text-sm text-green-800">Retail cap enforced: {retailCapNum.toFixed(2)} tokens</p>
             )}
           </div>
+        )}
+      </div>
 
-          {/* Right: Contract Reality */}
-          <div>
-            <p className="text-sm font-bold text-gray-600 mb-2">CONTRACT: getBaseFeeForTier()</p>
-            <div className="bg-black text-white border-2 border-black p-4 rounded font-mono text-xs mb-4">
-              <pre>{`function getBaseFeeForTier(
-  uint8 tier
-) external view returns (uint24) {
-  if (tier == 0) return 0;
-  if (tier == 1) return 3000;  // 30 bps
-  if (tier == 2) return 1000;  // 10 bps
-  revert InvalidTier();
-}`}</pre>
-            </div>
+      <div className="bg-white border-2 border-gray-300 p-6 rounded space-y-4">
+        <h3 className="text-2xl font-black text-black">Simulate Volatility Impact</h3>
+        <label className="text-sm font-bold text-gray-700 block">
+          Simulated Volatility: {simulatedVolatility}%
+        </label>
+        <input
+          type="range"
+          min="0"
+          max="100"
+          value={simulatedVolatility}
+          onChange={(event) => setSimulatedVolatility(Number(event.target.value))}
+          className="w-full accent-black"
+        />
 
-            <p className="text-sm font-bold text-gray-600 mb-2">LIVE FEES FROM CONTRACT</p>
-            <div className="space-y-2 bg-white border-2 border-gray-300 p-4 rounded">
-              <div className="flex justify-between text-sm">
-                <span className="font-semibold text-gray-700">Tier 0 (Blocked):</span>
-                <span className="font-mono font-bold text-red-700">{tierFees[0]} bps</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="font-semibold text-gray-700">Tier 1 (Retail):</span>
-                <span className="font-mono font-bold text-blue-700">{tierFees[1]} bps</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="font-semibold text-gray-700">Tier 2 (Institutional):</span>
-                <span className="font-mono font-bold text-green-700">{tierFees[2]} bps</span>
-              </div>
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="border border-gray-300 rounded p-3">
+            <p className="text-xs font-bold text-gray-500">TIER 0</p>
+            <p className="text-lg font-black">Blocked</p>
+          </div>
+          <div className="border border-blue-300 bg-blue-50 rounded p-3">
+            <p className="text-xs font-bold text-blue-600">TIER 1</p>
+            <p className="text-lg font-black text-blue-700">{simulatedFees[1]} bps</p>
+          </div>
+          <div className="border border-green-300 bg-green-50 rounded p-3">
+            <p className="text-xs font-bold text-green-600">TIER 2</p>
+            <p className="text-lg font-black text-green-700">{simulatedFees[2]} bps</p>
           </div>
         </div>
       </div>
 
-      {/* Educational Callout */}
       <div className="bg-black text-white border-2 border-black p-6 rounded">
-        <p className="font-bold mb-2">📋 Why This Matters</p>
-        <p className="text-sm leading-relaxed">
-          The hook calls <code className="bg-gray-800 px-1">beforeSwap()</code> for every swap
-          attempt. It checks the user's compliance tier and either allows the swap (with
-          appropriate fees) or reverts with{' '}
-          <code className="bg-gray-800 px-1">AccessDenied()</code>. This is how Uniswap v4
-          hooks can embed regulatory requirements directly into the protocol.
-        </p>
-      </div>
+        <p className="text-xs font-bold mb-2 text-gray-300">CONTRACT REALITY CHECK</p>
+        <pre className="text-xs font-mono overflow-x-auto">{`function beforeSwap(...) external returns (...) {
+  uint8 tier = userTier[sender];
+  if (tier == 0) revert AccessDenied();
 
-      {/* Tier Modifier Simulation */}
-      <TierModifierSimulation tierFees={tierFees} />
-    </div>
-  );
-}
+  if (tier == RETAIL && amount > retailSwapCap) {
+    revert RetailLimitExceeded();
+  }
 
-function TierModifierSimulation({ tierFees }: { tierFees: { 0: number; 1: number; 2: number } }) {
-  const [simulatedTier, setSimulatedTier] = useState<TierOption>(0);
-
-  return (
-    <div className="bg-gray-50 border-2 border-gray-300 p-6 rounded">
-      <h3 className="text-2xl font-black text-black mb-4">🔄 TRY IT YOURSELF</h3>
-      <p className="text-sm font-semibold text-gray-700 mb-6">
-        Simulate upgrading a user's tier and see how their fee changes in real time.
-      </p>
-
-      <div className="space-y-4">
-        {/* Slider */}
-        <div>
-          <label className="text-sm font-bold text-gray-700 mb-3 block">
-            Simulated User Tier:
-          </label>
-          <div className="flex gap-2 items-center">
-            {([0, 1, 2] as TierOption[]).map((tier) => (
-              <button
-                key={tier}
-                onClick={() => setSimulatedTier(tier)}
-                className={`px-4 py-2 rounded font-bold text-sm transition-all ${
-                  simulatedTier === tier
-                    ? 'bg-black text-white border-2 border-black'
-                    : 'bg-white text-black border-2 border-gray-300 hover:border-black'
-                }`}
-              >
-                Tier {tier}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Result */}
-        <div className="bg-white border-2 border-gray-300 p-4 rounded">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <p className="text-xs font-bold text-gray-600 mb-2">SIMULATED TIER</p>
-              <p className="text-2xl font-black text-black">{simulatedTier}</p>
-            </div>
-            <div>
-              <p className="text-xs font-bold text-gray-600 mb-2">FEE APPLIED</p>
-              <p className="text-2xl font-black text-black">{tierFees[simulatedTier]} bps</p>
-            </div>
-            <div>
-              <p className="text-xs font-bold text-gray-600 mb-2">INTERPRETATION</p>
-              <p className="text-sm font-semibold text-gray-700">
-                {simulatedTier === 0 && '❌ Blocked'}
-                {simulatedTier === 1 && '✅ Retail (30bps)'}
-                {simulatedTier === 2 && '💎 Institutional (10bps)'}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Code Snippet */}
-        <div className="bg-black text-white border-2 border-black p-3 rounded font-mono text-xs">
-          <pre>{`// Hook checks tier and applies fee
-uint8 userTier = userTier[msg.sender];
-if (userTier == 0) revert AccessDenied();
-
-uint24 fee = getBaseFeeForTier(userTier);
-// fee is now ${tierFees[simulatedTier]} for tier ${simulatedTier}`}</pre>
-        </div>
+  uint24 fee = getDynamicFee(sender);
+  emit BeforeSwapCalled(sender, tier, fee);
+}`}</pre>
       </div>
     </div>
   );

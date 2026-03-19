@@ -1,29 +1,29 @@
 RWAComply Canonical Demo Run Log
-Generated: 2026-03-19T15:26:25.053Z
+Generated: 2026-03-19T17:06:38.439Z
 Chain ID: 31337
 Broadcast File: broadcast/DeployFull.s.sol/31337/run-latest.json
 
 Addresses
-POOL_MANAGER=0x1fa02b2d6a771842690194cf62d91bdd92bfe28d
-HOOK_ADDRESS=0x851ee973e4ba7e6d19ff1dcff9406cc6ce1ef8c0
-ORACLE=0xdbc43ba45381e02825b14322cddd15ec4b3164e6
-TOKEN_A=0x21df544947ba3e8b3c32561399e88b52dc8b2823
-TOKEN_B=0x2e2ed0cfd3ad2f1d34481277b3204d807ca2f8c2
-EXECUTOR=0xdc11f7e700a4c898ae5caddb1082cffa76512add
+POOL_MANAGER=0x5fbdb2315678afecb367f032d93f642f64180aa3
+HOOK_ADDRESS=0x37b73fb90d78624c8ba6e7c9313a3c4abd4078c0
+ORACLE=0xe7f1725e7734ce288f8367e1bb143e90bb3f0512
+TOKEN_A=0xdc64a140aa3e981100a9beca4e685f962f0cf6c9
+TOKEN_B=0x5fc8d32690cc91d4c39d9d3abcbd16989f875707
+EXECUTOR=0xa513e6e4b8f2a923d98304ec87f64353c4d5c853
 
 Transaction Hashes
-1. 0x18fde7fb20db6913d0e47fe6dc498c8fb88444b5d7a0d1a84e561f1f3dfcbb65 | PoolManager | CREATE
-2. 0x5b00274db7e80ea99c3f71450e6d631bc66e631e3c055660c179457c18424703 | MockRWAOracle | CREATE
-3. 0x9e4741010ecf900628af3ef5133824267ff1332c4ba1d5f1dbfc72ab839106de | RWAComplyHook | CREATE2
-4. 0xb8f58646591ea17f5570c2d0b97714ea779911ab990752fd247b1ba93787128c | MockRWAOracle | setVolatility(uint256)
-5. 0x14b0135b77ca78e452223416609e066dc5b0eeb69036cc6fb2818224ce4d1e3a | MockERC20 | CREATE
-6. 0xfd6ad5d50ec44809bbd63bfd8fde053ea88ad0dc06a1c20599b14b0e7e9fb6ab | MockERC20 | CREATE
-7. 0xdfbf5d6b8699a1ccee2042a4b8128b291763df3b240d6d77bc66b32160a16663 | PoolManager | initialize((address,address,uint24,int24,address),uint160)
-8. 0xbbf0f8b7db9d7060945021dbdd64083ad49421fde3082ecd99d0c2ea403ce9e4 | PoolExecutor | CREATE
-9. 0x1d73a14ccf95a097a328b24be24c3191c3b6c304958b6ac7a844687d3e15b744 | RWAComplyHook | setTier(address,uint8)
-10. 0x1d2a051115f5bb823885a1344710198071df41b9bc764effbd1c60f517a36a55 | MockERC20 | transfer(address,uint256)
-11. 0xb8d17c73c9e5ca9cb1b8f6ef47dab82ae42843c9a22d0790e111d99473149057 | MockERC20 | transfer(address,uint256)
-12. 0x6eb4d3ecf52f4b58e99a10a13ababb404390ea97987be999c76ae38d5737dc93 | PoolExecutor | execute()
+1. 0xec796aea64a660037a59de18f0790c1b9e9c2130e5b74850cd93b7f8896f0c83 | PoolManager | CREATE
+2. 0xf4d59a4365d66303652487d83db8f7efacad5788ce9266c2389c2fb8087d6a42 | MockRWAOracle | CREATE
+3. 0x4cc4ddaeb2f042a0eb11cfc52ebd271a8095bd1ee2f8065bdae44c6ebc5d93bb | RWAComplyHook | CREATE2
+4. 0x43d078f8adb914eac39e104e1747c2e7739030b3751c8c94b585424f81c7710b | MockRWAOracle | setVolatility(uint256)
+5. 0x304ffb3eb08c6e9b783e57dfea9bd3c89d9ab0131ef8ad88ae19ce715e68ff68 | MockERC20 | CREATE
+6. 0xe3efeeb891b1fa3cfbe195e2940437762921aefafae8918d6bc961c32d14e498 | MockERC20 | CREATE
+7. 0xdbf24bdf9400703249e628296092da9ac27c216b7b87ae2de770f6557bcd8a1b | PoolManager | initialize((address,address,uint24,int24,address),uint160)
+8. 0x778c56de354ce94dd76ab1b0fe90967876de8482eeb468ea8b7d114208e4aed2 | PoolExecutor | CREATE
+9. 0x5b075bd0b7f323775c47903a9e8662633254ac140b02d8a49516e1f4d1278ef2 | RWAComplyHook | setTier(address,uint8)
+10. 0xc3cd09a1bbf7e3a99ad5d0d428afb67b2f659209f57d6e128cc072c1ab3fb3d5 | MockERC20 | transfer(address,uint256)
+11. 0xf5e30a2bdc64567f0b5fcaf0072b76ca7c6d55c781a5f0e9b1d559e0d7cb1eca | MockERC20 | transfer(address,uint256)
+12. 0x4b2e7edbad6f0292dc3adc36c9ea5cb2c737f2b60a387fe7b7e51d3c8d084449 | PoolExecutor | execute()
 
 Re-run Commands
 1) forge script script/DeployFull.s.sol --rpc-url http://127.0.0.1:8545 --broadcast

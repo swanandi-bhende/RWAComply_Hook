@@ -35,7 +35,7 @@ export function QuickStats() {
     abi: HOOK_ABI,
     functionName: 'volatilityThreshold',
     args: [],
-    query: { enabled: !!addresses?.hook },
+    query: { enabled: !!addresses?.hook, refetchInterval: 3000 },
   });
 
   // Retail cap
@@ -44,7 +44,7 @@ export function QuickStats() {
     abi: HOOK_ABI,
     functionName: 'retailSwapCap',
     args: [],
-    query: { enabled: !!addresses?.hook },
+    query: { enabled: !!addresses?.hook, refetchInterval: 3000 },
   });
 
   // Hook owner
@@ -53,7 +53,7 @@ export function QuickStats() {
     abi: HOOK_ABI,
     functionName: 'owner',
     args: [],
-    query: { enabled: !!addresses?.hook },
+    query: { enabled: !!addresses?.hook, refetchInterval: 3000 },
   });
 
   // Pool paused
@@ -62,7 +62,7 @@ export function QuickStats() {
     abi: HOOK_ABI,
     functionName: 'poolPaused',
     args: [],
-    query: { enabled: !!addresses?.hook },
+    query: { enabled: !!addresses?.hook, refetchInterval: 3000 },
   });
 
   if (deploymentError) {
