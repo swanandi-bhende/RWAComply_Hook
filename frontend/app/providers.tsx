@@ -5,6 +5,7 @@ import { WagmiProvider, createConfig, createStorage, http, injected, noopStorage
 import { anvil } from 'wagmi/chains';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
+import { TransactionProvider } from './TransactionContext';
 import '@rainbow-me/rainbowkit/styles.css';
 
 const config = createConfig({
@@ -24,7 +25,9 @@ export function Providers({ children }: { children: ReactNode }) {
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider>
-          {children}
+          <TransactionProvider>
+            {children}
+          </TransactionProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>

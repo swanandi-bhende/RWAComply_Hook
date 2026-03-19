@@ -4,9 +4,11 @@ import { useState } from 'react';
 import { useAccount, useReadContract } from 'wagmi';
 import { TOKEN_A_ADDRESS, TOKEN_B_ADDRESS, ERC20_ABI, HOOK_ADDRESS, HOOK_ABI } from '@/contracts';
 import { parseEther } from 'viem';
+import { useTransactions } from '@/app/TransactionContext';
 
 export function SwapInterface() {
   const { address } = useAccount();
+  const { addTransaction } = useTransactions();
   const [inputAmount, setInputAmount] = useState('');
   const [selectedInput, setSelectedInput] = useState('A');
   const [swapLoading, setSwapLoading] = useState(false);
@@ -49,13 +51,30 @@ export function SwapInterface() {
       // Simulate transaction delay
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      setSwapMessage(`✅ Swap successful! Swapped ${inputAmount} Token ${selectedInput} → ${(Number(inputAmount) * 0.95).toFixed(4)} Token ${selectedInput === 'A' ? 'B' : 'A'}`);
+      const outputAmount = (Number(inputAmount) * 0.95).toFixed(4);
+      const fromToken = selectedInput === 'A' ? 'Token A' : 'Token B';
+      const toToken = selectedInput === 'A' ? 'Token B' : 'Token A';
       
-      // Clear message after 3 seconds
+      // Add transaction to history
+      addTransaction({
+        type: 'swap',
+        tokenIn: fromToken,
+        tokenOut: toToken,
+        amountIn: Number(inputAmount),
+        amountOut: Number(outputAmount),
+        fee: 0.05,
+        timestamp: 'just now',
+        status: 'success',
+        hash: '0x' + Math.random().toString(16).substr(2, 8) + '...' + Math.random().toString(16).substr(2, 4),
+      });
+      
+      setSwapMessage(`✅ Swap successful! Swapped ${inputAmount} ${fromToken} → ${outputAmount} ${toToken}. Check transaction history below!`);
+      
+      // Clear message and form after 6 seconds
       setTimeout(() => {
         setSwapMessage('');
         setInputAmount('');
-      }, 3000);
+      }, 6000);
     } catch (error) {
       setSwapMessage(`❌ Swap failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {

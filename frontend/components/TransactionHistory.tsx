@@ -1,6 +1,7 @@
 'use client';
 
 import { useAccount } from 'wagmi';
+import { useTransactions } from '@/app/TransactionContext';
 
 interface Transaction {
   id: string;
@@ -57,6 +58,7 @@ const mockTransactions: Transaction[] = [
 
 export function TransactionHistory() {
   const { address } = useAccount();
+  const { transactions } = useTransactions();
 
   if (!address) {
     return (
@@ -87,44 +89,52 @@ export function TransactionHistory() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {mockTransactions.map((tx) => (
-              <tr key={tx.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4">
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${
-                    tx.type === 'swap'
-                      ? 'bg-blue-100 text-blue-700'
-                      : tx.type === 'add'
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-red-100 text-red-700'
-                  }`}>
-                    {tx.type === 'swap' ? '⇄' : tx.type === 'add' ? '+' : '-'} {tx.type.toUpperCase()}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm">
-                    <p className="font-semibold text-gray-900">
-                      {tx.amountIn} {tx.tokenIn} → {tx.amountOut} {tx.tokenOut}
-                    </p>
-                    <p className="text-xs text-gray-600 mt-1">{tx.hash}</p>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-sm font-semibold text-gray-900">
-                  {tx.fee > 0 ? `${tx.fee}%` : '—'}
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-600">{tx.timestamp}</td>
-                <td className="px-6 py-4">
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${
-                    tx.status === 'success'
-                      ? 'bg-green-100 text-green-700'
-                      : tx.status === 'pending'
-                      ? 'bg-yellow-100 text-yellow-700'
-                      : 'bg-red-100 text-red-700'
-                  }`}>
-                    {tx.status === 'success' ? '✓' : tx.status === 'pending' ? '⏳' : '✕'} {tx.status}
-                  </span>
+            {transactions && transactions.length > 0 ? (
+              transactions.map((tx) => (
+                <tr key={tx.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${
+                      tx.type === 'swap'
+                        ? 'bg-blue-100 text-blue-700'
+                        : tx.type === 'add'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-red-100 text-red-700'
+                    }`}>
+                      {tx.type === 'swap' ? '⇄' : tx.type === 'add' ? '+' : '-'} {tx.type.toUpperCase()}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm">
+                      <p className="font-semibold text-gray-900">
+                        {tx.amountIn} {tx.tokenIn} → {tx.amountOut} {tx.tokenOut}
+                      </p>
+                      <p className="text-xs text-gray-600 mt-1">{tx.hash}</p>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-sm font-semibold text-gray-900">
+                    {tx.fee > 0 ? `${tx.fee}%` : '—'}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{tx.timestamp}</td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${
+                      tx.status === 'success'
+                        ? 'bg-green-100 text-green-700'
+                        : tx.status === 'pending'
+                        ? 'bg-yellow-100 text-yellow-700'
+                        : 'bg-red-100 text-red-700'
+                    }`}>
+                      {tx.status === 'success' ? '✓' : tx.status === 'pending' ? '⏳' : '✕'} {tx.status}
+                    </span>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={5} className="px-6 py-8 text-center text-gray-600">
+                  No transactions yet. Perform a swap or add liquidity to see them here.
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>

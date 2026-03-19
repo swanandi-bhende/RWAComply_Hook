@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import { useAccount, useReadContract } from 'wagmi';
 import { TOKEN_A_ADDRESS, TOKEN_B_ADDRESS, ERC20_ABI } from '@/contracts';
+import { useTransactions } from '@/app/TransactionContext';
 
 export function AddLiquidity() {
   const { address } = useAccount();
+  const { addTransaction } = useTransactions();
   const [amountA, setAmountA] = useState('');
   const [amountB, setAmountB] = useState('');
   const [liquidityLoading, setLiquidityLoading] = useState(false);
@@ -41,13 +43,28 @@ export function AddLiquidity() {
       // Simulate transaction delay
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      setStatusMessage(`✅ Liquidity added! Received ~${(Number(amountA) + Number(amountB)) / 2} LP tokens`);
+      const lpTokens = (Number(amountA) + Number(amountB)) / 2;
+      
+      // Add transaction to history
+      addTransaction({
+        type: 'add',
+        tokenIn: 'Token A',
+        tokenOut: 'Token B',
+        amountIn: Number(amountA),
+        amountOut: Number(amountB),
+        fee: 0,
+        timestamp: 'just now',
+        status: 'success',
+        hash: '0x' + Math.random().toString(16).substr(2, 8) + '...' + Math.random().toString(16).substr(2, 4),
+      });
+      
+      setStatusMessage(`✅ Liquidity added! Received ~${lpTokens.toFixed(2)} LP tokens. Check transaction history below!`);
       
       setTimeout(() => {
         setStatusMessage('');
         setAmountA('');
         setAmountB('');
-      }, 3000);
+      }, 6000);
     } catch (error) {
       setStatusMessage(`❌ Failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
@@ -63,11 +80,11 @@ export function AddLiquidity() {
       // Simulate loading delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      setStatusMessage('✅ Pool Stats: TVL: $2.5M | Volume 24h: $156K | APY: 12.5%');
+      setStatusMessage('✅ Pool Stats: TVL: $2.5M | Volume 24h: $156K | APY: 12.5% | LPs: 1,234');
       
       setTimeout(() => {
         setStatusMessage('');
-      }, 3000);
+      }, 6000);
     } catch (error) {
       setStatusMessage(`❌ Failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
