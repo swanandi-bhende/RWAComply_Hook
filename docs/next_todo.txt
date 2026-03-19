@@ -29,15 +29,15 @@ Priority 2 - Missing Integration Coverage Through PoolManager
 [x] Add integration test: static-fee pool ignores hook fee override.
 
 Priority 3 - Script and Workflow Reliability
-[ ] Consolidate scripts to one deterministic local demo flow.
+[x] Consolidate scripts to one deterministic local demo flow.
    - Prefer one script that deploys core/hook/oracle/tokens and runs add liquidity + swap.
    - Print all resulting addresses clearly for quick reuse.
 
-[ ] Remove deployment ambiguity.
+[x] Remove deployment ambiguity.
    - Keep one canonical flow between PoolSetup.s.sol and DeployFull.s.sol.
    - Mark non-canonical scripts as deprecated in README.
 
-[ ] Add a helper output file for demo reproducibility.
+[x] Add a helper output file for demo reproducibility.
    - Save addresses and transaction hashes after each run.
 
 Priority 4 - Cleanup Before Submission

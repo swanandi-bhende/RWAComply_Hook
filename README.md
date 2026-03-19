@@ -20,8 +20,10 @@ It includes:
 - script
   - DeployCore.s.sol
   - DeployHook.s.sol
-  - DeployFull.s.sol
-  - PoolSetup.s.sol
+  - DeployFull.s.sol (canonical local demo flow)
+  - PoolSetup.s.sol (deprecated)
+  - run_canonical_demo.sh
+  - generateDemoRunLog.js
 - test
   - Counter.t.sol
   - RWAComply.t.sol
@@ -31,6 +33,7 @@ It includes:
 
 - Foundry installed (`forge`, `anvil`)
 - Local Anvil node for deployment runs
+- Node.js (for `script/generateDemoRunLog.js`)
 - Dependencies present in `lib/`
 
 ## Setup
@@ -45,21 +48,16 @@ cp .env.example .env
 
 ```dotenv
 PRIVATE_KEY=0x...
-POOL_MANAGER=0x...
-HOOK_ADDRESS=0x...
-TOKEN_A=0x...
-TOKEN_B=0x...
 ```
 
 Notes:
-- `TOKEN_A` and `TOKEN_B` must be ERC20 token addresses.
-- `TOKEN_A` and `TOKEN_B` must not be `POOL_MANAGER` or `HOOK_ADDRESS`.
-- Scripts already fail fast on missing/invalid env values.
+- Canonical flow auto-deploys PoolManager, oracle, hook, tokens, initializes pool, adds liquidity, and executes swap.
 - In deployment scripts, the deployer EOA is owner of `MockRWAOracle` and `RWAComplyHook`.
+- `POOL_MANAGER`, `HOOK_ADDRESS`, `TOKEN_A`, and `TOKEN_B` are only needed for legacy split-flow scripts.
 
 ## Local End-to-End Run (Fresh Anvil)
 
-This run proves: deploy -> initialize -> add liquidity -> swap.
+This run proves: deploy -> initialize -> add liquidity -> swap in a single canonical run.
 
 1. Start Anvil.
 
@@ -67,42 +65,34 @@ This run proves: deploy -> initialize -> add liquidity -> swap.
 anvil
 ```
 
-2. Deploy PoolManager.
+2. Run canonical one-command flow.
 
 ```bash
-forge script script/DeployCore.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
+bash script/run_canonical_demo.sh
 ```
 
-3. Set `POOL_MANAGER` in `.env` from script output.
-
-4. Deploy Hook + Oracle.
-
-```bash
-forge script script/DeployHook.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
-```
-
-5. Set `HOOK_ADDRESS` in `.env` from script output.
-
-6. Deploy two mock ERC20 tokens and capture the two deployed addresses.
-
-```bash
-source .env
-forge create src/MockERC20.sol:MockERC20 --rpc-url http://127.0.0.1:8545 --private-key "$PRIVATE_KEY" --constructor-args "TokenA" "TKA" 1000000000000000000000000
-forge create src/MockERC20.sol:MockERC20 --rpc-url http://127.0.0.1:8545 --private-key "$PRIVATE_KEY" --constructor-args "TokenB" "TKB" 1000000000000000000000000
-```
-
-7. Set `TOKEN_A` and `TOKEN_B` in `.env` from the deploy outputs.
-
-8. Run full flow.
+This wrapper runs:
 
 ```bash
 forge script script/DeployFull.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
+node script/generateDemoRunLog.js
 ```
+
+3. Check reproducibility outputs.
+
+- `docs/demo_run_log.txt` contains deployed addresses and transaction hashes for the latest run.
+- `broadcast/DeployFull.s.sol/31337/run-latest.json` contains full raw broadcast details.
 
 Expected script logs include:
 - `beforeAddLiquidity called`
 - `beforeSwap called`
 - `afterSwap called`
+
+## Legacy Split Flow (Deprecated)
+
+- `script/PoolSetup.s.sol` is deprecated and intentionally reverts.
+- `script/DeployCore.s.sol` + `script/DeployHook.s.sol` remain for debugging workflows, but are not the recommended demo path.
+- Use `script/DeployFull.s.sol` as the canonical path for local end-to-end demos.
 
 ## Admin Controls (Owner Only)
 
@@ -335,8 +325,8 @@ forge test -vvvv
 ## Troubleshooting
 
 - `HookAddressNotValid(...)`:
-  - run `DeployHook.s.sol`; it brute-forces a valid CREATE2 salt for required hook flags
+  - canonical `DeployFull.s.sol` already brute-forces a valid CREATE2 salt for required hook flags
 - `CurrencyNotSettled()`:
   - ensure you are using current `PoolExecutor` logic with `sync + settle` and `take`
-- stale env values after redeploy:
-  - if `POOL_MANAGER` changes, redeploy hook and update `HOOK_ADDRESS` before running `DeployFull`
+- stale env values after redeploy (legacy split flow only):
+  - if `POOL_MANAGER` changes, rerun `DeployHook.s.sol` and refresh dependent addresses
