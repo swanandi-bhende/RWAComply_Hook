@@ -8,6 +8,7 @@ import { QuickStats } from '@/components/QuickStats';
 import { TierTester } from '@/components/TierTester';
 import { DynamicFeeVisualizer } from '@/components/DynamicFeeVisualizer';
 import { SwapDemo } from '@/components/SwapDemo';
+import { AdminObservatory } from '@/components/AdminObservatory';
 import { Providers } from './providers';
 
 type PageId = 'page1' | 'page2' | 'page3' | 'page4' | 'page5';
@@ -134,13 +135,10 @@ export default function Home() {
             </div>
           )}
 
-          {/* Page 5: Admin (Placeholder) */}
+          {/* Page 5: Admin Observatory */}
           {currentPage === 'page5' && (
-            <div className="text-center py-20">
-              <div className="text-5xl mb-4">🔑</div>
-              <h2 className="text-3xl font-black text-black mb-4">Admin Observatory</h2>
-              <p className="text-gray-600 font-semibold mb-8">Coming next...</p>
-              <p className="text-sm text-gray-500">Owner controls and hook management</p>
+            <div>
+              <AdminObservatory />
             </div>
           )}
         </div>
