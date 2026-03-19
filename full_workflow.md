@@ -48,7 +48,7 @@ Use three terminals.
 
 ```bash
 cd /path/to/UHI8_Hookathon
-anvil --chain-id 31337 --accounts 10 --silent
+anvil --chain-id 31337 --accounts 10
 ```
 
 ### Terminal 2 - Deploy contracts and initialize state
@@ -198,7 +198,7 @@ Run this sequence:
 Start local chain:
 
 ```bash
-anvil --chain-id 31337 --accounts 10 --silent
+anvil --chain-id 31337 --accounts 10
 ```
 
 Deploy and initialize:

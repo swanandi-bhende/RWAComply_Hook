@@ -11,8 +11,15 @@ contract PoolExecutor {
 
     error UnsupportedAction();
 
+    uint160 internal constant MIN_SQRT_RATIO_PLUS_ONE = 4295128740;
+    uint160 internal constant MAX_SQRT_RATIO_MINUS_ONE =
+        1461446703485210103287273052203988822378723970341;
+
     IPoolManager public poolManager;
     PoolKey public key;
+
+    // Alternate direction so repeated demo swaps do not get stuck at a single price boundary.
+    bool public swapZeroForOne = true;
 
     constructor(IPoolManager _poolManager, PoolKey memory _key) {
         poolManager = _poolManager;
@@ -46,17 +53,21 @@ contract PoolExecutor {
 
         } else if (action == keccak256("SWAP")) {
 
+            bool zeroForOne = swapZeroForOne;
             IPoolManager.SwapParams memory swapParams =
                 IPoolManager.SwapParams({
-                    zeroForOne: true,
+                    zeroForOne: zeroForOne,
                     amountSpecified: int256(1e18),
-                    sqrtPriceLimitX96: 4295128740
+                    sqrtPriceLimitX96: zeroForOne
+                        ? MIN_SQRT_RATIO_PLUS_ONE
+                        : MAX_SQRT_RATIO_MINUS_ONE
                 });
 
             BalanceDelta delta =
                 poolManager.swap(key, swapParams, "");
 
             _settleAndTake(delta);
+            swapZeroForOne = !zeroForOne;
 
         } else {
             revert UnsupportedAction();

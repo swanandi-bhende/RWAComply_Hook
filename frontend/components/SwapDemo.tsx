@@ -16,6 +16,32 @@ type SwapPhase = 'idle' | 'approving' | 'executing' | 'success' | 'error';
 
 const LIVE_REFETCH_MS = 1000;
 
+function formatSwapError(raw: string): string {
+  const lowered = raw.toLowerCase();
+
+  if (lowered.includes('rpc endpoint returned too many errors') || lowered.includes('request not available')) {
+    return 'Local RPC is not reachable. Start Anvil on http://127.0.0.1:8545, run bash script/run_canonical_demo.sh, then refresh the page.';
+  }
+
+  if (lowered.includes('accessdenied')) {
+    return 'Swap blocked by compliance tier. Set the swap actor tier to 1 or 2, then retry.';
+  }
+
+  if (lowered.includes('poolpaused')) {
+    return 'Pool is paused. Unpause from Admin page and retry.';
+  }
+
+  if (lowered.includes('retaillimitexceeded')) {
+    return 'Retail swap cap exceeded. Reduce amount or update cap in Admin page.';
+  }
+
+  if (lowered.includes('insufficient funds')) {
+    return 'Insufficient gas balance in connected wallet. Fund the wallet with local ETH and retry.';
+  }
+
+  return raw;
+}
+
 export function SwapDemo() {
   const { address } = useAccount();
   const publicClient = usePublicClient();
@@ -213,6 +239,31 @@ export function SwapDemo() {
       return;
     }
 
+    const contractsToCheck: Array<[string, string]> = [
+      ['Hook', addresses.hook],
+      ['Oracle', addresses.oracle],
+      ['TokenA', addresses.tokenA],
+      ['TokenB', addresses.tokenB],
+      ['PoolExecutor', addresses.executor],
+    ];
+
+    for (const [label, addr] of contractsToCheck) {
+      const code = await publicClient.getBytecode({ address: addr as `0x${string}` });
+      if (!code || code === '0x') {
+        setErrorMessage(
+          `${label} is not deployed on current chain. Start Anvil, run bash script/run_canonical_demo.sh, then refresh.`
+        );
+        setPhase('error');
+        return;
+      }
+    }
+
+    if (executorTierNum === 0) {
+      setErrorMessage('Swap actor is Tier 0, so beforeSwap will revert. Run canonical deploy or set executor tier from Admin.');
+      setPhase('error');
+      return;
+    }
+
     setErrorMessage('');
     setPhase('approving');
 
@@ -247,7 +298,7 @@ export function SwapDemo() {
       setPhase('success');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Swap execution failed';
-      setErrorMessage(message);
+      setErrorMessage(formatSwapError(message));
       setPhase('error');
     }
   };
