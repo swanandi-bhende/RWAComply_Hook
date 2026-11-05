@@ -1,0 +1,1418 @@
+﻿RWAComply idea: 
+
+
+RWAComplyHook (Uniswap v4)
+RWAComplyHook is a Uniswap v4 hook for specialized, compliance-aware markets. It enforces tier-based access, retail caps, volatility-aware dynamic fees, and admin safeguards during swap flow.
+
+
+Demo
+Demo video: (https://youtu.be/oxLZlcRivwM)
+Full workflow: full_workflow.md
+Detailed test reference with all cases, commands: docs/test_cases.md
+Core Features
+Tier-based compliance access:
+Tier 0: blocked
+Tier 1: retail (capped)
+Tier 2: institutional
+Dynamic fees based on oracle volatility and user tier
+Admin controls:
+pause and unpause
+set retail cap
+set volatility threshold
+update oracle address
+PoolManager integration tests on the real hook call path
+Repository Layout
+src/RWAComplyHook.sol - main hook logic
+src/MockRWAOracle.sol - volatility oracle
+src/PoolExecutor.sol - swap execution helper
+src/MockERC20.sol - demo tokens
+test/RWAComply.t.sol - hook unit tests
+test/RWAComplyIntegration.t.sol - PoolManager integration tests
+script/DeployFull.s.sol - canonical local deployment flow
+script/run_canonical_demo.sh - one-command demo run
+frontend/ - interactive UI and presentation page
+docs/demo_run_log.txt - reproducible local run output
+Quick Start (Local)
+Start local chain:
+anvil
+Deploy and run canonical flow:
+bash script/run_canonical_demo.sh
+Start frontend:
+cd frontend
+npm install
+npm run dev
+Open:
+http://localhost:3000
+
+
+Run Tests
+forge test
+License
+MIT
+
+
+Brand Positioning 
+RWAComply 
+Building a Compliant Liquidity Layer for Tokenized Real-World Assets 
+We position RWAComply as a specialized Uniswap v4 hook protocol that enables secure, 
+adaptive liquidity pools for RWAs, bridging DeFi with regulated assets. This focuses the TAM on 
+tokenized real estate, treasuries, and credit markets, with opportunities in institutional trading, 
+retail access to RWAs, and cross-chain compliance automation. While platforms like Centrifuge 
+focus on issuance and BlackRock on enterprise tokenization, adaptive, hook-native compliance 
+for on-chain liquidity is underserved. We'll emphasize real-world utility in mitigating regulatory 
+risks while unlocking DeFi composability for RWAs. 
+Vision 
+We're building a permissioned Uniswap v4 hook that creates tiered, compliant liquidity pools for 
+RWAs (e.g., tokenized real estate or USDC-backed bonds). It gates access via KYC/identity 
+checks and dynamically adapts parameters like fees or swap caps based on user tiers and 
+oracle-fed real-world asset status. Integrated with Reactive Network for cross-chain reactivity 
+(e.g., auto-updating compliance from Ethereum KYC events to Unichain pools), RWAComply 
+supercharges Uniswap for institutions—delivering deeper liquidity, lower risks, and seamless 
+DeFi integration without sacrificing speed. 
+Problem Statement 
+Regulatory Fragmentation in RWAs:  
+Tokenized assets like treasuries face strict compliance hurdles, fragmenting liquidity across 
+permissioned silos and deterring DeFi participation. 
+Static Compliance Gaps:  
+Existing hooks (e.g., basic whitelists) can't adapt to real-time events like asset audits or user tier 
+changes, leading to over-exposure for retail or paused institutional flows. 
+Cross-Chain Inefficiencies:  
+Off-chain KYC or oracle updates don't propagate automatically, causing delays in volatile RWA 
+markets and missed arbitrage opportunities. 
+Our Customers 
+Liquidity Providers (LPs) & Institutions 
+Profile:  
+Funds like BlackRock or retail whales providing liquidity to RWA pools (e.g., real estate tokens 
+on Unichain). 
+Pain Point:  
+Risk of non-compliant flows eroding yields; need adaptive fees to protect against volatility 
+without manual intervention. 
+Willingness to Pay:  
+Institutions allocate billions to compliant DeFi; they'd pay premium fees or protocol shares for 
+risk-mitigated liquidity. 
+Traders & Swappers 
+Profile:  
+Retail traders, algo bots, or enterprises swapping RWAs (e.g., converting tokenized bonds to 
+stables). 
+Pain Point:  
+Blocked or capped access due to regs; lack of tiered execution leads to high slippage in 
+low-liquidity pools. 
+Willingness to Pay:  
+Traders pay for better execution (e.g., lower fees via verification); integrate with wallets for 
+seamless upgrades. 
+RWA Issuers & Oracles 
+Profile:  
+Protocols like Centrifuge or Chainlink data providers feeding asset status. 
+Pain Point:  
+No native hooks to enforce real-world compliance on-chain, limiting adoption. 
+Willingness to Pay:  
+Low (integration fees); earn from boosted volume and protocol revenue shares. 
+Workflow 
+LP/Institution Workflow (Providing Compliant Liquidity) 
+LPs are institutions or verified users supplying assets to RWA pools. 
+1. Onboarding and Verification 
+Connect wallet to the RWAComply frontend (Next.js dApp). 
+Submit KYC via integrated identity (e.g., Circle or mock ENS merkle proofs) to get tier 
+(retail/institutional). 
+2. Adding Liquidity 
+Select RWA pool (e.g., tokenized treasury/USDC on Unichain). 
+Call beforeModifyPosition via hook—system checks tier and oracle (Chainlink for asset status); 
+auto-adjusts range if under audit. 
+Confirm: Hook mints NFT-wrapped position (for fractional yield accrual). 
+3. Monitoring & Adaptation 
+Dashboard tracks fees earned, tier upgrades (e.g., hold NFT to boost status). 
+Reactive Network callback: On cross-chain event (e.g., KYC revocation on Base), auto-pauses 
+position or hikes fees. 
+4. Post-Provision 
+Withdraw anytime; earnings auto-distributed minus compliance premiums. 
+Trader/Swapper Workflow (Executing Compliant Trades) 
+Traders are users swapping in/out of RWA pools. 
+1. Onboarding and Verification 
+Connect wallet to dApp. 
+Optional: Verify for higher tier (unlocks lower fees/caps). 
+2. Querying the Pool 
+Input swap details (e.g., USDC to RWA bond). 
+Hook's beforeSwap checks tier + oracle; applies dynamic fee (0.05% institutional vs. 0.5% retail) 
+or caps size. 
+3. Executing 
+Approve: Transaction routes through hook on Unichain. 
+Post-swap: afterSwap accrues fees to NFT for yield holders. 
+4. Post-Trade 
+Rate execution; track impact on pool health via dashboard. 
+Differentiators 
+Adaptive Intelligence:  
+Unlike static permissioned hooks (e.g., VioletID gates), ours uses oracle + Reactive for real-time 
+adaptation—e.g., auto-pause on "asset audit" signals, creating truly responsive liquidity. 
+Cross-Chain Supercharge:  
+Chatty oracles give snapshots; we enable event-driven callbacks (e.g., Ethereum KYC → 
+Unichain update), reducing latency vs. manual bridges. 
+Tiered Monetization:  
+Basic hooks lack revenue loops; ours accrues fees to upgradable NFTs, turning compliance into 
+a yield engine for LPs—while qualifying for Unichain/Reactive prizes via direct integrations.
+
+
+
+
+Idea Form 
+RWAComply 
+Project Description:  
+A permissioned Uniswap v4 hook optimized for tokenized Real-World Assets (RWAs) like real 
+estate or treasuries. It gates access via KYC/identity checks and dynamically adapts pool 
+parameters (e.g., fees or swap caps) based on user compliance tiers and RWA oracle data 
+(e.g., Chainlink feeds for asset status). Integrated with Reactive Network for cross-chain 
+reactivity (e.g., auto-updating compliance from off-chain events) and deployed on Unichain for 
+better institutional liquidity. This creates tiered, compliant liquidity to mitigate regulatory risks 
+while unlocking DeFi for RWAs. 
+Concept:  
+A permissioned hook for RWA pools (e.g., tokenized real estate, treasuries, or credit like 
+USDC-backed bonds) that not only gates access via KYC/identity checks but dynamically 
+adapts pool parameters based on the user's compliance tier and the RWA's real-world status 
+(e.g., via an oracle). This goes beyond static whitelists: it creates "tiered liquidity" where verified 
+institutions get lower fees/deeper liquidity, while retail gets capped exposure—mitigating 
+regulatory risks for RWAs.  
+To supercharge it for prizes: 
+Integrate Reactive Network for cross-chain reactivity (e.g., auto-update compliance status from 
+an off-chain KYC event on another chain, like Ethereum mainnet verifying a user's ID then 
+triggering an update on Unichain). 
+Target Unichain deployment (high RWA volume potential) and select Reactive as a partner in 
+submission for their prize track—they explicitly list "Permissioned Pool Hook" as a 
+recommended idea. 
+Why this is different and prize-worthy: 
+Originality (High):  
+Most existing permissioned hooks (e.g., VioletID) are basic gates. Yours adds adaptive 
+logic—e.g., if an RWA oracle signals "asset under audit" (real-world event like a property 
+valuation change), the hook auto-pauses adds/swaps for non-institutional users or adjusts fees. 
+No direct copies in the current ecosystem (from recent searches: only generic compliance hooks 
+exist, no adaptive ones tied to RWA oracles). 
+Unique Execution (High):  
+Use Reactive for async/cross-chain compliance (e.g., a KYC update on Base triggers a callback 
+to your Unichain pool). This "supercharges" the hook as per Reactive's docs, making it modular 
+and automatable—perfect for their judging criteria (innovative use of Reactive Smart Contracts). 
+Impact (High):  
+Unlocks institutional RWAs on Uniswap (e.g., better liquidity for tokenized bonds without full 
+permissionlessness risking regs). Clear DeFi value: reduces RWA fragmentation, attracts VCs 
+like a16z judging the event. 
+Compared to others:  
+Avoids overbuilt perps (Unichain's idea, but crowded). Stands out from taught hooks like 
+dynamic fees—yours is RWA-specific. Prize odds: Eligible for general ($25k+ pool), Unichain 
+(innovation in tokenized assets), and Reactive (direct match to their list). 
+Feasibility for solo:  
+Core in week 1 (permissioned base + adaptive fees). Reactive integration in week 2 (deploy 
+their two contracts). Tests/frontend in week 3. No testnet deploy needed per guidelines. 
+High-Level How It Works 
+Base Structure:  
+Extend BaseHook from Uniswap v4-periphery. Deploy on Unichain testnet for demo. 
+Key Callbacks: 
+beforeSwap / beforeModifyPosition:  
+Check user's compliance tier (e.g., via Circle Compliance Engine or a simple on-chain registry 
+like ENS + merkle proofs for KYC). If low-tier, apply a higher fee (e.g., 0.5% vs 0.05% for 
+institutions) or cap swap size. 
+afterSwap:  
+If integrated, accrue fees to an NFT (inspired by "NFT Strategy Token Hooks") representing 
+fractional RWA yield—users "upgrade" tiers by holding it. 
+Reactive Twist:  
+Deploy RSC on Reactive Network to monitor an RWA oracle (e.g., Chainlink feed for asset 
+status). On event (e.g., "compliance revoked"), it callbacks to your hook on Unichain to update 
+the whitelist or pause. 
+Oracle/Compliance:  
+Use Chainlink for RWA data (e.g., tokenized real estate price feeds). For identity: Start with a 
+mock registry (address list), upgrade to real like Worldcoin or Civic if time. 
+Demo Flow:  
+Video shows: 1) Unverified user blocked/capped. 2) Verified user swaps with low fees. 3) Oracle 
+update triggers adaptive change (e.g., fee hike on volatility). Frontend: Basic Next.js app to 
+interact (add liquidity, swap, check tier). 
+README/Submission Tips:  
+List integrations clearly (Reactive, Chainlink). Public GitHub, ≤5 min Loom video covering 
+problem (RWA reg barriers), how it works, vs existing (e.g., static vs adaptive), impact 
+(institutional adoption). 
+Potential Challenges + Mitigations 
+Complexity:  
+Scope to MVP—skip full frontend if tests cover functionality (per binary quals). 
+Security:  
+Avoid custody (hook doesn't hold funds). Test for reentrancy (common hook vuln). 
+Differentiation Proof:  
+From ecosystem scans, no exact matches—closest are privacy-focused (FHE) or basic 
+permissioned, not adaptive/oracle-tied.
+
+
+V1: 
+Set up your development environment:  
+Install Foundry for Solidity development and testing, clone the Uniswap v4-periphery repository to access 
+the BaseHook template, and set up a local Anvil node for initial testing before moving to Unichain testnet. 
+Define the hook's basic structure:  
+Extend the BaseHook contract from Uniswap v4-periphery in a new Solidity file called 
+RWAComplyHook.sol, inheriting necessary interfaces like IHook and adding state variables for user tiers 
+(a mapping from address to uint8 for retail=1, institutional=2), oracle feed address, and a merkle root for 
+the whitelist. 
+Implement user tier verification logic:  
+In the constructor, set up an Ownable pattern using OpenZeppelin for admin controls, and create a 
+function to update user tiers based on mock KYC (e.g., admin adds addresses to a simple array or merkle 
+tree for proofs). 
+Add permissioned access gating in beforeSwap callback:  
+Write the beforeSwap function to first verify the user's tier by checking against the registry; if unverified 
+or low-tier, revert the transaction with a custom error message like "AccessDenied: Verify KYC for 
+institutional tier". 
+Incorporate dynamic fee adjustment in beforeSwap:  
+Query the Chainlink oracle feed within beforeSwap to fetch the current RWA asset status (e.g., price 
+deviation or audit flag); if volatility exceeds a threshold (e.g., 5%), apply a higher dynamic fee multiplier 
+(e.g., 0.5% for retail vs. 0.05% for institutional) by returning a modified SwapConfig. 
+Extend gating to beforeModifyPosition callback:  
+Implement beforeModifyPosition similarly to beforeSwap, checking tier and oracle status before allowing 
+liquidity adds or removals; for low-tier users during an "audit mode" signal from the oracle, cap the 
+position size or auto-narrow the liquidity range. 
+Accrue fees to NFT in afterSwap callback:  
+Create an afterSwap function that calculates swap fees and transfers a portion to a linked NFT contract; 
+emit an event for off-chain tracking to simulate yield accrual for fractional RWA positions. 
+Design and deploy the NFT contract:  
+Build a separate ComplianceNFT.sol as an ERC-721 contract using OpenZeppelin, with minting triggered 
+on successful liquidity adds via the hook, including metadata for tier upgrades (e.g., holding >1 NFT 
+boosts user tier automatically). 
+Integrate Chainlink oracle for RWA data:  
+Install Chainlink contracts via Foundry (import from npm), configure the hook to use a specific feed (e.g., 
+a mock or testnet USD/RealEstate price feed), and add a function to update the feed address by the owner. 
+Set up mock identity registry for compliance:  
+For MVP, implement a simple address-based whitelist in the hook contract; include a setter function for 
+admins to add/remove addresses, and plan for future upgrades like ENS merkle proofs or Circle 
+integration via comments in the code. 
+Prepare for Reactive Network integration:  
+Review Reactive docs and deploy their two required contracts (Reactive Smart Contract and destination 
+contract) on a test setup; configure the RSC to monitor a sample oracle event (e.g., 
+"ComplianceRevoked(address user)"). 
+Implement cross-chain callback logic:  
+Add a public updateWhitelistOrPause function in the hook that can be called by the Reactive destination 
+contract; on callback from RSC (e.g., triggered by an Ethereum KYC event), it updates the user's tier to 0 
+(revoked) or pauses the pool by setting a global flag. 
+Deploy the hook and dependencies to Unichain testnet:  
+Use Foundry scripts to deploy RWAComplyHook, ComplianceNFT, and Chainlink aggregator on 
+Unichain testnet; fund a test wallet with testnet tokens and create a sample RWA pool (e.g., 
+mockTokenA/USDC) with the hook enabled. 
+Write unit tests for core callbacks:  
+Using Foundry's test framework, create tests for beforeSwap (e.g., assert fee adjustment on oracle mock 
+return), beforeModifyPosition (e.g., revert on low-tier cap), and afterSwap (e.g., check fee accrual event 
+emission); aim for 80%+ coverage. 
+Add integration tests for Reactive flow:  
+Simulate cross-chain events by manually calling the update function and verifying whitelist changes or 
+pauses; include fuzz tests for edge cases like oracle failures (fallback to pool TWAP). 
+Test for security vulnerabilities:  
+Run Slither static analysis on contracts to check for reentrancy; add ReentrancyGuard from OpenZeppelin 
+to key functions, and manually audit to ensure the hook never holds funds (only modifies params). 
+Build a basic frontend for demo interaction:  
+If time allows over tests, create a simple Next.js app with Wagmi for wallet connection, sections to add 
+liquidity (call modifyPosition via hook), swap (call swap via router), and check tier/oracle status; deploy 
+to Vercel for easy sharing. 
+Update README with all details:  
+Document installation (forge install), deployment script usage, key functions, integrations (list Reactive 
+and Chainlink with links), and how to interact (e.g., via frontend or ethers.js); include a section on vs. 
+existing hooks for differentiation.
+
+
+1. Deploy Mock ERC20 Tokens
+   Create and deploy two ERC20 tokens that will be used to form a liquidity pool (Token0 and Token1).
+
+
+2. Approve Token Spending
+   Approve the PoolManager (or router later) to spend your deployed tokens from your wallet.
+
+
+3. Construct PoolKey
+   Define a PoolKey struct including:
+
+
+* token0 address
+* token1 address
+* fee
+* tick spacing
+* hook address (your RWAComplyHook)
+
+
+4. Initialize the Pool
+   Call PoolManager.initialize() with the PoolKey and initial price (sqrtPriceX96).
+
+
+5. Add Liquidity
+   Call modifyLiquidity via PoolManager to add initial liquidity to the pool.
+   Ensure your hook’s beforeAddLiquidity is triggered and working.
+
+
+6. Verify Hook Permissions
+   Ensure your hook address has correct permission bits set (important for Uniswap v4 hooks to activate).
+
+
+7. Execute a Swap
+   Call swap() on PoolManager with proper SwapParams.
+   This should trigger:
+
+
+* beforeSwap (tier check + revert if needed)
+* afterSwap (event emission)
+
+
+8. Test Compliance Logic
+
+
+* Try swap with tier = 0 → should revert
+* Try swap with tier = 1 or 2 → should pass
+
+
+9. Test Dynamic Fee Logic
+
+
+* Change oracle volatility
+* Observe different fee behavior for retail vs institutional users
+
+
+10. Improve Fee Handling
+    Optionally integrate fee override properly using beforeSwap return values (lpFee override).
+
+
+11. Add Event Assertions / Logging
+    Verify emitted events (FeeAccrued, TierUpdated) during execution.
+
+
+12. Write Unit Tests (Foundry)
+
+
+* beforeSwap revert cases
+* successful swap cases
+* volatility-based behavior
+* liquidity add restrictions
+
+
+13. Add Integration Test
+    Simulate full flow:
+
+
+* deploy → create pool → add liquidity → swap → verify outputs
+
+
+14. Implement NFT Fee Accrual (Optional Next Phase)
+    Create ERC721 contract to represent LP positions and distribute fees.
+
+
+15. Replace Mock Oracle with Chainlink (Upgrade)
+    Integrate real oracle feed instead of MockRWAOracle.
+
+
+16. Add Reactive Network Integration (Advanced)
+    Enable cross-chain callback to:
+
+
+* update user tier
+* pause pool
+* revoke access
+
+
+17. Build Minimal Frontend (Optional but useful)
+    Allow:
+
+
+* wallet connect
+* tier display
+* swap execution
+* volatility display
+
+
+18. Clean Codebase for Submission
+
+
+* Remove unused imports
+* Fix warnings
+* Optimize functions
+
+
+19. Finalize README
+    Include:
+
+
+* architecture
+* flow
+* how to run
+* demo explanation
+
+
+20. Record Demo Video
+    Show:
+
+
+* blocked user
+* verified user swap
+* volatility change effect
+* hook execution
+
+
+21. Prepare Submission
+    Ensure:
+
+
+* public GitHub repo
+* working code
+* tests OR frontend
+* demo video under 5 min
+
+
+22. Optional Optimization
+
+
+* Gas optimization
+* security checks (reentrancy, edge cases)
+* better error messages
+
+
+23. Stretch Goals
+
+
+* tier upgrade via NFT
+* swap caps for retail users
+* liquidity range adjustments
+* multiple pools support
+
+
+
+
+Detailed Next Steps (To-Do List)
+
+
+--------------------------------------------------
+
+
+PHASE 1: Complete Core Uniswap Integration
+
+
+1. Deploy Mock ERC20 Tokens
+- Create two ERC20 tokens (TokenA and TokenB)
+- Mint sufficient supply to deployer
+- Approve PoolManager for token transfers
+
+
+2. Create PoolKey
+- Define:
+  - token0 and token1
+  - fee (use dynamic fee flag)
+  - hook address (your deployed hook)
+- Ensure correct token ordering (token0 < token1)
+
+
+3. Initialize Pool
+- Call PoolManager.initialize()
+- Set initial sqrtPriceX96
+- Verify hook’s beforeInitialize and afterInitialize are triggered
+
+
+4. Add Liquidity
+- Use modifyLiquidity()
+- Provide initial liquidity range
+- Ensure beforeAddLiquidity hook executes
+- Confirm only verified users can add liquidity
+
+
+5. Perform First Swap
+- Call swap() via PoolManager
+- Pass SwapParams:
+  - amountSpecified
+  - zeroForOne
+- Verify:
+  - beforeSwap executes
+  - fee returned from hook is applied
+  - afterSwap event is emitted
+
+
+--------------------------------------------------
+
+
+PHASE 2: Validate Hook Behavior On-Chain
+
+
+6. Test Compliance Logic
+- Try swap with:
+  - Unverified user → should revert
+  - Retail user → should pass with limits
+  - Institutional user → no limit
+
+
+7. Test Retail Cap
+- Attempt swap > retailSwapCap
+- Ensure transaction reverts
+
+
+8. Test Dynamic Fees
+- Change oracle volatility
+- Perform swaps:
+  - Low volatility → normal fee
+  - High volatility:
+    - Retail → higher fee
+    - Institutional → lower fee
+
+
+9. Test Pause Mechanism
+- Call setPoolPaused(true)
+- Attempt swap → should revert
+- Resume and test again
+
+
+--------------------------------------------------
+
+
+PHASE 3: Improve Contract Design
+
+
+10. Add Events for Better Tracking
+- Emit events for:
+  - Swap blocked
+  - Fee calculated
+  - Tier usage
+
+
+11. Add Getter Functions
+- Expose:
+  - current volatility
+  - user tier
+  - current fee logic output
+
+
+12. Optimize Gas
+- Reduce redundant storage reads
+- Cache values where needed
+
+
+--------------------------------------------------
+
+
+PHASE 4: Replace Mock Components
+
+
+13. Replace Mock Oracle
+- Integrate Chainlink or external oracle
+- Fetch real volatility or price feeds
+
+
+14. Add Real Token Support
+- Use standard ERC20 tokens (USDC, WETH on testnet)
+- Handle decimals properly
+
+
+--------------------------------------------------
+
+
+PHASE 5: Advanced Features
+
+
+15. NFT-based Fee Accrual (Optional)
+- Track fees per user using NFTs
+- Reward institutional liquidity providers
+
+
+16. Tier Management System
+- Add whitelist / KYC registry
+- Allow batch tier updates
+
+
+17. Governance Control
+- Add multi-sig or DAO ownership
+- Control:
+  - pause
+  - thresholds
+  - caps
+
+
+--------------------------------------------------
+
+
+PHASE 6: Frontend / UX
+
+
+18. Build Basic UI
+- Connect wallet
+- Display:
+  - user tier
+  - current fee
+  - pool status
+
+
+19. Add Swap Interface
+- Input token amount
+- Show estimated fee before execution
+
+
+20. Admin Dashboard
+- Set tiers
+- Update oracle
+- Pause/unpause pool
+
+
+--------------------------------------------------
+
+
+PHASE 7: Testing & Security
+
+
+21. Expand Test Coverage
+- Edge cases:
+  - zero amounts
+  - extreme volatility
+  - rapid swaps
+
+
+22. Fuzz Testing
+- Random inputs for swap amounts and tiers
+
+
+23. Security Checks
+- Reentrancy safety (even though hook doesn’t hold funds)
+- Validate all external calls
+
+
+--------------------------------------------------
+
+
+PHASE 8: Deployment
+
+
+24. Deploy to Testnet
+- Use Sepolia / Holesky
+- Deploy:
+  - PoolManager
+  - Tokens
+  - Hook
+
+
+25. Verify Contracts
+- Publish on Etherscan
+
+
+26. End-to-End Testing
+- Full swap flow with real users
+
+
+--------------------------------------------------
+
+
+PHASE 9: Finalization
+
+
+27. Documentation
+- Final README
+- Architecture diagram
+- Hook lifecycle explanation
+
+
+28. Demo Preparation
+- Record working swap
+- Show:
+  - compliance blocking
+  - dynamic fees
+
+
+29. Submission / Pitch
+- Highlight:
+  - Uniswap v4 hook usage
+  - real-world asset compliance
+  - extensibility
+
+
+--------------------------------------------------
+
+
+Current Priority (Immediate Next Step)
+
+
+→ Create pool + add liquidity + perform first swap
+
+
+This is the most important step to prove:
+YOUR HOOK WORKS INSIDE UNISWAP V4
+
+
+
+
+
+
+
+
+PHASE 1 (1.5 hrs) — MAKE HOOK ACTUALLY RUN IN POOL
+
+
+1. Deploy 2 Mock ERC20 tokens
+2. Approve PoolManager to spend tokens
+3. Create PoolKey with:
+   - token0, token1
+   - fee
+   - tickSpacing
+   - hook address
+
+
+4. Initialize pool using PoolManager.initialize()
+
+
+5. Add liquidity using modifyLiquidity()
+   - Ensure hook executes
+
+
+6. Perform swap using swap()
+   - Confirm:
+     - beforeSwap runs (tier check)
+     - afterSwap runs
+
+
+7. Test 3 cases:
+   - tier = 0 → revert
+   - retail → high fee
+   - institutional → low fee
+
+
+
+
+(Reference: this is explicitly your next required step) :contentReference[oaicite:1]{index=1}
+
+
+
+
+==============================
+PHASE 2 (45 mins) — LOGS + DEMO PROOF
+==============================
+
+
+8. Add console logs / events:
+   - Tier detected
+   - Fee applied
+   - Swap allowed/blocked
+
+
+9. Run script and capture:
+   - revert case
+   - successful swap
+   - fee difference
+
+
+10. Save terminal outputs (for demo)
+
+
+
+
+==============================
+PHASE 3 (1 hr) — SIMPLE BUT IMPRESSIVE UI
+==============================
+
+
+Build MINIMAL Next.js UI (do NOT overbuild)
+
+
+Pages:
+
+
+1. Wallet connect (wagmi)
+2. Show:
+   - user tier
+   - current volatility
+   - expected fee
+
+
+3. Swap section:
+   - input amount
+   - button: Swap
+
+
+4. Admin section:
+   - setTier(address, tier)
+   - change volatility
+
+
+UI Goal:
+- Clean dashboard
+- Show "Retail vs Institutional difference clearly"
+
+
+DO NOT:
+- build full charts
+- build full LP UI
+- build NFT system
+
+
+👉 Just make interaction visible
+
+
+
+
+==============================
+PHASE 4 (30 mins) — README FIX
+==============================
+
+
+11. Update README:
+   - What problem (RWA compliance)
+   - How hook works (beforeSwap, oracle, tiers)
+   - Demo flow:
+       - unverified blocked
+       - retail high fee
+       - institutional low fee
+
+
+12. Clearly mention:
+   - Uniswap v4 hook
+   - Oracle integration
+   - Compliance logic
+
+
+
+
+==============================
+OPTIONAL (IF TIME LEFT)
+==============================
+
+
+- Improve UI styling (dark theme + cards)
+- Add badges:
+   - "Retail"
+   - "Institutional"
+- Add "Fee Preview" before swap
+
+
+
+
+==============================
+SUCCESS CRITERIA
+==============================
+
+
+You WIN if:
+
+
+✔ Hook executes inside real pool
+✔ Swap clearly shows compliance + dynamic fee
+✔ Demo video is clear
+✔ UI makes it easy to understand
+
+
+==============================
+
+
+Page 1: Hero/Compliance Dashboard (Home)
+Goal: Immediately show what makes this hook different
+
+
+Above the fold:
+
+
+Bold title: "RWA Compliance Hook for Uniswap v4"
+Subtitle: "Regulatory-ready trading with dynamic fees"
+3-card visual summary:
+Tier-Based Access (show 3 tiers with examples)
+Oracle-Driven Fees (volatility → fee mapping)
+Hook Integration (how it plugs into PoolManager)
+Live Compliance Status (populated from chain):
+
+
+Your wallet's tier (fetched from userTier mapping)
+Current oracle volatility
+Active pool fee structure
+Applicable swap cap for you
+Quick Stats (from actual contracts):
+
+
+volatilityThreshold value
+retailSwapCap in tokens
+Hook owner address
+Pool paused status
+
+
+Page 2: Interactive Tier Tester
+Goal: Make judges understand the access control immediately
+
+
+Visual Flow:
+
+
+Select a tier (0, 1, or 2)
+Show: "What happens if YOU try to swap?"
+Tier 0: ❌ Access Denied (show the error: AccessDenied())
+Tier 1: ✅ Allowed – Retail Fee Applied (show fee calculation)
+Tier 2: ✅ Allowed – Institutional Rate (show lower fee)
+Contract Reality Check (read-only):
+
+
+Show code snippet of beforeSwap() tier check
+Display actual getBaseFeeForTier(tier) values from contract
+Explain in plain English: "Tier 2 pays 10 bps, Tier 1 pays 30 bps"
+Optional Interaction:
+
+
+User can modify their tier (via backend simulation UI explaining permissions)
+See fee change in real time
+
+
+Page 3: Dynamic Fee Visualizer
+Goal: Show the oracle-driven fee system
+
+
+Interactive Chart:
+
+
+X-axis: Volatility (0-100%)
+Y-axis: Fee (bps)
+Show 2 curves: Tier 1 (retail) vs Tier 2 (institutional)
+volatilityThreshold marked on chart
+Live oracle volatility indicator
+Contract Data Displayed:
+
+
+Current oracle volatility (from MockRWAOracle.getVolatility)
+Volatility threshold (from hook.volatilityThreshold)
+Fee tiers at current volatility
+Explain: "When volatility exceeds 5%, dynamic fees kick in"
+Simulated Scenario:
+
+
+Slider to adjust simulated volatility
+Shows fee that would apply at that volatility
+Include comparison to static-fee pools
+
+
+Page 4: Live Swap Demo
+Goal: Real contract interaction showing the hook in action
+
+
+Before Swap (Preparation):
+
+
+Show pool state: tick, liquidity, current price
+Show your balances (read from MockERC20)
+Show your tier (read from hook)
+Show applicable fee (calculated)
+Execute Swap:
+
+
+Input amount
+Real on-chain approval+swap (not simulated)
+Show transaction breakdown:
+Hook beforeSwap called? ✅
+Tier check passed? ✅
+Fee applied? ✅ (show bps)
+Swap executed? ✅
+After Swap (Results):
+
+
+Updated balances
+Amount out with fee deduction highlighted
+Transaction hash linked to etherscan/anvil explorer
+Hook events emitted (BeforeSwapCalled, etc.)
+Error Showcase (Optional):
+
+
+Try swapping as Tier 0
+Show AccessDenied() error in real time
+Explain: "This is the hook protecting compliance"
+
+
+Page 5: Admin Observatory
+Goal: Show owner controls + teach how to manage the hook
+
+
+Read-Only View of Current State:
+
+
+Hook owner address
+Oracle address
+Volatility threshold
+Retail swap cap
+Pool paused status
+Base fee per tier
+Interactive Admin Panel (if user is owner):
+
+
+Set volatility threshold slider
+Set retail cap
+See live changes in fees above (Page 3 chart updates)
+Write events to transaction log
+Security Highlight:
+
+
+Show onlyOwner modifier explanation
+Show zero-address validation in setOracle
+Explain Ownable pattern
+Oracle Control:
+
+
+If owner is also oracle owner, allow setVolatility
+Trigger a fee change and show it ripple through Page 3
+
+
+--
+🎨 Visual/UX Principles
+Contract-Centric Code Snippets:
+
+
+On each page, show relevant contract code snippet
+Highlight the specific function being demonstrated
+Example: On Page 2, show beforeSwap() with tier check highlighted
+Transparency via Live Reads:
+
+
+Every static value should be fetched from contracts, not hardcoded
+Display what's actually on-chain
+Error-Driven Teaching:
+
+
+Don't hide errors; use them to teach
+Examples: "Tier 0 gets AccessDenied()" shown as educational feature
+Judicial Appeal:
+
+
+Each page has a "Why This Matters for Uniswap" callout box
+Example: Page 1 → "Enables KYC/AML-compliant token swaps on Uniswap"
+Example: Page 3 → "Hook plugs directly into PoolManager for regulatory pricing"
+No Fake Data:
+
+
+Remove all mock transaction simulation
+All interactions are real contract calls
+Build fails clearly if deployment is stale
+--
+📊 Execution Roadmap
+Phase 1: Scaffold Core Pages (30 min)
+
+
+Create page structure: Hero → Tiers → Chart → Swap → Admin
+Wire up contract ABIs and calls
+Display live on-chain data
+
+
+
+
+Phase 2: Interactive Tier Tester (20 min)
+
+
+Tier selector radio buttons
+Render tier → fee mapping from contract
+Show tier check logic as code snippet
+
+
+
+
+Phase 3: Dynamic Fee Chart (25 min)
+
+
+Build volatility slider
+Plot fee curves for both tiers
+Link to oracle volatility
+
+
+
+
+Phase 4: Real Swap Interface (30 min)
+
+
+Replace fake simulation with real calls
+Approval + swap execution
+Show hook events in real time
+
+
+
+
+Phase 5: Polish & Deploy (15 min)
+
+
+Remove generic Uniswap styling
+Add contract code explanations
+Test end-to-end on fresh anvil
+
+
+
+
+RWAComply Canonical Demo Run Log
+Generated: 2026-03-19T18:36:30.071Z
+Chain ID: 31337
+Broadcast File: broadcast/DeployFull.s.sol/31337/run-latest.json
+
+
+Addresses
+POOL_MANAGER=0x5fbdb2315678afecb367f032d93f642f64180aa3
+HOOK_ADDRESS=0x37b73fb90d78624c8ba6e7c9313a3c4abd4078c0
+ORACLE=0xe7f1725e7734ce288f8367e1bb143e90bb3f0512
+TOKEN_A=0xdc64a140aa3e981100a9beca4e685f962f0cf6c9
+TOKEN_B=0x5fc8d32690cc91d4c39d9d3abcbd16989f875707
+EXECUTOR=0xa513e6e4b8f2a923d98304ec87f64353c4d5c853
+
+
+Transaction Hashes
+1. 0xdbf24bdf9400703249e628296092da9ac27c216b7b87ae2de770f6557bcd8a1b | PoolManager | CREATE
+2. 0x5b075bd0b7f323775c47903a9e8662633254ac140b02d8a49516e1f4d1278ef2 | MockRWAOracle | CREATE
+3. 0x43d078f8adb914eac39e104e1747c2e7739030b3751c8c94b585424f81c7710b | RWAComplyHook | CREATE2
+4. 0xf4d59a4365d66303652487d83db8f7efacad5788ce9266c2389c2fb8087d6a42 | MockRWAOracle | setVolatility(uint256)
+5. 0x778c56de354ce94dd76ab1b0fe90967876de8482eeb468ea8b7d114208e4aed2 | MockERC20 | CREATE
+6. 0xe3efeeb891b1fa3cfbe195e2940437762921aefafae8918d6bc961c32d14e498 | MockERC20 | CREATE
+7. 0x214e010069083dd25303e735efc9a080fb0fe899abfc8e902b812764b7344257 | PoolManager | initialize((address,address,uint24,int24,address),uint160)
+8. 0x304ffb3eb08c6e9b783e57dfea9bd3c89d9ab0131ef8ad88ae19ce715e68ff68 | PoolExecutor | CREATE
+9. 0x4b2e7edbad6f0292dc3adc36c9ea5cb2c737f2b60a387fe7b7e51d3c8d084449 | RWAComplyHook | setTier(address,uint8)
+10. 0x5daf671bf61e6f29a25834492a6ab9e8eb5a74b02e948ae3442acfa4ba472336 | MockERC20 | transfer(address,uint256)
+11. 0xc3cd09a1bbf7e3a99ad5d0d428afb67b2f659209f57d6e128cc072c1ab3fb3d5 | MockERC20 | transfer(address,uint256)
+12. 0xec796aea64a660037a59de18f0790c1b9e9c2130e5b74850cd93b7f8896f0c83 | PoolExecutor | execute()
+
+
+Re-run Commands
+1) forge script script/DeployFull.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
+2) node script/generateDemoRunLog.js
+
+
+
+
+# Test Cases
+
+
+This document lists every test in this repository, how to run it, and what it verifies.
+
+
+## Quick Run Guide
+
+
+- Run all tests:
+
+
+```bash
+forge test
+```
+
+
+- Run a full test file:
+
+
+```bash
+forge test --match-path test/Counter.t.sol -vv
+forge test --match-path test/RWAComply.t.sol -vv
+forge test --match-path test/RWAComplyIntegration.t.sol -vv
+```
+
+
+- Run a single test:
+
+
+```bash
+forge test --match-test <TEST_NAME> -vv
+```
+
+
+## test/Counter.t.sol
+
+
+- `test_Increment`
+  - What it does: Confirms `increment()` moves the counter from 0 to 1.
+  - Run:
+
+
+```bash
+forge test --match-test test_Increment -vv
+```
+
+
+- `testFuzz_SetNumber(uint256 x)`
+  - What it does: Confirms `setNumber(x)` stores any fuzzed `uint256` value correctly.
+  - Run:
+
+
+```bash
+forge test --match-test testFuzz_SetNumber -vv
+```
+
+
+## test/RWAComply.t.sol
+
+
+- `testRevertIfUnverified`
+  - What it does: Confirms an unverified user is rejected by `beforeSwap`.
+  - Run:
+
+
+```bash
+forge test --match-test testRevertIfUnverified -vv
+```
+
+
+- `testRetailFee`
+  - What it does: Confirms Tier 1 users get fee `5000` in high volatility.
+  - Run:
+
+
+```bash
+forge test --match-test testRetailFee -vv
+```
+
+
+- `testInstitutionalFee`
+  - What it does: Confirms Tier 2 users get fee `500` in high volatility.
+  - Run:
+
+
+```bash
+forge test --match-test testInstitutionalFee -vv
+```
+
+
+- `testPause`
+  - What it does: Confirms swaps revert when the pool is paused.
+  - Run:
+
+
+```bash
+forge test --match-test testPause -vv
+```
+
+
+- `testOnlyOwnerCanSetVolatility`
+  - What it does: Confirms non-owners cannot call oracle `setVolatility`.
+  - Run:
+
+
+```bash
+forge test --match-test testOnlyOwnerCanSetVolatility -vv
+```
+
+
+- `testOwnerCanSetVolatility`
+  - What it does: Confirms the owner can update oracle volatility.
+  - Run:
+
+
+```bash
+forge test --match-test testOwnerCanSetVolatility -vv
+```
+
+
+- `testOwnerCanUpdateHookConfig`
+  - What it does: Confirms the owner can update threshold, retail cap, and oracle address.
+  - Run:
+
+
+```bash
+forge test --match-test testOwnerCanUpdateHookConfig -vv
+```
+
+
+- `testNonOwnerCannotUpdateHookConfig`
+  - What it does: Confirms non-owners cannot change hook config values.
+  - Run:
+
+
+```bash
+forge test --match-test testNonOwnerCannotUpdateHookConfig -vv
+```
+
+
+- `testSetOracleZeroAddressReverts`
+  - What it does: Confirms setting oracle to zero address reverts with `ZeroAddress`.
+  - Run:
+
+
+```bash
+forge test --match-test testSetOracleZeroAddressReverts -vv
+```
+
+
+## test/RWAComplyIntegration.t.sol
+
+
+- `testTier0SwapRevertsThroughPoolManager`
+  - What it does: Confirms Tier 0 swap reverts through PoolManager with wrapped `AccessDenied`.
+  - Run:
+
+
+```bash
+forge test --match-test testTier0SwapRevertsThroughPoolManager -vv
+```
+
+
+- `testTier0AddLiquidityRevertsThroughPoolManager`
+  - What it does: Confirms Tier 0 add-liquidity reverts through PoolManager with wrapped `AccessDenied`.
+  - Run:
+
+
+```bash
+forge test --match-test testTier0AddLiquidityRevertsThroughPoolManager -vv
+```
+
+
+- `testTier1SwapPassesThroughPoolManager`
+  - What it does: Confirms Tier 1 swaps succeed and emit expected `BeforeSwapCalled` data.
+  - Run:
+
+
+```bash
+forge test --match-test testTier1SwapPassesThroughPoolManager -vv
+```
+
+
+- `testTier2SwapPassesThroughPoolManager`
+  - What it does: Confirms Tier 2 swaps succeed and emit expected `BeforeSwapCalled` data.
+  - Run:
+
+
+```bash
+forge test --match-test testTier2SwapPassesThroughPoolManager -vv
+```
+
+
+- `testFullFlowInitializeAddLiquidityAndSwap`
+  - What it does: Confirms end-to-end initialize, add-liquidity, and swap flow executes with expected fee.
+  - Run:
+
+
+```bash
+forge test --match-test testFullFlowInitializeAddLiquidityAndSwap -vv
+```
+
+
+- `testPausedSwapRevertsThroughPoolManager`
+  - What it does: Confirms swaps revert with `PoolPaused` when pause is enabled.
+  - Run:
+
+
+```bash
+forge test --match-test testPausedSwapRevertsThroughPoolManager -vv
+```
+
+
+- `testRetailCapExceededRevertsThroughPoolManager`
+  - What it does: Confirms retail swaps over cap revert with `RetailLimitExceeded`.
+  - Run:
+
+
+```bash
+forge test --match-test testRetailCapExceededRevertsThroughPoolManager -vv
+```
+
+
+- `testDynamicFeeAppliedDefaultLowVolatility`
+  - What it does: Confirms low volatility applies default executed fee `1000`.
+  - Run:
+
+
+```bash
+forge test --match-test testDynamicFeeAppliedDefaultLowVolatility -vv
+```
+
+
+- `testDynamicFeeAppliedRetailHighVolatility`
+  - What it does: Confirms high volatility applies executed fee `5000` for Tier 1 users.
+  - Run:
+
+
+```bash
+forge test --match-test testDynamicFeeAppliedRetailHighVolatility -vv
+```
+
+
+- `testDynamicFeeAppliedInstitutionalHighVolatility`
+  - What it does: Confirms high volatility applies executed fee `500` for Tier 2 users.
+  - Run:
+
+
+```bash
+forge test --match-test testDynamicFeeAppliedInstitutionalHighVolatility -vv
+```
+
+
+- `testStaticFeePoolIgnoresHookOverride`
+  - What it does: Confirms static-fee pools keep static fee `3000` even when hook computes a different fee.
+  - Run:
+
+
+```bash
+forge test --match-test testStaticFeePoolIgnoresHookOverride -vv
+```

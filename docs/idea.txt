@@ -1,0 +1,60 @@
+﻿Fair Claim
+Scarce things go to real people, not bots or duplicate wallets. One person, one allocation, enforced by a public contract.
+
+
+Working name. One-page overview for customer interviews. Draft, not final.
+
+
+1. The problem
+Token sales, airdrops, limited drops, and coupons get taken by the people who game them. One person creates ten wallets and claims ten times. Bots race the first second. Teams then fight it with spreadsheets, manual reviews, and "please don't multi-claim" warnings. Nothing stops it in the moment, and nobody outside the team can check whether the rules were followed.
+
+
+2. Who pays
+Campaign owners. Anyone giving away something scarce: token projects and DAOs (airdrops, token sales), consumer brands (limited drops, coupons), event organizers (limited tickets), and tokenized-asset issuers (retail allocations that must be capped).
+
+
+The people claiming don't pay. They verify once with World ID, which proves they are a unique human without revealing who they are.
+
+
+First customer we want: tokenized-asset issuers. They are required to cap retail buyers, so they have the strongest reason to pay.
+
+
+3. How it works
+Create a campaign: total supply, per-person limit, start and end dates.
+Verify once: a person proves they are unique with World ID.
+Claim: the contract checks the person's World ID nullifier, a per-person identifier that stays the same across all their wallets. If it has already claimed, the claim is rejected.
+Public record: every claim and every rejection is visible on-chain, so anyone can verify the rules were followed.
+4. How we earn
+Revenue        What it is        When
+Campaign setup fee        Flat fee per campaign, paid by the owner        At creation
+Per-claim fee        Small fee per verified claim, paid by the owner        Per claim
+Trading fee share        For tokenized-asset venues, a share of the trading fee        Later, when trading starts
+Pricing is not decided. The point to test is whether owners will pay per campaign, and how much.
+
+
+5. What the demo shows (about 3 minutes)
+A campaign owner creates a drop with a limit of one per person.
+A verified person claims. The allocation goes through.
+The same person tries a second wallet. It is rejected, and the rejection is visible on-chain.
+An unverified wallet tries to claim. It is rejected, with the reason shown.
+The public claim list. Anyone can check the rules were followed.
+6. Why this needs a blockchain
+A database can enforce a limit. It cannot give outsiders a way to check that the owner did not quietly give extra allocations to friends. The public, unchangeable claim record is the product's core value.
+
+
+7. Alternatives people use today
+Option        What it does        Gap
+Spreadsheet allowlist        Manual list of addresses        Manual, easy to game, not checkable
+Gitcoin Passport        Scores how trustworthy a wallet looks        A score, not an enforced limit per campaign
+Galxe-style campaign tools        Quests and rewards        Quest completion, not one-per-person enforcement
+World ID alone        Proves a unique human        No campaign, cap, or claim logic on top
+8. What we don't know yet
+How much value bots and duplicate claims actually take from a typical campaign.
+Whether owners would pay, or would stay with free tools.
+Whether World ID coverage is high enough for the audiences we want.
+Whether tokenized-asset issuers will buy before a full trading venue exists.
+Interview questions
+What did you last give away, and how many went to bots or duplicate wallets?
+What did you use to stop it, and what did it cost you?
+Would you pay per campaign for a rule that makes multi-claiming impossible?
+What would stop you from paying?
