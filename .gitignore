@@ -8,5 +8,7 @@ cache/
 
 # Environment
 .env
+.env.*
+!.env.example
 
 broadcast/

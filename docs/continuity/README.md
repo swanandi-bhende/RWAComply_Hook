@@ -1,44 +1,37 @@
 # Continuity
 
-RWAComply V2 extends an existing Uniswap v4 hook. It does not replace that product, and it was not created from scratch during ETHGlobal Mumbai.
+RWAComply V2 extends the existing Uniswap v4 hook. The earlier product checks who may trade, how large a retail purchase may be, and what fee applies. V2 adds a separate control: several wallets can share one USDC purchase budget, and that budget is enforced on the supported swap route.
 
-The new feature is a shared USDC purchase budget. Several registered wallets can point at one allocation id. The supported purchase route checks the remaining budget before the swap and records the USDC the pool actually takes after the swap. A different allocation id has its own budget.
+The allocation id comes from a backend signature. This phase does not connect it to World ID. It is not proof of humanity, KYC, AML, accreditation, or legal eligibility.
 
-This phase does not connect that allocation id to World ID. The id is created by a backend signature. It is not proof of humanity, KYC, AML, accreditation, or legal eligibility.
+## Earlier product
 
-## A. Original Hookathon work
+Commits `15f1a4e` (2026-02-27) through `1629f37` (2026-03-20) contain the earlier hook. As described by the repository README, that product has:
 
-Git history from `15f1a4e` (2026-02-27) through `1629f37` (2026-03-20) is the earlier product. The repository README at that point, which is still the committed `README.md` at `7bcc85a` apart from a small later edit, describes:
-
-- Tier 0 blocked, tier 1 retail with a cap, tier 2 institutional.
+- Tier 0 blocked, tier 1 retail with a cap, and tier 2 institutional.
 - A volatility oracle and tier-based dynamic fees.
 - Admin controls for pause, the retail cap, the volatility threshold, and the oracle address.
 - A Next.js demo and a local Anvil deployment.
 
 The README links a demo video: https://youtu.be/oxLZlcRivwM
 
-No hackathon submission URL, judging page, or event receipt for that March work is stored in this repository. The YouTube link above is the only public demo reference found in the current tree.
+There are no commits between `1629f37` on 2026-03-20 and `540aeb2` on 2026-11-05.
 
-## B. Work after that baseline and before ETHGlobal Mumbai
+## Later commits on `v2`
 
-The last commit before November 2026 is `1629f37` on 2026-03-20. The next commit is `540aeb2` on 2026-11-05 at 23:19 IST. There are no commits between those two. This repository does not show a separate body of work in that gap.
+These commits are in the repository history. Their dates are the git author dates.
 
-## C. Work during the ETHGlobal Mumbai dates
-
-ETHGlobal's public event list shows ETHGlobal Mumbai on 5–7 November 2026. A secondary write-up of the organiser schedule says hacking runs from 21:00 IST on 5 November to 09:00 IST on 7 November. This note uses the commit timestamps in the repository. It does not treat the secondary schedule as something verified on ethglobal.com.
-
-Commits with timestamps inside 5–7 November 2026 IST:
-
-| Commit | Timestamp (IST) | What it contains |
+| Commit | Git date | What it contains |
 |---|---|---|
-| `540aeb2` | 2026-11-05 23:19 | Documentation rearrangement. It also deleted several older docs. |
-| `7306d25` | 2026-11-05 23:59 | Frontend dependency pins and a fee helper. |
-| `bd78828` | 2026-11-06 02:28 | First `src/AllocationLedger.sol` and its tests: policy storage and wallet registration. |
-| `7bcc85a` | 2026-11-06 03:21 | Ledger spend accounting, the trusted `PoolExecutor.swapExactInput` router, router tests, and `docs/PRD v1.txt`. |
+| `540aeb2` | 2026-11-05 | Documentation rearrangement. It also removed several older docs. |
+| `7306d25` | 2026-11-05 | Frontend dependency pins and a fee helper. |
+| `bd78828` | 2026-11-06 | First `src/AllocationLedger.sol` and its tests: policy storage and wallet registration. |
+| `7bcc85a` | 2026-11-06 | Ledger spend accounting, the trusted `PoolExecutor.swapExactInput` router, router tests, and `docs/PRD v1.txt`. |
+| `b2b0b45` | 2026-11-06 | Hook budget checks, settled-USDC recording, deployment wiring, the frontend `swapExactInput` call, and CREATE2 permission mining. |
 
-`7bcc85a` is the current `HEAD` of branch `v2`. Everything after it is uncommitted local work. It has no commit hash and no git timestamp, so it is not claimed here as a committed Mumbai artifact. That working tree adds the hook's budget check, settled-USDC recording, deployment wiring, the frontend `swapExactInput` call, and CREATE2 permission mining.
+`b2b0b45` is the current `HEAD` of branch `v2`.
 
-## How the V2 purchase budget works
+## What V2 adds
 
 `src/AllocationLedger.sol` stores a wallet, an allocation id, and USDC spent for a group and period. Two wallets with the same allocation id share one counter. Another allocation id has a separate counter.
 
@@ -57,11 +50,11 @@ The recorded number is the USDC paid, not the RWA received. The same check is co
 
 ## Limits of this phase
 
-- An allocation id is not yet tied to a person through World ID.
+- An allocation id is not tied to a person through World ID. The Next.js server can sign a fresh World ID relying-party context for enrollment (`signup`) and for a later session proof (no action). It does not verify proofs, store sessions, or issue allocation ids.
 - The budget applies only to the `PoolExecutor.swapExactInput` route into this hook.
 - Direct transfers, other pools, and other protocols are outside this check.
 - A sale does not reduce the recorded spend.
-- The original tier, retail-cap, pause, and dynamic-fee checks still run on this route. Low volatility uses fee 1000. High volatility uses 5000 for tier 1 and 500 for tier 2.
+- The tier, retail-cap, pause, and dynamic-fee checks still run on this route. Low volatility uses fee 1000. High volatility uses 5000 for tier 1 and 500 for tier 2.
 
 ## Where to read the code
 

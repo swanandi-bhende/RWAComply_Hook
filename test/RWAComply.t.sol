@@ -90,6 +90,10 @@ contract RWAComplyTest is Test {
         vm.expectRevert(RWAComplyHook.PoolPaused.selector);
         vm.prank(address(poolManager));
         hook.beforeSwap(router, key, params, abi.encode(user));
+
+        hook.setPoolPaused(false);
+        vm.prank(address(poolManager));
+        hook.beforeSwap(router, key, params, abi.encode(user));
     }
 
     function testOnlyOwnerCanSetVolatility() public {

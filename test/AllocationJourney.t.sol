@@ -64,6 +64,10 @@ contract AllocationJourneyTest is Test {
     }
 
     function testSharedIdentityPurchasesRecordSettledUsdc() public {
+        assertEq(ledger.allocationIdByWallet(aliceA), aliceId);
+        assertEq(ledger.allocationIdByWallet(aliceB), aliceId);
+        assertEq(ledger.allocationIdByWallet(bob), bobId);
+
         uint256 aliceBefore = _spent(aliceId);
         uint256 paidA = _buy(aliceA, 700_000_000);
         assertEq(paidA, 700_000_000);
@@ -85,6 +89,9 @@ contract AllocationJourneyTest is Test {
         router.swapExactInput(key, 500_000_000);
         assertEq(_spent(aliceId), spentAfterA);
         assertEq(usdc.balanceOf(aliceB), 2_000_000_000);
+        assertEq(rwa.balanceOf(aliceB), 0);
+        assertEq(usdc.balanceOf(address(router)), 0);
+        assertEq(rwa.balanceOf(address(router)), 0);
 
         uint256 paidB = _buy(aliceB, 200_000_000);
         assertEq(paidB, 200_000_000);
@@ -150,7 +157,57 @@ contract AllocationJourneyTest is Test {
         router.swapExactInput(key, CAP);
         assertEq(_spent(aliceId), spent);
         assertEq(usdc.balanceOf(aliceB), bal);
+        assertEq(rwa.balanceOf(aliceB), 0);
+        assertEq(usdc.balanceOf(address(router)), 0);
+        assertEq(rwa.balanceOf(address(router)), 0);
         assertEq(paid, 700_000_000);
+    }
+
+    function testInsufficientBalanceRollsBackSpend() public {
+        uint256 start = usdc.balanceOf(aliceA);
+        vm.prank(aliceA);
+        usdc.transfer(address(0xBEEF), start - 50_000_000);
+
+        vm.expectRevert();
+        vm.prank(aliceA);
+        router.swapExactInput(key, 100_000_000);
+
+        assertEq(usdc.balanceOf(aliceA), 50_000_000);
+        assertEq(rwa.balanceOf(aliceA), 0);
+        assertEq(_spent(aliceId), 0);
+        assertEq(usdc.balanceOf(address(router)), 0);
+        assertEq(rwa.balanceOf(address(router)), 0);
+    }
+
+    function testExactOutputFromTheTrustedSenderRecordsNothing() public {
+        SpecifiedSwap caller = new SpecifiedSwap(manager);
+        hook.setTrustedRouter(address(caller));
+        uint256 bal = usdc.balanceOf(aliceA);
+
+        vm.expectRevert();
+        caller.swap(key, Currency.unwrap(key.currency0) == address(usdc), int256(100_000_000), aliceA);
+
+        assertEq(_spent(aliceId), 0);
+        assertEq(usdc.balanceOf(aliceA), bal);
+        assertEq(rwa.balanceOf(aliceA), 0);
+        assertEq(usdc.balanceOf(address(router)), 0);
+        assertEq(rwa.balanceOf(address(router)), 0);
+    }
+
+    function testWrongHookIsRejectedBeforeAnyTransfer() public {
+        PoolKey memory bad = key;
+        bad.hooks = IHooks(address(0x1234));
+        uint256 bal = usdc.balanceOf(aliceA);
+
+        vm.expectRevert(PoolExecutor.InvalidPool.selector);
+        vm.prank(aliceA);
+        router.swapExactInput(bad, 100_000_000);
+
+        assertEq(_spent(aliceId), 0);
+        assertEq(usdc.balanceOf(aliceA), bal);
+        assertEq(rwa.balanceOf(aliceA), 0);
+        assertEq(usdc.balanceOf(address(router)), 0);
+        assertEq(rwa.balanceOf(address(router)), 0);
     }
 
     function testSettlementFailureRecordsNoSpend() public {
@@ -165,6 +222,8 @@ contract AllocationJourneyTest is Test {
         assertEq(_spent(aliceId), 0);
         assertEq(usdc.balanceOf(aliceA), bal);
         assertEq(rwa.balanceOf(aliceA), 0);
+        assertEq(usdc.balanceOf(address(router)), 0);
+        assertEq(rwa.balanceOf(address(router)), 0);
     }
 
     function testLedgerRejectionRollsBackTheSwap() public {
@@ -178,6 +237,8 @@ contract AllocationJourneyTest is Test {
         assertEq(_spent(bobId), 0);
         assertEq(usdc.balanceOf(bob), bal);
         assertEq(rwa.balanceOf(bob), 0);
+        assertEq(usdc.balanceOf(address(router)), 0);
+        assertEq(rwa.balanceOf(address(router)), 0);
     }
 
     function testSellingRwaDoesNotReduceSpend() public {
@@ -341,6 +402,34 @@ contract JourneyLiquidity is IUnlockCallback {
         } else if (amount > 0) {
             poolManager.take(currency, address(this), uint256(uint128(amount)));
         }
+    }
+}
+
+contract SpecifiedSwap is IUnlockCallback {
+    IPoolManager public immutable poolManager;
+
+    constructor(IPoolManager poolManager_) {
+        poolManager = poolManager_;
+    }
+
+    function swap(PoolKey calldata key, bool zeroForOne, int256 amountSpecified, address trader) external {
+        poolManager.unlock(abi.encode(key, zeroForOne, amountSpecified, trader));
+    }
+
+    function unlockCallback(bytes calldata data) external returns (bytes memory) {
+        require(msg.sender == address(poolManager), "only manager");
+        (PoolKey memory key, bool zeroForOne, int256 amountSpecified, address trader) =
+            abi.decode(data, (PoolKey, bool, int256, address));
+        poolManager.swap(
+            key,
+            IPoolManager.SwapParams({
+                zeroForOne: zeroForOne,
+                amountSpecified: amountSpecified,
+                sqrtPriceLimitX96: zeroForOne ? 4295128740 : 1461446703485210103287273052203988822378723970341
+            }),
+            abi.encode(trader)
+        );
+        return "";
     }
 }
 
