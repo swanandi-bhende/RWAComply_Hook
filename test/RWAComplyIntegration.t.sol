@@ -14,6 +14,9 @@ import {Hooks} from "@uniswap/v4-core/libraries/Hooks.sol";
 import {CustomRevert} from "@uniswap/v4-core/libraries/CustomRevert.sol";
 import {LPFeeLibrary} from "@uniswap/v4-core/libraries/LPFeeLibrary.sol";
 
+import "../src/AllocationLedger.sol";
+import "../src/HookFlags.sol";
+import "../src/PoolExecutor.sol";
 import "../src/RWAComplyHook.sol";
 import "../src/MockRWAOracle.sol";
 import "../src/MockERC20.sol";
@@ -128,6 +131,17 @@ contract RWAComplyIntegrationTest is Test {
     PoolUser internal retailUser;
     PoolUser internal institutionalUser;
 
+    AllocationLedger internal ledger;
+    PoolExecutor internal router;
+    address internal usdc;
+    address internal rwa;
+    address internal retailTrader;
+    address internal institutionalTrader;
+    bytes32 internal groupId = keccak256("group");
+    uint256 internal periodId = 1;
+    uint256 internal signerKey = 0xA11CE;
+    uint256 internal constant SWAP_AMOUNT = 1_000_000;
+
     function setUp() public {
         poolManager = new PoolManager(address(0));
         oracle = new MockRWAOracle(address(this));
@@ -167,15 +181,36 @@ contract RWAComplyIntegrationTest is Test {
         _fund(address(institutionalUser), 1e21);
 
         liquidityUser.addLiquidity();
+
+        usdc = Currency.unwrap(key.currency0);
+        rwa = Currency.unwrap(key.currency1);
+        ledger = new AllocationLedger(address(this), vm.addr(signerKey));
+        ledger.setPolicy(groupId, periodId, 1e30, usdc);
+        router = new PoolExecutor(IPoolManager(address(poolManager)), usdc, rwa, address(hook));
+        hook.setTrustedRouter(address(router));
+        hook.setQuoteTokens(usdc, rwa);
+        hook.setLedger(address(ledger));
+        hook.setAllocation(groupId, periodId);
+        ledger.setAuthorizedHook(address(hook));
+
+        retailTrader = makeAddr("retail-trader");
+        institutionalTrader = makeAddr("institutional-trader");
+        hook.setTier(retailTrader, 1);
+        hook.setTier(institutionalTrader, 2);
+        _register(retailTrader, 1);
+        _register(institutionalTrader, 2);
+
+        MockERC20 quote = address(tokenA) == usdc ? tokenA : tokenB;
+        quote.transfer(retailTrader, 100e18);
+        quote.transfer(institutionalTrader, 100e18);
+        vm.prank(retailTrader);
+        quote.approve(address(router), type(uint256).max);
+        vm.prank(institutionalTrader);
+        quote.approve(address(router), type(uint256).max);
     }
 
     function _deployHookWithValidAddress() internal returns (RWAComplyHook deployed) {
-        uint160 permissions =
-            Hooks.BEFORE_INITIALIZE_FLAG |
-            Hooks.AFTER_INITIALIZE_FLAG |
-            Hooks.BEFORE_ADD_LIQUIDITY_FLAG |
-            Hooks.BEFORE_SWAP_FLAG |
-            Hooks.AFTER_SWAP_FLAG;
+        uint160 permissions = HookFlags.toFlags(HookFlags.declared());
 
         bytes32 bytecodeHash = keccak256(
             abi.encodePacked(
@@ -236,8 +271,10 @@ contract RWAComplyIntegrationTest is Test {
             abi.encodeWithSelector(Hooks.HookCallFailed.selector)
         );
 
+        address unverifiedTrader = makeAddr("unverified-trader");
+        vm.prank(unverifiedTrader);
         vm.expectRevert(expectedError);
-        unverifiedUser.swap();
+        router.swapExactInput(key, SWAP_AMOUNT);
     }
 
     function testTier0AddLiquidityRevertsThroughPoolManager() public {
@@ -255,51 +292,34 @@ contract RWAComplyIntegrationTest is Test {
 
     function testTier1SwapPassesThroughPoolManager() public {
         vm.expectEmit(true, false, false, true, address(hook));
-        emit BeforeSwapCalled(address(retailUser), 1, 1000);
+        emit BeforeSwapCalled(retailTrader, 1, 1000);
 
-        retailUser.swap();
+        vm.prank(retailTrader);
+        router.swapExactInput(key, SWAP_AMOUNT);
     }
 
     function testTier2SwapPassesThroughPoolManager() public {
         vm.expectEmit(true, false, false, true, address(hook));
-        emit BeforeSwapCalled(address(institutionalUser), 2, 1000);
+        emit BeforeSwapCalled(institutionalTrader, 2, 1000);
 
-        institutionalUser.swap();
+        vm.prank(institutionalTrader);
+        router.swapExactInput(key, SWAP_AMOUNT);
     }
 
     function testFullFlowInitializeAddLiquidityAndSwap() public {
-        MockERC20 tokenC = new MockERC20("TokenC", "TKC", 1e24);
-        MockERC20 tokenD = new MockERC20("TokenD", "TKD", 1e24);
-
-        (address token0, address token1) =
-            address(tokenC) < address(tokenD)
-                ? (address(tokenC), address(tokenD))
-                : (address(tokenD), address(tokenC));
-
-        PoolKey memory fullFlowKey = PoolKey({
-            currency0: Currency.wrap(token0),
-            currency1: Currency.wrap(token1),
-            fee: LPFeeLibrary.DYNAMIC_FEE_FLAG,
-            tickSpacing: 60,
-            hooks: IHooks(address(hook))
-        });
-
+        PoolKey memory fullFlowKey = key;
+        fullFlowKey.tickSpacing = 10;
         poolManager.initialize(fullFlowKey, SQRT_PRICE_1_1);
 
-        PoolUser fullFlowUser =
-            new PoolUser(IPoolManager(address(poolManager)), fullFlowKey);
-
+        PoolUser fullFlowUser = new PoolUser(IPoolManager(address(poolManager)), fullFlowKey);
         hook.setTier(address(fullFlowUser), 2);
-
-        tokenC.transfer(address(fullFlowUser), 1e21);
-        tokenD.transfer(address(fullFlowUser), 1e21);
-
+        _fund(address(fullFlowUser), 1e21);
         fullFlowUser.addLiquidity();
 
         vm.expectEmit(true, false, false, true, address(hook));
-        emit BeforeSwapCalled(address(fullFlowUser), 2, 1000);
+        emit BeforeSwapCalled(institutionalTrader, 2, 1000);
 
-        uint24 appliedFee = _swapAndGetAppliedFee(fullFlowUser);
+        uint24 appliedFee = _swapAndGetAppliedFee(fullFlowKey, institutionalTrader);
 
         assertEq(appliedFee, 1000, "full flow executed fee mismatch");
     }
@@ -319,8 +339,36 @@ contract RWAComplyIntegrationTest is Test {
         retailUser.swap();
     }
 
+    function testDirectSwapRevertsThroughPoolManager() public {
+        bytes memory expectedError = abi.encodeWithSelector(
+            CustomRevert.WrappedError.selector,
+            address(hook),
+            IHooks.beforeSwap.selector,
+            abi.encodeWithSelector(RWAComplyHook.UntrustedRouter.selector, address(retailUser)),
+            abi.encodeWithSelector(Hooks.HookCallFailed.selector)
+        );
+
+        vm.expectRevert(expectedError);
+        retailUser.swap();
+    }
+
+    function testUntrustedRouterReverts() public {
+        PoolExecutor other = new PoolExecutor(IPoolManager(address(poolManager)), usdc, rwa, address(hook));
+        bytes memory expectedError = abi.encodeWithSelector(
+            CustomRevert.WrappedError.selector,
+            address(hook),
+            IHooks.beforeSwap.selector,
+            abi.encodeWithSelector(RWAComplyHook.UntrustedRouter.selector, address(other)),
+            abi.encodeWithSelector(Hooks.HookCallFailed.selector)
+        );
+
+        vm.prank(retailTrader);
+        vm.expectRevert(expectedError);
+        other.swapExactInput(key, SWAP_AMOUNT);
+    }
+
     function testRetailCapExceededRevertsThroughPoolManager() public {
-        hook.setRetailSwapCap(5e17);
+        hook.setRetailSwapCap(SWAP_AMOUNT - 1);
 
         bytes memory expectedError = abi.encodeWithSelector(
             CustomRevert.WrappedError.selector,
@@ -330,14 +378,15 @@ contract RWAComplyIntegrationTest is Test {
             abi.encodeWithSelector(Hooks.HookCallFailed.selector)
         );
 
+        vm.prank(retailTrader);
         vm.expectRevert(expectedError);
-        retailUser.swap();
+        router.swapExactInput(key, SWAP_AMOUNT);
     }
 
     function testDynamicFeeAppliedDefaultLowVolatility() public {
         oracle.setVolatility(1);
 
-        uint24 appliedFee = _swapAndGetAppliedFee(retailUser);
+        uint24 appliedFee = _swapAndGetAppliedFee(key, retailTrader);
 
         assertEq(appliedFee, 1000, "default low-vol fee mismatch");
     }
@@ -345,7 +394,7 @@ contract RWAComplyIntegrationTest is Test {
     function testDynamicFeeAppliedRetailHighVolatility() public {
         oracle.setVolatility(10);
 
-        uint24 appliedFee = _swapAndGetAppliedFee(retailUser);
+        uint24 appliedFee = _swapAndGetAppliedFee(key, retailTrader);
 
         assertEq(appliedFee, 5000, "retail executed fee mismatch");
     }
@@ -353,7 +402,7 @@ contract RWAComplyIntegrationTest is Test {
     function testDynamicFeeAppliedInstitutionalHighVolatility() public {
         oracle.setVolatility(10);
 
-        uint24 appliedFee = _swapAndGetAppliedFee(institutionalUser);
+        uint24 appliedFee = _swapAndGetAppliedFee(key, institutionalTrader);
 
         assertEq(appliedFee, 500, "institutional executed fee mismatch");
     }
@@ -361,42 +410,24 @@ contract RWAComplyIntegrationTest is Test {
     function testStaticFeePoolIgnoresHookOverride() public {
         oracle.setVolatility(10);
 
-        MockERC20 tokenE = new MockERC20("TokenE", "TKE", 1e24);
-        MockERC20 tokenF = new MockERC20("TokenF", "TKF", 1e24);
-
-        (address token0, address token1) =
-            address(tokenE) < address(tokenF)
-                ? (address(tokenE), address(tokenF))
-                : (address(tokenF), address(tokenE));
-
-        PoolKey memory staticFeeKey = PoolKey({
-            currency0: Currency.wrap(token0),
-            currency1: Currency.wrap(token1),
-            fee: STATIC_FEE,
-            tickSpacing: 60,
-            hooks: IHooks(address(hook))
-        });
-
+        PoolKey memory staticFeeKey = key;
+        staticFeeKey.fee = STATIC_FEE;
         poolManager.initialize(staticFeeKey, SQRT_PRICE_1_1);
 
-        PoolUser staticFeeUser =
-            new PoolUser(IPoolManager(address(poolManager)), staticFeeKey);
-
-        hook.setTier(address(staticFeeUser), 1);
-
-        tokenE.transfer(address(staticFeeUser), 1e21);
-        tokenF.transfer(address(staticFeeUser), 1e21);
-
+        PoolUser staticFeeUser = new PoolUser(IPoolManager(address(poolManager)), staticFeeKey);
+        hook.setTier(address(staticFeeUser), 2);
+        _fund(address(staticFeeUser), 1e21);
         staticFeeUser.addLiquidity();
 
-        uint24 appliedFee = _swapAndGetAppliedFee(staticFeeUser);
+        uint24 appliedFee = _swapAndGetAppliedFee(staticFeeKey, retailTrader);
 
         assertEq(appliedFee, STATIC_FEE, "static pool fee should ignore hook override");
     }
 
-    function _swapAndGetAppliedFee(PoolUser user) internal returns (uint24) {
+    function _swapAndGetAppliedFee(PoolKey memory poolKey, address trader) internal returns (uint24) {
         vm.recordLogs();
-        user.swap();
+        vm.prank(trader);
+        router.swapExactInput(poolKey, SWAP_AMOUNT);
 
         Vm.Log[] memory logs = vm.getRecordedLogs();
 
@@ -407,7 +438,7 @@ contract RWAComplyIntegrationTest is Test {
                 logEntry.emitter == address(poolManager)
                     && logEntry.topics.length == 3
                     && logEntry.topics[0] == SWAP_EVENT_SIG
-                    && logEntry.topics[2] == bytes32(uint256(uint160(address(user))))
+                    && logEntry.topics[2] == bytes32(uint256(uint160(address(router))))
             ) {
                 (, , , , , uint24 fee) = abi.decode(
                     logEntry.data,
@@ -423,5 +454,34 @@ contract RWAComplyIntegrationTest is Test {
     function _fund(address user, uint256 amount) internal {
         tokenA.transfer(user, amount);
         tokenB.transfer(user, amount);
+    }
+
+    function _register(address wallet, uint256 nonce) internal {
+        uint256 expiry = block.timestamp + 1 days;
+        bytes32 allocationId = keccak256(abi.encode(wallet));
+        ledger.registerWallet(wallet, allocationId, groupId, expiry, nonce, _sign(wallet, allocationId, expiry, nonce));
+    }
+
+    function _sign(address wallet, bytes32 allocationId, uint256 expiry, uint256 nonce) internal view returns (bytes memory) {
+        bytes32 structHash =
+            keccak256(abi.encode(ledger.REGISTRATION_TYPEHASH(), wallet, allocationId, groupId, expiry, nonce));
+        (, string memory name, string memory version, uint256 chainId, address verifyingContract,,) = ledger.eip712Domain();
+        bytes32 digest = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                keccak256(
+                    abi.encode(
+                        keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                        keccak256(bytes(name)),
+                        keccak256(bytes(version)),
+                        chainId,
+                        verifyingContract
+                    )
+                ),
+                structHash
+            )
+        );
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(signerKey, digest);
+        return abi.encodePacked(r, s, v);
     }
 }

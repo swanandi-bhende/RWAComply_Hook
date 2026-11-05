@@ -10,10 +10,13 @@ import {IPoolManager} from "@uniswap/v4-core/interfaces/IPoolManager.sol";
 import {PoolKey} from "@uniswap/v4-core/types/PoolKey.sol";
 import {BalanceDelta} from "@uniswap/v4-core/types/BalanceDelta.sol";
 import {BeforeSwapDelta, BeforeSwapDeltaLibrary} from "@uniswap/v4-core/types/BeforeSwapDelta.sol";
+import {Currency} from "@uniswap/v4-core/types/Currency.sol";
 
 import {Hooks} from "@uniswap/v4-core/libraries/Hooks.sol";
 import {LPFeeLibrary} from "@uniswap/v4-core/libraries/LPFeeLibrary.sol";
 
+import "./AllocationLedger.sol";
+import "./HookFlags.sol";
 import "./MockRWAOracle.sol";
 
 contract RWAComplyHook is IHooks, Ownable {
@@ -23,6 +26,18 @@ contract RWAComplyHook is IHooks, Ownable {
     error RetailLimitExceeded();
     error OnlyPoolManager();
     error ZeroAddress();
+    error UntrustedRouter(address sender);
+    error MalformedHookData();
+    error ZeroTrader();
+    error ExactInputRequired();
+    error UnsupportedInputCurrency();
+    error InvalidPool();
+    error LedgerNotConfigured();
+    error AllocationNotConfigured();
+    error AllocationExceeded(uint256 amount, uint256 remaining);
+    error PurchaseInProgress();
+    error UnexpectedSwapDelta();
+    error SettledInputExceedsQuote(uint256 settled, uint256 quoted);
 
     uint8 constant RETAIL = 1;
     uint8 constant INSTITUTIONAL = 2;
@@ -31,6 +46,33 @@ contract RWAComplyHook is IHooks, Ownable {
 
     IPoolManager public immutable poolManager;
     address public oracle;
+
+    /// @notice The only account allowed to call PoolManager.swap for this hook.
+    address public trustedRouter;
+
+    /// @notice Input token. Raw units, six decimals for USDC.
+    address public usdc;
+
+    /// @notice Output token for the supported purchase pair.
+    address public rwaToken;
+
+    /// @notice Budget ledger. Spend is not written during beforeSwap.
+    AllocationLedger public ledger;
+
+    /// @notice Allocation group and period checked by this hook.
+    bytes32 public allocationGroupId;
+    uint256 public allocationPeriodId;
+
+    /// @notice Quote captured in beforeSwap and consumed by afterSwap of the same purchase.
+    struct Purchase {
+        address trader;
+        bytes32 groupId;
+        uint256 periodId;
+        uint256 quotedInput;
+        bool active;
+    }
+
+    Purchase private purchase;
 
     uint256 public volatilityThreshold = 5;
     uint256 public retailSwapCap = 1e18;
@@ -44,9 +86,7 @@ contract RWAComplyHook is IHooks, Ownable {
     event AfterSwapCalled(address indexed user);
 
     modifier onlyPoolManager() {
-        if (block.chainid != 31337) {
-            if (msg.sender != address(poolManager)) revert OnlyPoolManager();
-        }
+        if (msg.sender != address(poolManager)) revert OnlyPoolManager();
         _;
     }
 
@@ -62,33 +102,11 @@ contract RWAComplyHook is IHooks, Ownable {
         poolManager = _poolManager;
         oracle = _oracle;
 
-        if (block.chainid != 31337) {
-            Hooks.validateHookPermissions(
-                IHooks(address(this)),
-                getHookPermissions()
-            );
-        }
+        Hooks.validateHookPermissions(IHooks(address(this)), getHookPermissions());
     }
 
     function getHookPermissions() public pure returns (Hooks.Permissions memory) {
-        return Hooks.Permissions({
-            beforeInitialize: false,
-            afterInitialize: false,
-
-            beforeAddLiquidity: true,
-            afterAddLiquidity: false,
-            beforeRemoveLiquidity: false,
-            afterRemoveLiquidity: false,
-            beforeSwap: true,
-            afterSwap: true,
-            beforeDonate: false,
-            afterDonate: false,
-
-            beforeSwapReturnDelta: false,
-            afterSwapReturnDelta: false,
-            afterAddLiquidityReturnDelta: false,
-            afterRemoveLiquidityReturnDelta: false
-        });
+        return HookFlags.declared();
     }
 
     function setTier(address user, uint8 tier) external onlyOwner {
@@ -120,6 +138,33 @@ contract RWAComplyHook is IHooks, Ownable {
         emit OracleUpdated(oldOracle, newOracle);
     }
 
+    /// @notice Set the only router allowed to swap through this hook.
+    function setTrustedRouter(address router_) external onlyOwner {
+        if (router_ == address(0)) revert ZeroAddress();
+        trustedRouter = router_;
+    }
+
+    /// @notice Set the supported USDC input token and RWA output token.
+    function setQuoteTokens(address usdc_, address rwa_) external onlyOwner {
+        if (usdc_ == address(0) || rwa_ == address(0)) revert ZeroAddress();
+        if (usdc_ == rwa_) revert InvalidPool();
+        usdc = usdc_;
+        rwaToken = rwa_;
+    }
+
+    /// @notice Set the ledger whose remaining budget is checked before a purchase.
+    function setLedger(address ledger_) external onlyOwner {
+        if (ledger_ == address(0)) revert ZeroAddress();
+        ledger = AllocationLedger(ledger_);
+    }
+
+    /// @notice Select the allocation group and period this hook enforces.
+    function setAllocation(bytes32 groupId, uint256 periodId) external onlyOwner {
+        if (groupId == bytes32(0)) revert AllocationNotConfigured();
+        allocationGroupId = groupId;
+        allocationPeriodId = periodId;
+    }
+
     function getDynamicFee(address user) public view returns (uint24) {
         uint8 tier = userTier[user];
         uint256 vol = MockRWAOracle(oracle).getVolatility();
@@ -136,36 +181,45 @@ contract RWAComplyHook is IHooks, Ownable {
         address sender,
         PoolKey calldata key,
         IPoolManager.SwapParams calldata params,
-        bytes calldata
+        bytes calldata hookData
     )
         external
         override
         onlyPoolManager
         returns (bytes4, BeforeSwapDelta, uint24)
     {
-        console.log("beforeSwap called");
-        console.log("sender:", sender);
-
         if (poolPaused) revert PoolPaused();
+        if (purchase.active) revert PurchaseInProgress();
+        if (trustedRouter == address(0) || sender != trustedRouter) revert UntrustedRouter(sender);
 
-        uint8 tier = userTier[sender];
-        console.log("tier:", tier);
+        address trader = _trader(hookData);
+        if (params.amountSpecified >= 0) revert ExactInputRequired();
+        uint256 amountIn = uint256(-params.amountSpecified);
 
+        address inputCurrency = params.zeroForOne ? Currency.unwrap(key.currency0) : Currency.unwrap(key.currency1);
+        address outputCurrency = params.zeroForOne ? Currency.unwrap(key.currency1) : Currency.unwrap(key.currency0);
+        if (inputCurrency != usdc) revert UnsupportedInputCurrency();
+        if (outputCurrency != rwaToken) revert InvalidPool();
+
+        uint8 tier = userTier[trader];
         if (tier == 0) revert AccessDenied();
+        if (tier == RETAIL && amountIn > retailSwapCap) revert RetailLimitExceeded();
 
-        if (tier == RETAIL) {
-            uint256 amount = params.amountSpecified > 0
-                ? uint256(params.amountSpecified)
-                : uint256(-params.amountSpecified);
+        if (address(ledger) == address(0)) revert LedgerNotConfigured();
+        if (allocationGroupId == bytes32(0)) revert AllocationNotConfigured();
+        uint256 budget = ledger.remaining(trader, allocationGroupId, allocationPeriodId);
+        if (amountIn > budget) revert AllocationExceeded(amountIn, budget);
 
-            if (amount > retailSwapCap) revert RetailLimitExceeded();
-        }
+        purchase = Purchase({
+            trader: trader,
+            groupId: allocationGroupId,
+            periodId: allocationPeriodId,
+            quotedInput: amountIn,
+            active: true
+        });
 
-        uint24 fee = getDynamicFee(sender);
-
-        console.log("fee:", fee);
-
-        emit BeforeSwapCalled(sender, tier, fee);
+        uint24 fee = getDynamicFee(trader);
+        emit BeforeSwapCalled(trader, tier, fee);
 
         uint24 feeForSwap = fee;
         if (key.fee == LPFeeLibrary.DYNAMIC_FEE_FLAG) {
@@ -179,23 +233,61 @@ contract RWAComplyHook is IHooks, Ownable {
         );
     }
 
+    /// @dev Router hook data is abi.encode(trader). Any other shape is rejected.
+    function _trader(bytes calldata hookData) private pure returns (address trader) {
+        if (hookData.length != 32) revert MalformedHookData();
+
+        uint256 word;
+        assembly ("memory-safe") {
+            word := calldataload(hookData.offset)
+        }
+        if (word >> 160 != 0) revert MalformedHookData();
+
+        trader = address(uint160(word));
+        if (trader == address(0)) revert ZeroTrader();
+    }
+
     function afterSwap(
         address sender,
-        PoolKey calldata,
-        IPoolManager.SwapParams calldata,
-        BalanceDelta,
-        bytes calldata
+        PoolKey calldata key,
+        IPoolManager.SwapParams calldata params,
+        BalanceDelta delta,
+        bytes calldata hookData
     )
         external
         override
         onlyPoolManager
         returns (bytes4, int128)
     {
-        console.log("afterSwap called");
+        if (!purchase.active || sender != trustedRouter) revert UntrustedRouter(sender);
+        if (_trader(hookData) != purchase.trader) revert UnexpectedSwapDelta();
 
-        emit AfterSwapCalled(sender);
+        uint256 settled = _settledUsdcInput(key, params, delta);
+        if (settled > purchase.quotedInput) revert SettledInputExceedsQuote(settled, purchase.quotedInput);
+
+        address trader = purchase.trader;
+        bytes32 groupId = purchase.groupId;
+        uint256 periodId = purchase.periodId;
+
+        ledger.recordSpend(trader, groupId, periodId, settled);
+        purchase.active = false;
+        emit AfterSwapCalled(trader);
 
         return (IHooks.afterSwap.selector, 0);
+    }
+
+    /// @dev A negative USDC leg is currency the pool took from the router. That is the purchase.
+    function _settledUsdcInput(
+        PoolKey calldata key,
+        IPoolManager.SwapParams calldata params,
+        BalanceDelta delta
+    ) private view returns (uint256 settled) {
+        address inputCurrency = params.zeroForOne ? Currency.unwrap(key.currency0) : Currency.unwrap(key.currency1);
+        int128 inputDelta = params.zeroForOne ? delta.amount0() : delta.amount1();
+        if (inputCurrency != usdc || inputDelta >= 0) revert UnexpectedSwapDelta();
+
+        settled = uint256(uint128(-inputDelta));
+        if (settled == 0) revert UnexpectedSwapDelta();
     }
 
     function beforeAddLiquidity(

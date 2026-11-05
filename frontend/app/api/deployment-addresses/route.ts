@@ -8,7 +8,8 @@ type DeploymentAddresses = {
   oracle: string;
   tokenA: string;
   tokenB: string;
-  executor?: string;
+  executor: string;
+  ledger?: string;
 };
 
 type PartialAddresses = Partial<DeploymentAddresses>;
@@ -30,7 +31,8 @@ function hasRequiredAddresses(addrs: PartialAddresses): addrs is DeploymentAddre
     isAddress(addrs.hook) &&
     isAddress(addrs.oracle) &&
     isAddress(addrs.tokenA) &&
-    isAddress(addrs.tokenB)
+    isAddress(addrs.tokenB) &&
+    isAddress(addrs.executor)
   );
 }
 
@@ -87,10 +89,20 @@ async function addressesFromBroadcast(repoRoot: string): Promise<PartialAddresse
           continue;
         }
 
+        if (tx.contractName === 'AllocationLedger') {
+          result.ledger = tx.contractAddress;
+          continue;
+        }
+
+        if (tx.contractName === 'MockUSDC') {
+          result.tokenA = tx.contractAddress;
+          continue;
+        }
+
         if (tx.contractName === 'MockERC20') {
           const maybeName = typeof tx.arguments?.[0] === 'string' ? tx.arguments[0] : '';
-          if (maybeName === 'TokenA') result.tokenA = tx.contractAddress;
-          if (maybeName === 'TokenB') result.tokenB = tx.contractAddress;
+          if (maybeName === 'TokenA' && !result.tokenA) result.tokenA = tx.contractAddress;
+          if (maybeName === 'RWA' || maybeName === 'TokenB') result.tokenB = tx.contractAddress;
         }
       }
     }

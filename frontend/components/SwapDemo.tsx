@@ -7,9 +7,9 @@ import {
   useReadContract,
   useWriteContract,
 } from 'wagmi';
-import { formatEther, parseEther } from 'viem';
+import { formatUnits, parseUnits } from 'viem';
 import { loadDeploymentAddresses } from '@/config/deployments';
-import { ERC20_ABI, EXECUTOR_ABI, HOOK_ABI, ORACLE_ABI } from '@/contracts';
+import { ERC20_ABI, EXECUTOR_ABI, HOOK_ABI, ORACLE_ABI, POOL_FEE, TICK_SPACING } from '@/contracts';
 import { calculateDynamicFeeForTier } from '@/lib/hookFee';
 import { useTransactions } from '@/app/TransactionContext';
 import { TransactionHistory } from './TransactionHistory';
@@ -37,6 +37,10 @@ function formatSwapError(raw: string): string {
     return 'Retail swap cap exceeded. Reduce amount or update cap in Admin page.';
   }
 
+  if (lowered.includes('allocationexceeded')) {
+    return 'This purchase is above the remaining USDC allocation for the connected wallet.';
+  }
+
   if (lowered.includes('insufficient funds')) {
     return 'Insufficient gas balance in connected wallet. Fund the wallet with local ETH and retry.';
   }
@@ -56,7 +60,7 @@ export function SwapDemo() {
     tokenA: string;
     tokenB: string;
     poolManager: string;
-    executor?: string;
+    executor: string;
   } | null>(null);
   const [deploymentError, setDeploymentError] = useState<string | null>(null);
 
@@ -136,12 +140,18 @@ export function SwapDemo() {
     query: { enabled: !!addresses?.hook, refetchInterval: LIVE_REFETCH_MS },
   });
 
-  const { data: executorTier } = useReadContract({
-    address: addresses?.hook as `0x${string}`,
-    abi: HOOK_ABI,
-    functionName: 'userTier',
-    args: [addresses?.executor as `0x${string}`],
-    query: { enabled: !!addresses?.hook && !!addresses?.executor, refetchInterval: LIVE_REFETCH_MS },
+  const { data: tokenADecimals } = useReadContract({
+    address: addresses?.tokenA as `0x${string}`,
+    abi: ERC20_ABI,
+    functionName: 'decimals',
+    query: { enabled: !!addresses?.tokenA },
+  });
+
+  const { data: tokenBDecimals } = useReadContract({
+    address: addresses?.tokenB as `0x${string}`,
+    abi: ERC20_ABI,
+    functionName: 'decimals',
+    query: { enabled: !!addresses?.tokenB },
   });
 
   const { data: userTokenABalance, refetch: refetchUserTokenABalance } = useReadContract({
@@ -160,7 +170,7 @@ export function SwapDemo() {
     query: { enabled: !!addresses?.tokenB && !!address, refetchInterval: LIVE_REFETCH_MS },
   });
 
-  const { data: executorTokenABalance, refetch: refetchExecutorTokenABalance } = useReadContract({
+  const { data: executorTokenABalance } = useReadContract({
     address: addresses?.tokenA as `0x${string}`,
     abi: ERC20_ABI,
     functionName: 'balanceOf',
@@ -168,7 +178,7 @@ export function SwapDemo() {
     query: { enabled: !!addresses?.tokenA && !!addresses?.executor, refetchInterval: LIVE_REFETCH_MS },
   });
 
-  const { data: executorTokenBBalance, refetch: refetchExecutorTokenBBalance } = useReadContract({
+  const { data: executorTokenBBalance } = useReadContract({
     address: addresses?.tokenB as `0x${string}`,
     abi: ERC20_ABI,
     functionName: 'balanceOf',
@@ -186,11 +196,13 @@ export function SwapDemo() {
   );
   const userFee = tier === 0 ? 0 : Number((userDynamicFee as bigint | undefined) ?? BigInt(computedFee));
 
-  const userABalanceNum = Number(formatEther((userTokenABalance as bigint) ?? BigInt(0)));
-  const userBBalanceNum = Number(formatEther((userTokenBBalance as bigint) ?? BigInt(0)));
-  const executorABalanceNum = Number(formatEther((executorTokenABalance as bigint) ?? BigInt(0)));
-  const executorBBalanceNum = Number(formatEther((executorTokenBBalance as bigint) ?? BigInt(0)));
-  const retailCapNum = Number(formatEther((retailSwapCap as bigint) ?? BigInt(0)));
+  const decimalsA = Number(tokenADecimals ?? 6);
+  const decimalsB = Number(tokenBDecimals ?? 18);
+  const userABalanceNum = Number(formatUnits((userTokenABalance as bigint) ?? BigInt(0), decimalsA));
+  const userBBalanceNum = Number(formatUnits((userTokenBBalance as bigint) ?? BigInt(0), decimalsB));
+  const executorABalanceNum = Number(formatUnits((executorTokenABalance as bigint) ?? BigInt(0), decimalsA));
+  const executorBBalanceNum = Number(formatUnits((executorTokenBBalance as bigint) ?? BigInt(0), decimalsB));
+  const retailCapNum = Number(formatUnits((retailSwapCap as bigint) ?? BigInt(0), decimalsA));
 
   const estimatedOut = useMemo(() => {
     const amount = Number(inputAmount || '0');
@@ -198,17 +210,6 @@ export function SwapDemo() {
     const feeRate = userFee / 10000;
     return Math.max(amount * (1 - feeRate), 0);
   }, [inputAmount, userFee]);
-
-  const captureBeforeBalances = () => {
-    setBeforeExecutorA((executorTokenABalance as bigint) ?? BigInt(0));
-    setBeforeExecutorB((executorTokenBBalance as bigint) ?? BigInt(0));
-  };
-
-  const captureAfterBalances = async () => {
-    const [a, b] = await Promise.all([refetchExecutorTokenABalance(), refetchExecutorTokenBBalance()]);
-    setAfterExecutorA((a.data as bigint) ?? BigInt(0));
-    setAfterExecutorB((b.data as bigint) ?? BigInt(0));
-  };
 
   const handleExecuteSwap = async () => {
     if (!address) {
@@ -261,8 +262,8 @@ export function SwapDemo() {
       }
     }
 
-    if (executorTierNum === 0) {
-      setErrorMessage('Swap actor is Tier 0, so beforeSwap will revert. Run canonical deploy or set executor tier from Admin.');
+    if (tier === 0) {
+      setErrorMessage('Connected wallet is Tier 0, so beforeSwap will revert. Set this wallet to tier 1 or 2 from Admin.');
       setPhase('error');
       return;
     }
@@ -271,42 +272,64 @@ export function SwapDemo() {
     setPhase('approving');
 
     try {
-      captureBeforeBalances();
+      const beforeA = (userTokenABalance as bigint) ?? BigInt(0);
+      const beforeB = (userTokenBBalance as bigint) ?? BigInt(0);
+      setBeforeExecutorA(beforeA);
+      setBeforeExecutorB(beforeB);
+
+      const amountIn = parseUnits(inputAmount, decimalsA);
+      const [currency0, currency1] =
+        addresses.tokenA.toLowerCase() < addresses.tokenB.toLowerCase()
+          ? [addresses.tokenA, addresses.tokenB]
+          : [addresses.tokenB, addresses.tokenA];
 
       const approveHash = await writeContractAsync({
         address: addresses.tokenA as `0x${string}`,
         abi: ERC20_ABI,
         functionName: 'approve',
-        args: [addresses.poolManager as `0x${string}`, parseEther(inputAmount)],
+        args: [addresses.executor as `0x${string}`, amountIn],
       });
       setApprovalTxHash(approveHash);
       await publicClient.waitForTransactionReceipt({ hash: approveHash });
 
       setPhase('executing');
 
-      const executeHash = await writeContractAsync({
+      const swapHash = await writeContractAsync({
         address: addresses.executor as `0x${string}`,
         abi: EXECUTOR_ABI,
-        functionName: 'execute',
+        functionName: 'swapExactInput',
+        args: [
+          {
+            currency0: currency0 as `0x${string}`,
+            currency1: currency1 as `0x${string}`,
+            fee: POOL_FEE,
+            tickSpacing: TICK_SPACING,
+            hooks: addresses.hook as `0x${string}`,
+          },
+          amountIn,
+        ],
       });
-      setSwapTxHash(executeHash);
-      await publicClient.waitForTransactionReceipt({ hash: executeHash });
+      setSwapTxHash(swapHash);
+      await publicClient.waitForTransactionReceipt({ hash: swapHash });
 
-      await Promise.all([
+      const [afterAResult, afterBResult] = await Promise.all([
         refetchUserTokenABalance(),
         refetchUserTokenBBalance(),
-        captureAfterBalances(),
       ]);
+      const afterA = (afterAResult.data as bigint) ?? BigInt(0);
+      const afterB = (afterBResult.data as bigint) ?? BigInt(0);
+      setAfterExecutorA(afterA);
+      setAfterExecutorB(afterB);
 
-      const deltaA = Number(formatEther(beforeExecutorA)) - Number(formatEther(afterExecutorA));
-      const deltaB = Number(formatEther(afterExecutorB)) - Number(formatEther(beforeExecutorB));
+      const deltaA = Number(formatUnits(beforeA - afterA, decimalsA));
+      const deltaB = Number(formatUnits(afterB - beforeB, decimalsB));
       const feeRate = userFee / 10000;
       const feePercent = feeRate * 100;
 
       addTransaction({
         type: 'swap',
-        tokenIn: 'Token A',
-        tokenOut: 'Token B',
+        tokenIn: 'USDC',
+        tokenOut: 'RWA',
         amountIn: Math.abs(deltaA),
         amountOut: deltaB,
         fee: feePercent,
@@ -316,7 +339,7 @@ export function SwapDemo() {
           second: '2-digit',
         }),
         status: 'success',
-        hash: executeHash,
+        hash: swapHash,
       });
 
       setPhase('success');
@@ -339,7 +362,6 @@ export function SwapDemo() {
   };
 
   const tierLabel = tier === 2 ? 'Tier 2 (Institutional)' : tier === 1 ? 'Tier 1 (Retail)' : 'Tier 0 (Unverified)';
-  const executorTierNum = Number(executorTier ?? BigInt(0));
 
   if (deploymentError) {
     return (
@@ -386,7 +408,7 @@ export function SwapDemo() {
               </div>
               <div className="flex justify-between">
                 <span className="font-semibold text-black">Hook swap actor</span>
-                <span className="text-black font-mono">Executor tier {executorTierNum}</span>
+                <span className="text-black font-mono">{tierLabel}</span>
               </div>
             </div>
 
@@ -478,19 +500,19 @@ export function SwapDemo() {
             <div className="space-y-3 text-sm">
               <StepRow
                 title="1) Approval"
-                description="approve(tokenA -> poolManager)"
+                description="approve(USDC -> router)"
                 done={!!approvalTxHash}
                 running={phase === 'approving'}
               />
               <StepRow
                 title="2) beforeSwap hook"
-                description="Triggered inside executor.swap()"
+                description="Checks the connected wallet and remaining USDC"
                 done={phase === 'success' || phase === 'executing'}
                 running={phase === 'executing'}
               />
               <StepRow
                 title="3) Swap execution"
-                description="executor.execute() calls PoolManager.swap"
+                description="swapExactInput settles the purchase"
                 done={!!swapTxHash}
                 running={phase === 'executing'}
               />
@@ -522,13 +544,13 @@ export function SwapDemo() {
               )}
 
               <div className="bg-white p-3 rounded border border-green-300">
-                <p className="text-xs text-gray-600 mb-1">Executor Balance Delta</p>
+                <p className="text-xs text-gray-600 mb-1">Wallet Balance Delta</p>
                 <div className="text-xs font-mono space-y-1">
                   <p>
-                    Token A: {(Number(formatEther(beforeExecutorA)) - Number(formatEther(afterExecutorA))).toFixed(6)}
+                    USDC: {(Number(formatUnits(beforeExecutorA - afterExecutorA, decimalsA))).toFixed(6)}
                   </p>
                   <p>
-                    Token B: {(Number(formatEther(afterExecutorB)) - Number(formatEther(beforeExecutorB))).toFixed(6)}
+                    RWA: {(Number(formatUnits(afterExecutorB - beforeExecutorB, decimalsB))).toFixed(6)}
                   </p>
                 </div>
               </div>
@@ -536,8 +558,8 @@ export function SwapDemo() {
               <div className="bg-white p-3 rounded border border-green-300">
                 <p className="text-xs text-gray-600 mb-1">Hook Events (expected)</p>
                 <div className="text-xs font-mono space-y-1">
-                  <p>BeforeSwapCalled(executor, tier={executorTierNum}, fee=...)</p>
-                  <p>AfterSwapCalled(executor)</p>
+                  <p>BeforeSwapCalled(connected wallet, tier={tier}, fee=...)</p>
+                  <p>AfterSwapCalled(connected wallet)</p>
                 </div>
               </div>
             </div>

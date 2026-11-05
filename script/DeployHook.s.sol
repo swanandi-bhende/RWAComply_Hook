@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import "forge-std/Script.sol";
 import "forge-std/console.sol";
 
+import "../src/HookFlags.sol";
 import "../src/RWAComplyHook.sol";
 import "../src/MockRWAOracle.sol";
 
@@ -28,13 +29,6 @@ contract DeployHook is Script {
 
         IPoolManager poolManager = IPoolManager(poolManagerAddr);
 
-        uint160 permissions =
-            Hooks.BEFORE_INITIALIZE_FLAG |
-            Hooks.AFTER_INITIALIZE_FLAG |
-            Hooks.BEFORE_ADD_LIQUIDITY_FLAG |
-            Hooks.BEFORE_SWAP_FLAG |
-            Hooks.AFTER_SWAP_FLAG;
-
         bytes32 bytecodeHash = keccak256(
             abi.encodePacked(
                 type(RWAComplyHook).creationCode,
@@ -43,36 +37,8 @@ contract DeployHook is Script {
         );
 
         address CREATE2_DEPLOYER = 0x4e59b44847b379578588920cA78FbF26c0B4956C;
-
-        bytes32 salt;
-        address predicted;
-
-        for (uint256 i = 0; i < 1000000; i++) {
-            salt = bytes32(i);
-
-            predicted = address(
-                uint160(
-                    uint256(
-                        keccak256(
-                            abi.encodePacked(
-                                bytes1(0xff),
-                                CREATE2_DEPLOYER,
-                                salt,
-                                bytecodeHash
-                            )
-                        )
-                    )
-                )
-            );
-
-            if ((uint160(predicted) & Hooks.ALL_HOOK_MASK) == permissions) {
-                console.log("FOUND SALT:", i);
-                console.log("Predicted:", predicted);
-                break;
-            }
-
-            if (i == 999999) revert("No salt found");
-        }
+        (bytes32 salt, address predicted) =
+            HookFlags.mine(CREATE2_DEPLOYER, bytecodeHash, HookFlags.toFlags(HookFlags.declared()));
 
         RWAComplyHook hook = new RWAComplyHook{salt: salt}(
             poolManager,
@@ -83,7 +49,7 @@ contract DeployHook is Script {
         require(address(hook) == predicted, "Hook mismatch");
 
         require(
-            uint160(address(hook)) & Hooks.ALL_HOOK_MASK == permissions,
+            uint160(address(hook)) & Hooks.ALL_HOOK_MASK == HookFlags.toFlags(hook.getHookPermissions()),
             "Invalid hook address"
         );
 

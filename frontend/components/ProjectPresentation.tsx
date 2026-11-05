@@ -265,11 +265,11 @@ export function ProjectPresentation() {
               </div>
               <div className="flex gap-4">
                 <div className="bg-black text-white font-black w-10 h-10 flex items-center justify-center rounded-full text-lg">2</div>
-                <div className="text-black font-bold text-lg">Wagmi: Sends ERC20.approve() to poolManager with amount</div>
+                <div className="text-black font-bold text-lg">Wagmi: Sends ERC20.approve() to the router for the USDC amount</div>
               </div>
               <div className="flex gap-4">
                 <div className="bg-black text-white font-black w-10 h-10 flex items-center justify-center rounded-full text-lg">3</div>
-                <div className="text-black font-bold text-lg">Wagmi: Sends PoolExecutor.execute() call</div>
+                <div className="text-black font-bold text-lg">Wagmi: Sends PoolExecutor.swapExactInput(poolKey, amount)</div>
               </div>
               <div className="flex gap-4">
                 <div className="bg-black text-white font-black w-10 h-10 flex items-center justify-center rounded-full text-lg">4</div>

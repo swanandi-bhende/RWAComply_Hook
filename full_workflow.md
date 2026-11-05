@@ -59,11 +59,10 @@ bash script/run_canonical_demo.sh
 ```
 
 Expected result:
-- PoolManager, oracle, hook, tokens, and executor deployed
-- Pool initialized
-- Liquidity added
-- One swap executed
-- Deployment summary written to `docs/demo_run_log.txt`
+- PoolManager, oracle, hook, six-decimal USDC, RWA token, allocation ledger, and router deployed
+- Pool initialized and liquidity added
+- Deployer wallet registered for the demo allocation
+- Addresses written to `broadcast/DeployFull.s.sol/31337/run-latest.json`
 
 ### Terminal 3 - Start frontend
 
@@ -134,7 +133,7 @@ Steps:
 4. Confirm swap transaction in wallet.
 
 Expected behavior:
-- UI moves through approve -> execute -> success or error.
+- UI moves through approve -> swapExactInput -> success or error.
 - Transaction hash appears on success.
 - Balances update after confirmation.
 - Tier 0 account fails by design.

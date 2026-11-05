@@ -14,6 +14,8 @@ import {BeforeSwapDelta, BeforeSwapDeltaLibrary} from "@uniswap/v4-core/types/Be
 import {Currency} from "@uniswap/v4-core/types/Currency.sol";
 import {PoolKey} from "@uniswap/v4-core/types/PoolKey.sol";
 
+import {AllocationLedger} from "../src/AllocationLedger.sol";
+import {HookFlags} from "../src/HookFlags.sol";
 import {MockRWAOracle} from "../src/MockRWAOracle.sol";
 import {PoolExecutor} from "../src/PoolExecutor.sol";
 import {RWAComplyHook} from "../src/RWAComplyHook.sol";
@@ -161,12 +163,23 @@ contract PoolExecutorTest is Test {
 
         LiquidityPosition liquidity = new LiquidityPosition(manager);
         hook.setTier(address(liquidity), 2);
-        hook.setTier(address(router), 2);
         usdc.mint(address(liquidity), 1e30);
         rwa.mint(address(liquidity), 1e30);
         liquidity.add(key);
 
         address alice = makeAddr("alice");
+        hook.setTier(alice, 2);
+        AllocationLedger budget = new AllocationLedger(address(this), vm.addr(0xA11CE));
+        bytes32 groupId = keccak256("group");
+        budget.setPolicy(groupId, 1, 1_000_000_000, address(usdc));
+        hook.setTrustedRouter(address(router));
+        hook.setQuoteTokens(address(usdc), address(rwa));
+        hook.setLedger(address(budget));
+        hook.setAllocation(groupId, 1);
+        budget.setAuthorizedHook(address(hook));
+        uint256 expiry = block.timestamp + 1 days;
+        bytes32 allocationId = keccak256("allocation");
+        budget.registerWallet(alice, allocationId, groupId, expiry, 1, _ledgerSign(budget, alice, allocationId, groupId, expiry, 1));
         usdc.mint(alice, USDC_IN);
         vm.prank(alice);
         usdc.approve(address(router), USDC_IN);
@@ -176,6 +189,7 @@ contract PoolExecutorTest is Test {
 
         assertEq(usdc.balanceOf(alice), 0);
         assertGt(rwa.balanceOf(alice), 0);
+        assertEq(budget.spentByAllocation(allocationId, groupId, 1), USDC_IN);
         assertEq(usdc.balanceOf(address(router)), 0);
         assertEq(rwa.balanceOf(address(router)), 0);
     }
@@ -224,6 +238,37 @@ contract PoolExecutorTest is Test {
         });
     }
 
+    function _ledgerSign(
+        AllocationLedger budget,
+        address wallet,
+        bytes32 allocationId,
+        bytes32 group,
+        uint256 expiry,
+        uint256 nonce
+    ) internal view returns (bytes memory) {
+        bytes32 structHash =
+            keccak256(abi.encode(budget.REGISTRATION_TYPEHASH(), wallet, allocationId, group, expiry, nonce));
+        (, string memory name, string memory version, uint256 chainId, address verifyingContract,,) =
+            budget.eip712Domain();
+        bytes32 digest = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                keccak256(
+                    abi.encode(
+                        keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                        keccak256(bytes(name)),
+                        keccak256(bytes(version)),
+                        chainId,
+                        verifyingContract
+                    )
+                ),
+                structHash
+            )
+        );
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(0xA11CE, digest);
+        return abi.encodePacked(r, s, v);
+    }
+
     function _deployRwa(bool aboveUsdc) internal returns (TestERC20 token) {
         for (uint256 i = 0; i < 50; i++) {
             TestERC20 candidate = new TestERC20{salt: keccak256(abi.encode("rwa", aboveUsdc, i))}("RWA", "RWA", 18);
@@ -241,8 +286,7 @@ contract PoolExecutorTest is Test {
     }
 
     function _deployComplianceHook(PoolManager manager, MockRWAOracle oracle) internal returns (RWAComplyHook deployed) {
-        uint160 permissions = Hooks.BEFORE_INITIALIZE_FLAG | Hooks.AFTER_INITIALIZE_FLAG
-            | Hooks.BEFORE_ADD_LIQUIDITY_FLAG | Hooks.BEFORE_SWAP_FLAG | Hooks.AFTER_SWAP_FLAG;
+        uint160 permissions = HookFlags.toFlags(HookFlags.declared());
         bytes32 bytecodeHash = keccak256(
             abi.encodePacked(
                 type(RWAComplyHook).creationCode, abi.encode(IPoolManager(address(manager)), address(oracle), address(this))

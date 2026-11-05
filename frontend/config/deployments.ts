@@ -10,7 +10,7 @@ export interface DeploymentAddresses {
   oracle: string;
   tokenA: string;
   tokenB: string;
-  executor?: string;
+  executor: string;
 }
 
 let cachedAddresses: DeploymentAddresses | null = null;
@@ -35,7 +35,7 @@ export async function loadDeploymentAddresses(): Promise<DeploymentAddresses> {
         oracle: data.oracle || data.ORACLE_ADDRESS,
         tokenA: data.tokenA || data.TOKEN_A_ADDRESS,
         tokenB: data.tokenB || data.TOKEN_B_ADDRESS,
-        executor: data.executor || data.EXECUTOR_ADDRESS,
+        executor: data.executor || data.EXECUTOR_ADDRESS || '',
       };
 
       // Validate all addresses are present and valid
@@ -50,7 +50,7 @@ export async function loadDeploymentAddresses(): Promise<DeploymentAddresses> {
       oracle: process.env.NEXT_PUBLIC_ORACLE_ADDRESS || '',
       tokenA: process.env.NEXT_PUBLIC_TOKEN_A_ADDRESS || '',
       tokenB: process.env.NEXT_PUBLIC_TOKEN_B_ADDRESS || '',
-      executor: process.env.NEXT_PUBLIC_EXECUTOR_ADDRESS,
+      executor: process.env.NEXT_PUBLIC_EXECUTOR_ADDRESS || '',
     };
 
     validateAddresses(addresses);
@@ -63,7 +63,7 @@ export async function loadDeploymentAddresses(): Promise<DeploymentAddresses> {
 }
 
 function validateAddresses(addresses: DeploymentAddresses) {
-  const required = ['poolManager', 'hook', 'oracle', 'tokenA', 'tokenB'];
+  const required = ['poolManager', 'hook', 'oracle', 'tokenA', 'tokenB', 'executor'];
   for (const key of required) {
     const addr = addresses[key as keyof DeploymentAddresses];
     if (!addr || !addr.startsWith('0x')) {

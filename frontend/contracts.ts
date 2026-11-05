@@ -45,8 +45,13 @@ export const ORACLE_ABI = parseAbi([
   "function setVolatility(uint256 vol) external",
 ]);
 
+export const POOL_FEE = 0x800000;
+export const TICK_SPACING = 60;
+
 export const EXECUTOR_ABI = parseAbi([
-  "function execute() external",
+  "function swapExactInput((address currency0,address currency1,uint24 fee,int24 tickSpacing,address hooks) key,uint256 amountIn) external returns (int256)",
+  "function usdc() external view returns (address)",
+  "function rwa() external view returns (address)",
 ]);
 
 // Tier information

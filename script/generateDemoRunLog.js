@@ -47,16 +47,21 @@ function createdAddresses(contractName) {
     .map((item) => item.contractAddress);
 }
 
-const tokenAddresses = createdAddresses("MockERC20");
-const tokenA = tokenAddresses[0] || "N/A";
-const tokenB = tokenAddresses[1] || "N/A";
+const usdc = firstCreatedAddress("MockUSDC");
+const rwaTx = createTxs.find(
+  (item) => item.contractName === "MockERC20" && Array.isArray(item.arguments) && item.arguments[0] === "RWA"
+);
+const rwa = rwaTx ? rwaTx.contractAddress : createdAddresses("MockERC20")[0] || "N/A";
 
 const addresses = {
   POOL_MANAGER: firstCreatedAddress("PoolManager"),
   HOOK_ADDRESS: firstCreatedAddress("RWAComplyHook"),
   ORACLE: firstCreatedAddress("MockRWAOracle"),
-  TOKEN_A: tokenA,
-  TOKEN_B: tokenB,
+  USDC: usdc,
+  RWA: rwa,
+  TOKEN_A: usdc,
+  TOKEN_B: rwa,
+  LEDGER: firstCreatedAddress("AllocationLedger"),
   EXECUTOR: firstCreatedAddress("PoolExecutor"),
 };
 
@@ -71,8 +76,11 @@ lines.push("Addresses");
 lines.push(`POOL_MANAGER=${addresses.POOL_MANAGER}`);
 lines.push(`HOOK_ADDRESS=${addresses.HOOK_ADDRESS}`);
 lines.push(`ORACLE=${addresses.ORACLE}`);
+lines.push(`USDC=${addresses.USDC}`);
+lines.push(`RWA=${addresses.RWA}`);
 lines.push(`TOKEN_A=${addresses.TOKEN_A}`);
 lines.push(`TOKEN_B=${addresses.TOKEN_B}`);
+lines.push(`LEDGER=${addresses.LEDGER}`);
 lines.push(`EXECUTOR=${addresses.EXECUTOR}`);
 lines.push("");
 

@@ -12,7 +12,7 @@ import {PoolKey} from "@uniswap/v4-core/types/PoolKey.sol";
 
 /// @title PoolExecutor
 /// @notice Trusted exact-input USDC router. The purchaser is always msg.sender.
-/// @dev This contract does not check allocation budgets. The hook does that in a later step.
+/// @dev The hook checks the router, the trader in hookData, and the remaining budget.
 ///      Amounts are raw token units. USDC is six decimals; this contract does not assume 18.
 contract PoolExecutor is IUnlockCallback {
     using SafeERC20 for IERC20;
