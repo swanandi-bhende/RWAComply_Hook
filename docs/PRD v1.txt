@@ -1,0 +1,2670 @@
+﻿PRD v1
+
+
+
+
+PRODUCT REQUIREMENTS DOCUMENT (PRD)
+RWAComply V2 — Human-Level Allocation Controls for Tokenized Assets
+Product: RWAComply V2
+Category: DeFi / Real-World Assets / Identity / Compliance Infrastructure
+Primary protocol: Uniswap v4
+Identity provider: World ID / IDKit
+Decentralized data layer: Arkiv
+Optional storage layer: Swarm
+Smart contract language: Solidity
+Contract development: Foundry
+Frontend: Next.js, TypeScript, React
+Backend: Node.js / TypeScript
+Wallet integration: wagmi, viem
+Target release: ETHGlobal Mumbai 2026 MVP
+Document status: Proposed product specification
+Version: 1.0
+________________
+
+
+1. Executive Summary
+1.1 What is RWAComply?
+RWAComply is a compliance-aware trading infrastructure layer built on Uniswap v4.
+It allows issuers of tokenized real-world assets (RWAs) to create purchase policies that apply to individual humans rather than individual wallets.
+The system uses World ID to establish that a participant is a unique human. It then allows that participant to associate multiple wallets with one privacy-preserving allocation identity.
+When the participant purchases an RWA token through a supported RWAComply trading route, the Uniswap v4 hook checks how much that human has already purchased.
+If the purchase would exceed the issuer's configured limit, the transaction is rejected onchain.
+1.2 The problem
+Most blockchain applications identify users through wallet addresses.
+A single person can create multiple wallets and use each one independently.
+For example, suppose an issuer wants to distribute a tokenized treasury product with a maximum retail purchase limit of $1,000 per person.
+Alice creates three wallets:
+* Wallet A purchases $700.
+* Wallet B purchases $500.
+* Wallet C purchases $400.
+If the system only tracks wallet-level purchases, all three transactions may be accepted.
+Alice has effectively purchased $1,600 even though the issuer intended to limit her to $1,000.
+The problem is not necessarily that the issuer has no purchase limit. The problem is that the limit is attached to an address rather than a person.
+1.3 The solution
+RWAComply introduces a shared purchase allocation for each verified human.
+Alice verifies through World ID and establishes an RWAComply session.
+She then links Wallet A and Wallet B to the same issuer-scoped allocation identity.
+The system records:
+Wallet
+	Purchase
+	Shared spend
+	Alice — Wallet A
+	$700
+	$700
+	Alice — Wallet B
+	$500 attempted
+	$1,200 attempted
+	The second purchase is rejected because it would exceed the $1,000 allocation.
+Alice can still use Wallet B to purchase $300 or less.
+Bob, who has a different verified-human allocation identity, receives a separate $1,000 allocation.
+1.4 Product promise
+One human. Multiple wallets. One shared purchase budget.
+1.5 Core product distinction
+RWAComply is not:
+* A KYC provider.
+* A complete regulatory compliance platform.
+* A token issuance platform.
+* A general-purpose identity wallet.
+* A frontend-only wallet restriction.
+* A system that can automatically detect every wallet belonging to a person.
+It is an identity-assisted allocation enforcement system.
+World ID establishes uniqueness and session continuity. RWAComply connects authorized wallets to a shared allocation identity. Uniswap v4 enforces the purchase policy during supported swaps.
+1.6 Target outcome
+The first release must demonstrate the following complete flow:
+1. An issuer creates a $1,000 purchase policy.
+2. Alice connects Wallet A.
+3. Alice completes World ID Proof of Human verification.
+4. Wallet A is associated with Alice's allocation identity.
+5. Alice purchases $700 of an RWA token.
+6. Alice connects Wallet B.
+7. Alice proves that she belongs to the existing World ID session.
+8. Wallet B is associated with the same allocation identity.
+9. Wallet B attempts to purchase $500.
+10. The Uniswap v4 hook rejects the transaction.
+11. Wallet B purchases $200 successfully.
+12. Bob verifies separately and can purchase from his own allocation.
+The purchase restriction must be enforced by smart contracts, not just by the backend or frontend.
+________________
+
+
+2. Product Background and Existing System
+2.1 RWAComply V1
+The existing RWAComply project is a Uniswap v4 hook designed for compliance-aware markets.
+Its documented functionality includes:
+* Tier-based access control.
+* Retail purchase or swap limits.
+* Institutional allowlisting.
+* Oracle-based volatility information.
+* Dynamic fees based on volatility and user tier.
+* Administrative controls.
+* Pause and unpause functionality.
+* A PoolExecutor helper.
+* Mock ERC20 tokens and a mock RWA oracle.
+* Foundry unit tests.
+* PoolManager integration tests.
+* A local deployment and demonstration workflow.
+* A basic frontend.
+Existing access tiers
+Tier
+	Existing meaning
+	Existing behavior
+	Tier 0
+	Unverified / unauthorized
+	Trading blocked
+	Tier 1
+	Retail
+	Trading allowed within configured limits
+	Tier 2
+	Institutional
+	Issuer-approved access and separate trading rules
+	The existing implementation is primarily wallet-based.
+2.2 What changes in V2?
+V2 changes the identity and accounting model.
+Area
+	V1
+	V2
+	Identity
+	Wallet address
+	Verified-human allocation identity
+	Wallet relationship
+	Each wallet is independent
+	Multiple wallets can share one allocation
+	Retail limit
+	Wallet-level limit
+	Human-level cumulative limit
+	Spending records
+	Per-wallet
+	Per-human allocation and policy period
+	Access verification
+	Admin-managed tiers
+	World ID session plus issuer policies
+	Trading enforcement
+	Uniswap v4 hook
+	Uniswap v4 hook with shared allocation accounting
+	Issuer configuration
+	Admin settings
+	Issuer-defined allocation groups and policy versions
+	Offering information
+	Existing application data
+	Arkiv-backed public offering directory
+	2.3 What should be reused?
+The following components should be inspected and reused where appropriate:
+Existing component
+	V2 treatment
+	RWAComplyHook.sol
+	Extend with human-level allocation enforcement
+	PoolExecutor.sol
+	Inspect and extend as the supported trading route
+	MockRWAOracle.sol
+	Retain for testing existing fee behavior
+	MockERC20.sol
+	Reuse for local test markets
+	Existing tier logic
+	Preserve as a secondary access layer
+	Existing dynamic fee logic
+	Retain if stable; not the primary V2 feature
+	Admin controls
+	Extend with policy and allocation management
+	Foundry tests
+	Expand with identity and cross-wallet tests
+	Frontend
+	Extend rather than rebuild unnecessarily
+	Existing deployment scripts
+	Adapt to deploy the new contracts and pools
+	The original project must remain identifiable in the repository. The README should clearly explain what existed before the hackathon and what V2 adds.
+________________
+
+
+3. Problem Statement
+3.1 Primary problem
+RWA issuers need to enforce purchase limits at the level of an individual investor.
+Wallet addresses are not reliable representations of individual investors because one person can control multiple wallets.
+If purchase limits are applied independently to each wallet, users can bypass them by splitting purchases across addresses.
+3.2 Why this matters
+Tokenized real-world assets may have issuer-defined distribution rules.
+Examples include:
+* Maximum retail allocation per investor.
+* Maximum amount of a particular offering that one investor may acquire.
+* Different purchase limits for retail and institutional investors.
+* Restricted participation during a particular offering period.
+* Issuer-defined purchase eligibility.
+A wallet-based limit cannot reliably represent a human-level limit.
+3.3 Problems RWAComply V2 addresses
+Problem 1: Multiple wallets
+One human can create or control multiple wallets.
+Solution: Allow multiple wallets to be associated with one verified-human allocation identity.
+Problem 2: Independent purchase counters
+A separate counter for every wallet allows cumulative purchases to exceed the intended limit.
+Solution: Store spending against the shared allocation identity.
+Problem 3: Frontend-only restrictions
+A frontend can prevent a user from clicking a purchase button, but the user may interact directly with a contract.
+Solution: Enforce purchase limits inside the Uniswap v4 hook.
+Problem 4: Unclear issuer policies
+Different pools may have different purchase rules, even when they belong to the same issuer or offering.
+Solution: Introduce allocation groups that allow multiple pools to share one purchase budget.
+Problem 5: Unnecessary identity disclosure
+A normal identity system may require users to reveal personal information.
+Solution: Use World ID Proof of Human and session proofs without collecting names, government IDs or other personal information for the core feature.
+Problem 6: Limited transparency
+Users may not understand why a transaction is rejected or how much allocation remains.
+Solution: Display the active policy, cumulative spending, remaining budget and transaction result.
+3.4 What is not solved?
+RWAComply V2 does not automatically solve:
+* A person using different World ID identities.
+* A person purchasing assets outside RWAComply-supported routes.
+* Transfers of RWA tokens between wallets after purchase.
+* Purchases on unrelated chains.
+* KYC or AML requirements.
+* Accreditation or residency checks.
+* Fraudulent issuers.
+* Incorrect issuer-provided asset information.
+* Legal compliance in every jurisdiction.
+These limitations must be clearly documented.
+________________
+
+
+4. Product Vision and Goals
+4.1 Vision
+Make human-level allocation policies enforceable in decentralized RWA markets without requiring users to reveal their real-world identity to every application.
+4.2 Primary goals
+1. Enable a verified human to link multiple wallets to one allocation identity.
+2. Enforce a shared purchase budget across those wallets.
+3. Apply purchase limits inside Uniswap v4 execution.
+4. Allow issuers to configure and manage allocation policies.
+5. Provide transparent spending and remaining-budget information.
+6. Allow multiple pools to share the same allocation group.
+7. Use Arkiv to publish and retrieve public RWA offering information.
+8. Preserve the useful functionality of the existing RWAComply project.
+4.3 Secondary goals
+* Preserve institutional allowlisting as a separate access mechanism.
+* Retain existing volatility-aware dynamic fees if stable.
+* Provide a basic issuer dashboard.
+* Publish a clear technical explanation of the identity and enforcement model.
+* Make the system easy for other RWA issuers to integrate in the future.
+4.4 Non-goals for the first release
+The first release will not attempt to build:
+* A full security-token issuance platform.
+* A complete KYC or AML product.
+* A cross-chain identity registry.
+* A universal investor passport.
+* A secondary-market transfer compliance system.
+* A decentralized identity recovery network.
+* An automated legal compliance engine.
+* An AI-powered investment recommendation system.
+* An arbitrary multi-currency allocation engine.
+* A complete institutional onboarding system.
+________________
+
+
+5. Target Users and Personas
+5.1 Persona A — Retail investor
+Example: Alice, who wants to purchase tokenized treasury products.
+Needs:
+* Connect her wallet.
+* Verify that she is a unique human.
+* Understand what information is being requested.
+* Link additional wallets.
+* View her purchase limit.
+* View her total purchases.
+* Know how much she can still purchase.
+* Receive a clear reason when a purchase is rejected.
+Pain points:
+* Different wallets may be treated as unrelated users.
+* She may not know how much allocation remains.
+* A transaction may fail without a useful explanation.
+* She may not want to disclose personal information.
+Expected experience:
+Alice completes verification once, links her wallets through session proofs and uses the same allocation across supported pools.
+5.2 Persona B — RWA issuer
+Example: A company issuing a tokenized treasury product.
+Needs:
+* Create an offering.
+* Set a maximum purchase amount per verified human.
+* Define the allocation period.
+* Select the quote currency.
+* Choose which pools share the same allocation.
+* Pause an offering.
+* Update policy parameters.
+* Publish offering information.
+* See aggregate purchase activity.
+Pain points:
+* Wallet-based caps can be circumvented.
+* Managing separate allowlists is operationally difficult.
+* Different pools may accidentally apply inconsistent limits.
+* Issuers need transparent enforcement.
+Expected experience:
+The issuer configures a policy once. Supported pools use the same policy and spending record.
+5.3 Persona C — Platform administrator
+Needs:
+* Manage protocol configuration.
+* Manage authorized issuers.
+* Configure trusted verification signers.
+* Pause the protocol during an emergency.
+* Inspect transaction and policy events.
+* Monitor verification failures.
+* Manage backend configuration.
+Expected experience:
+The administrator can maintain the system without having unrestricted control over user allocations.
+5.4 Persona D — Developer / integrator
+Needs:
+* Understand the hook integration.
+* Register a pool with an allocation group.
+* Configure supported trading routes.
+* Understand how wallet registration works.
+* Read policy and spending information.
+* Integrate the allocation checks into another RWA application.
+Expected experience:
+A developer can integrate RWAComply without needing to recreate the World ID verification system.
+________________
+
+
+6. Product Scope and Priorities
+Use the following priorities:
+* P0: Essential for the MVP. The product is not complete without it.
+* P1: Important, but can follow the central demonstration.
+* P2: Optional improvement or future feature.
+Feature
+	Priority
+	World ID Proof of Human
+	P0
+	World ID session creation
+	P0
+	World ID session proof for a second wallet
+	P0
+	Wallet-to-allocation registration
+	P0
+	Issuer-defined purchase limit
+	P0
+	Shared allocation accounting
+	P0
+	Uniswap v4 hook enforcement
+	P0
+	Exact-input USDC purchase route
+	P0
+	Multiple pools sharing an allocation group
+	P0
+	Frontend wallet connection
+	P0
+	Remaining allocation display
+	P0
+	Rejected transaction explanation
+	P0
+	Issuer offering directory on Arkiv
+	P0 for the Arkiv prize
+	Issuer dashboard
+	P1
+	Institutional allowlisting
+	P1
+	Existing dynamic fee mechanism
+	P1
+	Policy history
+	P1
+	Swarm document storage
+	P2
+	Cross-chain allocation
+	P2
+	Smart-wallet support
+	P2
+	Advanced issuer analytics
+	P2
+	________________
+
+
+7. Core Product Concepts
+This section defines the terms used throughout the product.
+7.1 World ID
+World ID is used to verify that a participant is a unique human.
+RWAComply uses Proof of Human for the main retail flow.
+World ID does not tell RWAComply the participant's legal name, nationality, residency or accreditation status.
+7.2 World ID session
+A session allows RWAComply to recognize that a later interaction belongs to the same World ID holder as an earlier interaction.
+This is important because the system must recognize the same human when they connect another wallet.
+The product must not assume that a user can repeatedly submit the same one-time uniqueness proof and receive a reusable nullifier.
+Instead:
+1. The user completes an initial uniqueness proof.
+2. The user establishes an RWAComply session.
+3. The application stores the session reference securely.
+4. The user can later prove continuity with that session.
+5. The backend verifies the session proof.
+6. The backend associates the newly connected wallet with the existing allocation identity.
+The World ID session identifier must remain offchain.
+Official technical reference: https://worldcoin.github.io/world-id-protocol/world-id-4-specs/
+7.3 Allocation identity
+An allocation identity is a pseudonymous identifier representing one verified human within a particular issuer's allocation system.
+It is not a wallet address.
+It is not a World ID nullifier.
+It is not a publicly identifiable real-world identity.
+It is an application-level identifier used to associate wallets with one spending record.
+For privacy, the allocation identity should be scoped to an issuer rather than globally reused across every issuer.
+Example:
+* Alice's allocation identity for Issuer A: humanKeyA
+* Alice's allocation identity for Issuer B: humanKeyB
+Both represent the same World ID holder, but the identifiers are different.
+This prevents the onchain system from automatically exposing that the same person participates in multiple unrelated issuers' offerings.
+7.4 Wallet registration
+Wallet registration connects a wallet address to an allocation identity.
+A wallet must be registered before it can use the retail purchase route.
+A user may register multiple wallets.
+A wallet must not be silently reassigned to another allocation identity.
+7.5 Allocation policy
+An allocation policy defines how much a verified human may purchase.
+Example:
+* Issuer: Treasury Issuer A.
+* Offering: Treasury Basket 2026.
+* Maximum purchase: $1,000.
+* Quote currency: USDC.
+* Allocation period: November 2026.
+* Allocation group: TREASURY-2026-01.
+7.6 Allocation group
+An allocation group connects multiple pools to one shared spending counter.
+Example:
+Pool
+	Allocation group
+	Treasury Token A / USDC
+	TREASURY-2026-01
+	Treasury Token B / USDC
+	TREASURY-2026-01
+	Treasury Token C / USDC
+	TREASURY-2026-01
+	All three pools use the same purchase budget for the same human.
+7.7 Cumulative spend
+Cumulative spend is the total gross amount a human has purchased through supported RWAComply routes during the applicable allocation period.
+For the MVP:
+* Spending is measured in USDC.
+* Purchases count toward the limit.
+* Selling does not restore the allocation.
+* Failed transactions do not count.
+* Unsupported routes do not count.
+* The counter is shared across pools in the same allocation group.
+7.8 Remaining allocation
+Remaining allocation is:
+Remaining allocation = Maximum allocation - Cumulative spend
+The remaining amount cannot be negative.
+________________
+
+
+8. Main Product Workflows
+8.1 Workflow A — Issuer creates an offering
+Actor: Issuer administrator
+Precondition: The issuer has been authorized to create policies.
+Steps:
+1. Issuer opens the issuer dashboard.
+2. Issuer connects the authorized wallet.
+3. Issuer selects "Create Offering".
+4. Issuer enters the offering name.
+5. Issuer enters the RWA token address.
+6. Issuer selects USDC as the quote currency.
+7. Issuer enters the maximum purchase amount per verified human.
+8. Issuer defines the allocation period.
+9. Issuer creates an allocation group.
+10. Issuer selects the pools that belong to the group.
+11. Issuer reviews the policy.
+12. Issuer confirms the transaction.
+13. The policy registry stores the configuration.
+14. The frontend publishes the public offering information to Arkiv.
+15. The offering appears in the investor directory.
+Expected result:
+The offering is visible, its policy is active and all registered pools use the same allocation group.
+Failure cases:
+* Issuer is not authorized.
+* Invalid token address.
+* Invalid quote token.
+* Maximum allocation is zero.
+* Allocation period is invalid.
+* Pool is not configured with the expected hook.
+* Allocation group already exists with conflicting parameters.
+* Arkiv publication fails.
+If Arkiv publication fails, the onchain policy should remain valid. The application should display a publication error and allow the issuer to retry.
+8.2 Workflow B — First wallet verification
+Actor: Retail investor
+Precondition: The investor has a connected wallet and an active offering.
+Steps:
+1. Alice opens the offering.
+2. Alice connects Wallet A.
+3. The frontend checks whether Wallet A is already registered.
+4. If it is not registered, the frontend displays the verification requirement.
+5. Alice selects "Verify with World ID".
+6. IDKit starts the Proof of Human flow.
+7. Alice completes the verification.
+8. The application receives the proof response.
+9. The frontend sends the proof to the backend.
+10. The backend verifies the proof with World.
+11. The application establishes an RWAComply session.
+12. The backend creates or retrieves Alice's issuer-scoped allocation identity.
+13. The backend issues a wallet-registration authorization.
+14. Alice registers Wallet A onchain.
+15. The contract verifies the backend authorization.
+16. The contract stores Wallet A's allocation identity.
+17. The frontend confirms registration.
+18. The dashboard displays the allocation limit and remaining amount.
+Expected result:
+Wallet A is linked to Alice's allocation identity.
+Important requirements:
+* The World verification secret must never be exposed in the browser.
+* The backend must verify the proof.
+* The frontend must not treat an unverified response as authorization.
+* The session identifier must not be published onchain.
+* The wallet registration must be protected against replay.
+8.3 Workflow C — Linking a second wallet
+Actor: Retail investor
+Precondition: Alice has already completed the initial World ID verification and has an existing session.
+Steps:
+1. Alice switches from Wallet A to Wallet B.
+2. The frontend detects that Wallet B is not registered.
+3. Alice selects "Link another wallet".
+4. The application requests a World ID session proof.
+5. The authenticator proves continuity with the existing session.
+6. The frontend sends the proof to the backend.
+7. The backend verifies the proof.
+8. The backend confirms that the proof belongs to Alice's existing session.
+9. The backend retrieves Alice's issuer-scoped allocation identity.
+10. The backend issues a registration authorization for Wallet B.
+11. Alice registers Wallet B onchain.
+12. The contract records the same allocation identity for Wallet B.
+13. The dashboard displays both wallets under the same allocation.
+Expected result:
+Wallet A and Wallet B resolve to the same allocation identity.
+Important:
+The application must not use a new independent identity for Wallet B if the session proof succeeds.
+Failure cases:
+* No existing session.
+* Session proof is invalid.
+* Session proof belongs to another session.
+* Session has expired or is unavailable.
+* Backend cannot find the session mapping.
+* Wallet registration authorization has expired.
+* Wallet is already registered to another allocation identity.
+If the session cannot be recovered, the application must not silently create a new allocation identity. It should explain the recovery limitation.
+8.4 Workflow D — Successful purchase
+Actor: Retail investor
+Precondition:
+* Wallet is registered.
+* Allocation policy is active.
+* Pool belongs to the correct allocation group.
+* Wallet has sufficient USDC.
+* Wallet has approved the supported executor to spend the required USDC.
+Example:
+* Maximum allocation: $1,000.
+* Current spend: $0.
+* Requested purchase: $700.
+Steps:
+1. Alice selects the offering.
+2. Alice enters $700.
+3. The frontend reads her current allocation.
+4. The frontend displays $1,000 available.
+5. The frontend requests a quote.
+6. Alice confirms the purchase.
+7. The wallet signs or authorizes the trade intent as required by the executor.
+8. The executor verifies the trade request.
+9. The executor calls the Uniswap v4 PoolManager through the supported route.
+10. The hook receives the swap callback.
+11. The hook verifies the executor.
+12. The hook validates the signed trade authorization.
+13. The hook identifies the registered wallet.
+14. The hook retrieves the allocation identity.
+15. The hook retrieves the relevant allocation group and period.
+16. The hook reads the current cumulative spend.
+17. The hook checks whether the requested purchase fits within the remaining allocation.
+18. The hook updates cumulative spend.
+19. The Uniswap swap executes.
+20. The transaction completes.
+21. The frontend reads the updated spending record.
+22. The frontend displays the successful purchase and remaining allocation.
+Expected result:
+Alice spends $700 and has $300 remaining.
+Atomicity requirement:
+If any part of the transaction fails after the hook updates the spend counter, the complete transaction must revert. The spend update must not remain after a failed swap.
+8.5 Workflow E — Rejected purchase through a second wallet
+Actor: Retail investor
+Precondition:
+* Wallet A and Wallet B are registered to the same allocation identity.
+* Maximum allocation is $1,000.
+* Wallet A has already purchased $700.
+Steps:
+1. Alice connects Wallet B.
+2. The frontend retrieves the shared allocation record.
+3. The frontend displays $300 remaining.
+4. Alice attempts to purchase $500.
+5. The executor submits the transaction.
+6. The hook reads the same allocation identity used by Wallet A.
+7. The hook reads cumulative spend of $700.
+8. The hook calculates the new total: $1,200.
+9. The hook detects that the maximum is $1,000.
+10. The hook reverts the transaction.
+11. The frontend displays the rejection reason.
+Expected result:
+No tokens are purchased, and the spending counter remains $700.
+The rejection must happen onchain.
+8.6 Workflow F — Purchase from a different human
+Actor: Bob
+Precondition: Bob has completed his own World ID verification.
+Steps:
+1. Bob connects his wallet.
+2. Bob completes Proof of Human.
+3. Bob receives a separate allocation identity.
+4. Bob registers his wallet.
+5. Bob purchases $900.
+6. The hook checks Bob's spending record.
+7. The purchase is accepted.
+8. Bob has $100 remaining.
+Expected result:
+Alice's purchases do not affect Bob's allocation.
+8.7 Workflow G — Multiple pools share an allocation
+Actor: Retail investor
+Example:
+* Pool A: Treasury Token A / USDC.
+* Pool B: Treasury Token B / USDC.
+* Both pools use the same allocation group.
+* Maximum allocation: $1,000.
+Alice:
+* Purchases $600 through Pool A.
+* Attempts $500 through Pool B.
+Expected result:
+The second purchase is rejected because the shared spend would become $1,100.
+The allocation must not be stored independently for each pool.
+8.8 Workflow H — Issuer pauses an offering
+Actor: Issuer administrator
+Steps:
+1. Issuer opens the dashboard.
+2. Issuer selects an active offering.
+3. Issuer selects "Pause".
+4. Issuer confirms the transaction.
+5. The policy registry marks the offering as paused.
+6. The hook rejects further purchases for that offering.
+Expected result:
+No new purchases are accepted until the issuer resumes the offering.
+Existing spending records must remain unchanged.
+________________
+
+
+9. Product Rules and Business Logic
+9.1 Purchase-limit calculation
+The primary rule is:
+New cumulative spend = Existing cumulative spend + Requested purchase
+A purchase is allowed only when:
+New cumulative spend <= Maximum allocation
+Equivalent validation:
+Requested purchase <= Maximum allocation - Existing cumulative spend
+The contract must use safe integer arithmetic and must not rely on frontend calculations.
+9.2 Spending denomination
+For the MVP, all purchase budgets are denominated in USDC.
+Reasons:
+* USDC is a familiar stable-value quote asset.
+* It avoids introducing multiple price feeds.
+* It makes spending records easy to understand.
+* It simplifies cross-pool accounting.
+* It avoids currency conversion errors in the first implementation.
+All pools sharing an allocation group must use the same quote-token address and denomination.
+The application must handle USDC's token decimals correctly.
+The contract stores the smallest token unit, not a floating-point dollar amount.
+For example:
+$1,000 USDC is represented as 1,000 × 10^6 units for a six-decimal USDC token.
+9.3 Gross purchase accounting
+The system counts gross purchases.
+If Alice purchases $700 and later sells $200, her cumulative purchase spend remains $700.
+Reason:
+Allowing a sale to restore allocation would let users repeatedly buy and sell to bypass the intended gross purchase limit.
+9.4 Failed transactions
+A failed transaction does not count toward the allocation.
+The accounting update and the swap must be atomic.
+If the swap reverts, the allocation update must also revert.
+9.5 Exact-input purchases only
+The MVP supports exact-input swaps.
+The investor specifies the amount of USDC they want to spend.
+The system does not support exact-output purchases in the first release.
+This makes the amount used for purchase accounting easier to determine.
+The hook must reject unsupported swap types.
+9.6 Single-pool and multi-pool behavior
+A policy may apply to one or multiple pools.
+Every pool sharing the same allocation group must:
+* Use the same chain.
+* Use the same quote-token address.
+* Reference the same allocation group.
+* Use a compatible policy period.
+* Use the approved RWAComply hook and supported executor.
+A pool cannot silently change allocation groups after trading has started.
+9.7 Allocation periods
+A policy may have a start time and an end time.
+For the MVP, a new allocation period receives a new periodId.
+Example:
+* November offering: periodId = 1.
+* December offering: periodId = 2.
+Spending from November does not automatically carry into December unless the issuer deliberately configures a continuing allocation group and period.
+The frontend must display the active period.
+9.8 Policy updates
+The issuer may update policy parameters according to its permissions.
+Examples:
+* Increase the maximum allocation.
+* Decrease the maximum allocation.
+* Pause the offering.
+* Resume the offering.
+* Change the offering's end date if permitted.
+Rules:
+1. The issuer cannot change the quote token of an active allocation group.
+2. The issuer cannot reset spending by changing the policy version.
+3. A new policy version must not erase existing spending.
+4. The issuer cannot reduce the cap below the amount already spent.
+5. Old trade authorizations must not remain valid after a policy update if they were issued for an earlier policy version.
+6. All updates must emit events.
+9.9 Institutional users
+Institutional access remains separate from World ID Proof of Human.
+World ID does not prove that a user is an accredited investor or an institution.
+For V2:
+* Retail users use World ID and the shared allocation model.
+* Institutional wallets are approved through an issuer-controlled allowlist.
+* Institutional limits are configured separately.
+* Institutional access must not automatically bypass every policy.
+* The issuer decides whether an institutional wallet has a different cap or an unrestricted allocation.
+The initial demo focuses on retail users.
+9.10 Token transfers
+The MVP enforces purchases through supported RWAComply trading routes.
+It does not guarantee that a person cannot acquire the RWA token through:
+* A direct transfer.
+* An unrelated exchange.
+* Another Uniswap pool.
+* Another chain.
+* A different protocol.
+If an issuer requires ownership-level restrictions, the RWA token itself must implement compatible transfer controls.
+The product must not claim to enforce total ownership across every wallet.
+________________
+
+
+10. Technical Architecture
+10.1 Architecture overview
+The system contains six main layers.
+Layer 1 — Frontend
+Responsibilities:
+* Wallet connection.
+* Offering discovery.
+* World ID verification.
+* Wallet linking.
+* Allocation display.
+* Purchase interface.
+* Issuer dashboard.
+* Transaction history.
+Layer 2 — World ID integration
+Responsibilities:
+* Start Proof of Human.
+* Create a session.
+* Request session proofs.
+* Provide verification results.
+Layer 3 — Backend
+Responsibilities:
+* Verify World ID proofs.
+* Maintain session-to-allocation mappings.
+* Generate issuer-scoped allocation identities.
+* Issue wallet-registration attestations.
+* Verify wallet-registration requests.
+* Provide read APIs for the frontend.
+* Maintain operational logs without storing unnecessary identity data.
+Layer 4 — Onchain identity and policy registry
+Responsibilities:
+* Store wallet-to-allocation mappings.
+* Store issuer policies.
+* Store allocation groups.
+* Store cumulative spend.
+* Validate backend attestations.
+* Enforce policy permissions.
+Layer 5 — Uniswap v4 execution
+Responsibilities:
+* Authenticate supported swap routes.
+* Validate the signed trade intent.
+* Check allocation availability.
+* Update cumulative spending.
+* Allow or reject swaps.
+Layer 6 — Arkiv
+Responsibilities:
+* Store public offering metadata.
+* Allow the frontend to query available offerings.
+* Store issuer-published policy descriptions and references.
+* Provide an externally queryable offering directory.
+Arkiv does not store World ID session identifiers, wallet-to-human mappings or spending counters.
+10.2 High-level flow
+1. User connects a wallet.
+2. User completes World ID verification.
+3. Backend verifies the proof.
+4. Backend creates or retrieves the issuer-scoped allocation identity.
+5. User registers the wallet onchain.
+6. User requests a purchase.
+7. Trusted executor validates the wallet and trade intent.
+8. Uniswap v4 calls the hook.
+9. Hook retrieves the wallet's allocation identity.
+10. Hook checks the allocation policy.
+11. Hook updates cumulative spend.
+12. Swap executes or reverts.
+13. Frontend displays the final result.
+________________
+
+
+11. World ID and Identity Architecture
+11.1 Selected credential
+Use World ID Proof of Human.
+Reason:
+The product needs to establish that a participant is a unique human.
+It does not need to collect a passport, government ID or legal name.
+11.2 Initial verification
+The first verification establishes the user's RWAComply session.
+The backend must:
+1. Receive the proof from the frontend.
+2. Validate the request and expected application configuration.
+3. Verify the proof through the official World verification flow.
+4. Confirm that the proof is valid for the intended action.
+5. Create or retrieve the session mapping.
+6. Associate the session with an issuer-scoped allocation identity.
+The backend must not trust the frontend's claim that verification succeeded.
+11.3 Session-based wallet linking
+The second wallet uses a session proof.
+The backend must confirm that the session proof belongs to the same session as the initial verification.
+If it does, the backend can retrieve the existing allocation identity.
+The second wallet is then registered against that identity.
+11.4 Issuer-scoped allocation identities
+A user's allocation identity should be scoped to an issuer.
+The backend maintains a relationship conceptually similar to:
+World session → Issuer scope → Allocation identity
+The onchain contract receives only the opaque allocation identity.
+The same user should not automatically have one publicly visible identity across unrelated issuers.
+11.5 Session storage
+The backend may store the session identifier because it needs it for subsequent session proofs.
+Requirements:
+* Store it server-side.
+* Encrypt it at rest.
+* Restrict access.
+* Do not expose it through public APIs.
+* Do not publish it to Arkiv.
+* Do not emit it in smart contract events.
+* Do not include it in transaction calldata.
+* Do not use it as a public wallet identifier.
+11.6 Wallet registration authorization
+The backend issues an authorization that binds:
+* Wallet address.
+* Allocation identity.
+* Chain ID.
+* Registry contract address.
+* Authorization expiry.
+* Registration nonce.
+* Relevant issuer scope.
+The registration contract verifies the backend signature.
+The simplest MVP registration flow requires the wallet itself to submit the registration transaction. This proves that the caller controls that wallet.
+If a relayer is introduced later, the wallet must provide an additional wallet signature.
+11.7 Backend signer
+The backend signer is a trusted attestor.
+It must:
+* Be stored in a secure server environment.
+* Never be exposed in frontend variables.
+* Be configurable through deployment settings.
+* Support rotation.
+* Have restricted authority.
+* Be monitored for misuse.
+The contract should allow an authorized administrator to rotate the signer.
+11.8 Session expiry and recovery
+Session expiry or loss must not automatically create a new allocation identity.
+Otherwise, a user could potentially receive a fresh spending record.
+For the MVP:
+* If the session is available, use it.
+* If the session proof fails, show an error.
+* If the session is lost, require a documented recovery process.
+* Do not automatically reset the user's cumulative spend.
+* Do not allow an administrator to erase a user's spending history.
+Full decentralized recovery is outside the MVP.
+11.9 World ID failure states
+The application must handle:
+* User cancels verification.
+* User does not have the required credential.
+* Verification proof is invalid.
+* Verification proof is expired.
+* Verification service is unavailable.
+* Session creation fails.
+* Session proof fails.
+* Backend verification fails.
+* Backend signer is unavailable.
+In all such cases, the user must not receive an unverified allocation registration.
+________________
+
+
+12. Smart Contract Requirements
+The following is the proposed logical contract design. It is not a requirement to create a separate contract for every component if the existing codebase supports a simpler implementation.
+12.1 Contract components
+Recommended logical modules:
+1. HumanIdentityRegistry
+2. RWAAllocationPolicyRegistry
+3. RWAComplyHook
+4. RWAComplyExecutor
+These may be separate contracts or carefully separated modules depending on the existing implementation.
+12.2 HumanIdentityRegistry
+Purpose:
+Associate wallets with issuer-scoped allocation identities.
+State
+Conceptual storage:
+mapping(address => bytes32) public walletHumanKey;
+
+
+mapping(address => uint256) public registrationNonce;
+
+
+mapping(bytes32 => bool) public usedAllocationRegistration;
+The exact storage layout may change during implementation.
+Required functions
+registerWallet(...)
+getHumanKey(...)
+isWalletRegistered(...)
+revokeWallet(...)
+setAuthorizedSigner(...)
+Registration rules
+* Only valid backend attestations are accepted.
+* The authorization must be unexpired.
+* The nonce must be unused.
+* The authorization must match the current chain.
+* The authorization must match the registry contract.
+* The wallet must not already belong to another allocation identity.
+* A wallet must not be reassigned to a different allocation identity through the normal registration flow.
+Revocation
+A wallet may be disabled or revoked.
+Revocation must not erase its historical allocation identity or spending records.
+A revoked wallet cannot execute new purchases.
+A wallet must not be able to bypass its previous spending history by being unlinked and registered as a new person.
+12.3 RWAAllocationPolicyRegistry
+Purpose:
+Store issuer policies and allocation-group configuration.
+Proposed policy fields
+Field
+	Type
+	Purpose
+	policyId
+	bytes32
+	Unique policy identifier
+	allocationGroupId
+	bytes32
+	Shared spending group
+	issuer
+	address
+	Authorized issuer
+	quoteToken
+	address
+	USDC address
+	maxAllocation
+	uint256
+	Maximum gross purchase amount
+	periodId
+	uint64
+	Allocation period
+	startTime
+	uint64
+	Start time
+	endTime
+	uint64
+	End time
+	version
+	uint32
+	Policy version
+	active
+	bool
+	Whether purchases are allowed
+	Required functions
+createPolicy(...)
+updatePolicy(...)
+pausePolicy(...)
+resumePolicy(...)
+getPolicy(...)
+registerPool(...)
+getPoolAllocationGroup(...)
+Issuer permissions
+Only the issuer or an authorized administrator may update the issuer's policy.
+An unrelated wallet must not be able to modify the policy.
+Policy versioning
+Every meaningful policy update increments the version.
+Trade authorizations must include the expected policy version.
+12.4 Allocation accounting
+Purpose:
+Track how much a human has purchased.
+Conceptual storage:
+mapping(
+    bytes32 humanKey =>
+    mapping(
+        bytes32 allocationGroupId =>
+        mapping(uint64 periodId => uint256)
+    )
+) public cumulativeSpend;
+The actual implementation may optimize this structure.
+Required functions
+getCumulativeSpend(...)
+getRemainingAllocation(...)
+recordPurchase(...)
+Only the trusted hook or another explicitly authorized execution component may update spending.
+The frontend must never be able to write spending directly.
+12.5 RWAComplyHook
+Purpose:
+Enforce the policy during Uniswap v4 swaps.
+The primary enforcement point is beforeSwap.
+Required checks
+1. The caller must be the expected PoolManager.
+2. The pool must be registered.
+3. The policy must be active.
+4. The swap must use an approved executor.
+5. The trade intent must be valid.
+6. The wallet must be registered.
+7. The wallet must not be revoked.
+8. The allocation identity must exist.
+9. The swap must be exact-input.
+10. The input currency must be the configured quote token.
+11. The amount must be positive and within supported limits.
+12. The policy period must be active.
+13. The trade authorization must match the policy version.
+14. The purchase must fit within the remaining allocation.
+15. The trade authorization nonce must not have been used.
+If any required check fails, the swap must revert.
+12.6 Trusted executor
+The hook must not trust an arbitrary wallet address supplied in hookData.
+In Uniswap v4, the hook's sender parameter represents the initial caller to the PoolManager. It may be a router or executor rather than the end user's wallet.
+The hook therefore needs a defined, trusted route.
+The MVP should use a dedicated executor.
+Responsibilities:
+* Receive the user's purchase request.
+* Validate the wallet's authorization.
+* Ensure the correct wallet funds the purchase.
+* Call the PoolManager.
+* Pass the signed trade intent to the hook.
+* Ensure the output is delivered to the authorized recipient.
+* Settle the required token balances.
+* Prevent unauthorized route parameters.
+The hook must independently verify the important authorization fields rather than trusting arbitrary hook data.
+12.7 Signed trade intent
+The trade authorization should bind:
+Field
+	Purpose
+	wallet
+	Wallet making the purchase
+	recipient
+	Authorized output recipient
+	poolId
+	Pool being traded
+	policyId
+	Applicable policy
+	allocationGroupId
+	Shared spending group
+	amountIn
+	Exact USDC input
+	periodId
+	Allocation period
+	policyVersion
+	Expected policy version
+	nonce
+	Prevent replay
+	deadline
+	Prevent stale authorization
+	chainId
+	Prevent cross-chain replay
+	executor
+	Restrict the execution route
+	The wallet must authorize the trade intent.
+For the MVP, EOA wallet signatures may be supported first. Smart contract wallet signature support can be added later through EIP-1271.
+12.8 Swap amount accounting
+The MVP supports exact-input purchases using USDC.
+The hook should determine the input token and amount from the actual Uniswap swap parameters.
+It must confirm:
+* The swap is exact-input.
+* USDC is the input currency.
+* The pool is registered to the relevant allocation group.
+* The amount matches the signed trade authorization.
+The hook should not calculate spending from a user-supplied frontend value.
+The amount recorded must match the amount actually specified for the supported purchase.
+12.9 Atomic spending update
+The hook may update the spending counter during the swap execution path.
+If the swap later fails, the entire EVM transaction must revert, including the spending update.
+There must be no separate offchain step that permanently records a purchase before the swap has succeeded.
+12.10 Required events
+Recommended events:
+event WalletRegistered(
+    address indexed wallet,
+    bytes32 indexed humanKey
+);
+
+
+event WalletRevoked(
+    address indexed wallet
+);
+
+
+event PolicyCreated(
+    bytes32 indexed policyId,
+    bytes32 indexed allocationGroupId
+);
+
+
+event PolicyUpdated(
+    bytes32 indexed policyId,
+    uint32 version
+);
+
+
+event PolicyPaused(
+    bytes32 indexed policyId
+);
+
+
+event PolicyResumed(
+    bytes32 indexed policyId
+);
+
+
+event PoolRegistered(
+    bytes32 indexed poolId,
+    bytes32 indexed allocationGroupId
+);
+
+
+event PurchaseRecorded(
+    bytes32 indexed humanKey,
+    bytes32 indexed allocationGroupId,
+    uint64 periodId,
+    address indexed wallet,
+    uint256 amountIn,
+    uint256 cumulativeSpend
+);
+Events must not expose World ID session identifiers or sensitive verification information.
+12.11 Custom errors
+Recommended errors:
+error WalletNotRegistered();
+error WalletRevoked();
+error InvalidAttestation();
+error AttestationExpired();
+error InvalidNonce();
+error InvalidPolicy();
+error PolicyInactive();
+error PolicyExpired();
+error PoolNotRegistered();
+error UnauthorizedExecutor();
+error InvalidTradeIntent();
+error InvalidTradeSignature();
+error UnsupportedSwapType();
+error UnsupportedQuoteToken();
+error AllocationExceeded();
+error InvalidAllocationGroup();
+error PolicyVersionMismatch();
+error InvalidAmount();
+The frontend should translate these errors into clear messages.
+________________
+
+
+13. Frontend Requirements
+13.1 Main application pages
+The frontend should contain:
+1. Home page.
+2. RWA offering directory.
+3. Offering details page.
+4. Investor dashboard.
+5. Wallet management / linking.
+6. Purchase interface.
+7. Transaction history.
+8. Issuer dashboard.
+9. Policy configuration page.
+10. Basic protocol information page.
+13.2 Home page
+Must display:
+* Product name and description.
+* What problem RWAComply solves.
+* How human-level allocation works.
+* Available offerings.
+* Supported network.
+* Connect wallet button.
+The home page should communicate the product in one sentence:
+"One human, multiple wallets, one shared purchase budget."
+13.3 Offering directory
+Must display:
+* Offering name.
+* Issuer.
+* Asset category.
+* Token address.
+* Quote currency.
+* Maximum purchase allocation.
+* Allocation period.
+* Offering status.
+* Supported pools.
+* Link to offering details.
+The directory must retrieve offering records from Arkiv.
+It must not silently use hardcoded sample records as the production source of listings.
+13.4 Offering details page
+Must display:
+* Offering description.
+* Issuer information.
+* Asset information.
+* Pool information.
+* Purchase limit.
+* Quote currency.
+* Allocation period.
+* Policy status.
+* User's verification status.
+* User's available allocation.
+* Purchase button.
+The application should read enforceable policy parameters from the onchain registry.
+Arkiv provides the public offering description and discovery data. The smart contract remains authoritative for trading rules.
+13.5 Investor dashboard
+Must display:
+* Connected wallet.
+* Registration status.
+* World ID verification status.
+* Linked wallets.
+* Current issuer allocation identity status.
+* Active allocation group.
+* Maximum allocation.
+* Cumulative spend.
+* Remaining allocation.
+* Allocation period.
+* Recent purchases.
+* Recent rejected attempts, where observable.
+The dashboard must distinguish between:
+* A wallet that is not registered.
+* A wallet that is registered but revoked.
+* A wallet that is registered and eligible to trade.
+13.6 Wallet linking interface
+Must provide:
+* "Verify with World ID".
+* "Link another wallet".
+* Existing linked wallet list.
+* Registration status.
+* Clear session proof instructions.
+* Error messages.
+* Confirmation after successful linking.
+A user must understand that linking wallets allows RWAComply to recognize those wallets as belonging to the same allocation identity within the relevant issuer scope.
+13.7 Purchase interface
+Must display:
+* Input amount.
+* Input token.
+* Output token.
+* Estimated output.
+* Price impact.
+* Slippage settings.
+* Current allocation.
+* Remaining allocation.
+* Amount remaining after the proposed purchase.
+* Transaction confirmation.
+The frontend must prevent an obviously excessive purchase from being submitted where possible, but the contract remains the final authority.
+13.8 Rejected purchase interface
+Example:
+Purchase rejected
+Your allocation limit would be exceeded.
+* Maximum allocation: $1,000
+* Previous purchases: $700
+* Available allocation: $300
+* Requested purchase: $500
+Reduce your purchase to $300 or less.
+The frontend must not show a successful purchase when the transaction has reverted.
+13.9 Issuer dashboard
+Must display:
+* Issuer wallet.
+* Created offerings.
+* Active and paused policies.
+* Maximum allocation.
+* Allocation period.
+* Associated pools.
+* Policy version.
+* Aggregate purchase activity.
+* Pause and resume controls.
+* Policy update controls.
+For the MVP, the issuer dashboard may be simplified.
+13.10 Responsive design
+The application must work on:
+* Desktop browsers.
+* Mobile browsers.
+The main investor flow should not require a desktop-only interface.
+________________
+
+
+14. Backend Requirements
+14.1 Backend responsibilities
+The backend is responsible for identity verification and session management.
+It is not the authority for purchase-limit enforcement.
+The smart contracts enforce the purchase limit.
+14.2 Proposed API endpoints
+These are logical API requirements. Final route names may change during implementation.
+Method
+	Endpoint
+	Purpose
+	POST
+	/api/world/verify
+	Verify an initial World ID proof
+	POST
+	/api/world/session
+	Establish or retrieve a session
+	POST
+	/api/world/session-proof
+	Verify continuity with an existing session
+	POST
+	/api/wallet/registration-attestation
+	Issue wallet registration authorization
+	GET
+	/api/wallet/:address/status
+	Retrieve wallet registration status
+	GET
+	/api/allocation/:wallet/:groupId
+	Retrieve allocation information
+	GET
+	/api/offerings
+	Retrieve public offering information
+	GET
+	/api/policies/:policyId
+	Retrieve policy information
+	POST
+	/api/arkiv/publish
+	Publish offering metadata to Arkiv
+	GET
+	/api/arkiv/offerings
+	Query Arkiv offerings
+	14.3 Verification API
+The initial verification endpoint must:
+* Validate request structure.
+* Validate the expected World application configuration.
+* Verify the proof with World.
+* Reject invalid proofs.
+* Prevent replay.
+* Establish the session mapping.
+* Return only the information required by the frontend.
+14.4 Session-proof API
+The session-proof endpoint must:
+* Require an existing session reference.
+* Verify the submitted session proof.
+* Confirm continuity with the expected session.
+* Retrieve the issuer-scoped allocation identity.
+* Reject unrelated or invalid sessions.
+* Return a short-lived registration authorization when appropriate.
+14.5 Registration authorization API
+The backend should generate a signed authorization binding:
+* Wallet.
+* Allocation identity.
+* Chain.
+* Registry contract.
+* Nonce.
+* Expiry.
+* Issuer scope.
+The authorization must not be reusable.
+14.6 Backend storage
+A relational database may be used for the following information:
+User session table
+Field
+	Description
+	id
+	Internal record ID
+	session_id_encrypted
+	Encrypted World session reference
+	created_at
+	Creation time
+	status
+	Active / expired / revoked
+	Issuer allocation table
+Field
+	Description
+	id
+	Internal record ID
+	issuer_id
+	Issuer scope
+	allocation_key
+	Opaque onchain allocation identity
+	session_record_id
+	Related session record
+	created_at
+	Creation time
+	status
+	Active / disabled
+	Wallet association table
+Field
+	Description
+	wallet_address
+	Wallet address
+	issuer_id
+	Issuer scope
+	allocation_key
+	Related allocation identity
+	registered_at
+	Registration time
+	status
+	Active / revoked
+	The backend database is an operational index.
+The onchain registry remains authoritative for wallet registration and spending enforcement.
+14.7 Backend security
+* Keep signing keys in server-side environment variables or a secure key manager.
+* Never expose private keys in frontend code.
+* Rate-limit verification endpoints.
+* Validate all request fields.
+* Validate wallet signatures where required.
+* Protect session data.
+* Avoid logging raw proofs or session secrets unnecessarily.
+* Restrict administrative endpoints.
+* Use HTTPS in deployed environments.
+* Do not trust frontend-provided allocation balances.
+* Do not trust frontend-provided verification status.
+________________
+
+
+15. Arkiv Integration Requirements
+15.1 Why Arkiv is included
+Arkiv provides a decentralized, queryable data layer for public RWA offering information.
+It should make the offering directory more useful than a static list stored in the frontend or a private application database.
+15.2 What Arkiv stores
+Arkiv stores public offering metadata.
+Example entity:
+{
+  "schema": "rwa-comply.offering",
+  "offeringId": "treasury-2026-01",
+  "issuer": "0xIssuerAddress",
+  "name": "Tokenized Treasury Basket",
+  "description": "Tokenized treasury offering",
+  "assetClass": "Treasury",
+  "chainId": 1234,
+  "assetToken": "0xAssetToken",
+  "quoteToken": "0xUSDC",
+  "policyId": "0xPolicyId",
+  "allocationGroupId": "0xAllocationGroup",
+  "policyVersion": 1,
+  "status": "active",
+  "expiresAt": 1794000000
+}
+The values above are illustrative.
+The actual schema must be documented in /arkiv/schema.md.
+15.3 What Arkiv must not store
+Do not store:
+* World ID session identifiers.
+* World ID proofs.
+* Allocation identities.
+* Wallet-to-human mappings.
+* Private signing keys.
+* Personal identity documents.
+* KYC information.
+* Private investor data.
+* Individual cumulative spending records.
+These belong in the appropriate backend or smart contract.
+15.4 Arkiv ownership
+Offering entities should be owned by the issuer wallet or another clearly authorized publishing wallet.
+The application must document which wallets write entities.
+The entity ownership model must match the issuer's ability to publish and update its offerings.
+15.5 Arkiv queries
+The frontend must support useful queries, such as:
+* All active offerings.
+* Offerings from a particular issuer.
+* Offerings by asset class.
+* Offerings on a particular chain.
+* Offerings that have not expired.
+The exact query fields must match the Arkiv entity schema.
+15.6 Arkiv and onchain data relationship
+Arkiv is the discovery and metadata layer.
+The onchain policy registry is the enforcement layer.
+When a user opens an offering:
+1. Frontend queries Arkiv.
+2. Frontend displays the public offering information.
+3. Frontend reads the corresponding policy from the blockchain.
+4. Frontend compares the policy ID and version.
+5. Frontend displays the enforceable policy.
+6. If the Arkiv record is stale, the frontend must warn the user or refresh the record.
+The frontend must never use an Arkiv record alone to authorize a trade.
+15.7 Arkiv reliability
+If Arkiv is temporarily unavailable:
+* Existing onchain policies must continue working.
+* Previously loaded offering information may be displayed with a stale-data warning.
+* New offering publication may be retried.
+* Trading must not depend on an Arkiv query succeeding.
+This keeps Arkiv from becoming a critical dependency for swap execution.
+15.8 Arkiv acceptance requirements
+* Application writes entities to the current Arkiv testnet.
+* Application reads entities from Arkiv.
+* At least one user-visible feature uses Arkiv data.
+* Issuer wallet addresses are documented.
+* At least one reproducible query is documented.
+* Schema is documented.
+* Entity ownership is documented.
+* Expiration behavior is documented.
+* Arkiv friction is documented.
+* Why Arkiv is used is documented.
+* How Arkiv changes the user experience is documented.
+________________
+
+
+16. Optional Swarm Integration
+Swarm is not required for the core product.
+If implemented, it may store public offering documents such as:
+* Offering factsheets.
+* Asset summaries.
+* Public terms.
+* Issuer documents.
+* Public audit reports.
+Arkiv can store the Swarm reference and associated metadata.
+Swarm should not store private investor information or identity data.
+The Swarm integration must only be attempted after the Uniswap, World ID and Arkiv flows are working.
+________________
+
+
+17. Security and Threat Model
+Security is a core product requirement because the system controls access to financial purchases.
+17.1 Threat: Multiple wallets
+Attack: A person creates multiple wallets to bypass the purchase cap.
+Protection: Wallets linked through the same World ID session resolve to one allocation identity.
+17.2 Threat: Forged wallet association
+Attack: An attacker attempts to register another person's wallet against their own allocation identity.
+Protection:
+* Backend verifies World ID session continuity.
+* Backend issues an authorization for the specific wallet.
+* The wallet must submit the registration transaction or provide a valid wallet signature.
+* Contract checks the backend signature.
+17.3 Threat: Replaying registration authorization
+Attack: An attacker reuses an old registration signature.
+Protection:
+* Nonce.
+* Expiry.
+* Chain ID.
+* Contract address.
+* Wallet binding.
+* Signature verification.
+17.4 Threat: Replaying trade authorization
+Attack: A user reuses an old signed purchase intent.
+Protection:
+* Trade nonce.
+* Expiry.
+* Exact input amount.
+* Pool binding.
+* Policy binding.
+* Allocation-group binding.
+* Executor binding.
+* Nonce consumption.
+17.5 Threat: Forged hook data
+Attack: A caller supplies another wallet address through hookData.
+Protection:
+* Only the trusted executor may call the supported route.
+* Hook verifies the signed trade intent.
+* Wallet must be registered.
+* Executor ensures the correct input funding and output recipient.
+17.6 Threat: Unauthorized router
+Attack: An attacker calls the PoolManager directly and attempts to bypass the executor.
+Protection:
+The hook rejects unsupported execution routes.
+17.7 Threat: Spending counter reset
+Attack: A user attempts to reset their spending by changing policy versions or registering another wallet.
+Protection:
+* Spending is keyed by allocation identity, allocation group and period.
+* Policy versions do not reset spending.
+* Wallets cannot be freely reassigned.
+* Revocation does not erase historical spending.
+17.8 Threat: Selling and repurchasing
+Attack: A user sells tokens and expects their purchase budget to reset.
+Protection:
+The system tracks gross purchases. Selling does not restore the allocation.
+17.9 Threat: Issuer changes policy maliciously
+Attack: An issuer changes the policy to erase previous spending or bypass restrictions.
+Protection:
+* Policy changes are permissioned.
+* Spending remains independent of policy version.
+* Policy changes emit events.
+* Cap cannot be reduced below already-spent amounts.
+* Policy changes must be visible in the frontend.
+17.10 Threat: Backend signer compromise
+Attack: An attacker obtains the backend signing key and issues false wallet registrations.
+Protection:
+* Secure key storage.
+* Restricted signer permissions.
+* Monitoring.
+* Key rotation.
+* Administrative pause.
+* Short authorization expiry.
+* Issuer-scoped allocation identities.
+The backend signer remains a trust assumption in the MVP.
+17.11 Threat: World verification service unavailable
+Attack or failure: The verification provider is unavailable.
+Protection:
+New registrations and wallet linking are paused until verification works.
+Already registered wallets may continue trading if their onchain registration and policies remain valid.
+The system must not bypass verification to preserve availability.
+17.12 Threat: Arkiv data manipulation
+Attack: An attacker publishes misleading offering metadata.
+Protection:
+* Issuer ownership is checked.
+* Issuer wallet is displayed.
+* Onchain policy is authoritative.
+* Token and pool addresses are validated against onchain records.
+* Stale or inconsistent metadata is flagged.
+17.13 Threat: Oracle manipulation
+The MVP does not rely on an oracle for purchase-limit calculations.
+If the existing volatility-fee mechanism remains enabled, it must have separate stale-price and invalid-feed protections.
+17.14 Threat: Reentrancy and accounting inconsistency
+The hook and executor must be reviewed for:
+* Reentrancy.
+* Repeated callbacks.
+* Incorrect nonce consumption.
+* Incorrect spending updates.
+* Token settlement failures.
+* Partial execution.
+* Invalid balance assumptions.
+The hook should not hold user funds unnecessarily.
+17.15 Privacy requirements
+* Do not publish World ID session IDs.
+* Do not publish World ID proofs.
+* Do not expose personal information.
+* Do not reuse a global allocation identity across unrelated issuers.
+* Do not emit sensitive data in events.
+* Explain that linked wallets share an allocation record.
+* Explain that allocation activity within an issuer's scope is linkable by the application.
+________________
+
+
+18. Error Handling and User Messages
+The application must provide understandable error messages.
+Situation
+	User-facing message
+	Wallet not connected
+	Connect your wallet to continue.
+	Wallet not registered
+	Verify with World ID before purchasing.
+	World ID cancelled
+	Verification was cancelled. No wallet was registered.
+	World proof invalid
+	Verification could not be completed. Please try again.
+	Session unavailable
+	Your RWAComply session could not be found.
+	Session proof rejected
+	This wallet could not be linked to your existing allocation.
+	Registration authorization expired
+	Your registration request expired. Please try again.
+	Wallet already linked elsewhere
+	This wallet is already associated with another allocation.
+	Policy paused
+	This offering is currently paused.
+	Policy expired
+	This offering's allocation period has ended.
+	Allocation exceeded
+	This purchase exceeds your remaining allocation.
+	Unsupported swap type
+	This offering supports exact-input purchases only.
+	Wrong quote token
+	This pool does not use the supported quote token.
+	Unauthorized executor
+	This trading route is not supported.
+	Transaction reverted
+	The transaction failed. Your allocation was not used.
+	Arkiv unavailable
+	Offering information could not be refreshed. Trading rules are still checked onchain.
+	Backend unavailable
+	Verification services are temporarily unavailable.
+	Error messages must not expose private backend information or cryptographic secrets.
+________________
+
+
+19. Functional Requirements
+19.1 Identity requirements
+FR-ID-01: The application must support World ID Proof of Human.
+FR-ID-02: The backend must verify the proof.
+FR-ID-03: The application must establish an RWAComply session after successful initial verification.
+FR-ID-04: The application must support session proofs for linking additional wallets.
+FR-ID-05: The backend must associate session proofs with the correct issuer-scoped allocation identity.
+FR-ID-06: The session identifier must remain offchain.
+FR-ID-07: Invalid or expired proofs must not create wallet registrations.
+19.2 Wallet requirements
+FR-W-01: A wallet must be registered before retail trading.
+FR-W-02: A user may link multiple wallets.
+FR-W-03: Multiple wallets linked to the same allocation identity must share spending.
+FR-W-04: A wallet cannot be silently reassigned to another identity.
+FR-W-05: Revoked wallets cannot execute new purchases.
+FR-W-06: Revocation must not erase historical spending.
+19.3 Policy requirements
+FR-P-01: Authorized issuers can create policies.
+FR-P-02: A policy must define a maximum allocation.
+FR-P-03: A policy must define a quote token.
+FR-P-04: A policy must define an allocation period.
+FR-P-05: A policy must define an allocation group.
+FR-P-06: A policy can be paused and resumed by authorized actors.
+FR-P-07: Policy updates must increment the version.
+FR-P-08: Policy updates must not reset spending.
+FR-P-09: A policy must be associated with registered pools.
+19.4 Trading requirements
+FR-T-01: The system must support exact-input USDC purchases.
+FR-T-02: The system must reject unregistered wallets.
+FR-T-03: The system must reject unauthorized executors.
+FR-T-04: The system must validate the signed trade intent.
+FR-T-05: The system must check the shared allocation balance.
+FR-T-06: The system must reject purchases that exceed the limit.
+FR-T-07: The system must record successful purchases.
+FR-T-08: Failed swaps must not permanently update spending.
+FR-T-09: Multiple pools in the same allocation group must share the same spending record.
+FR-T-10: Selling tokens must not restore the purchase allocation.
+19.5 Frontend requirements
+FR-UI-01: Users can connect a wallet.
+FR-UI-02: Users can verify through World ID.
+FR-UI-03: Users can link another wallet.
+FR-UI-04: Users can view their allocation.
+FR-UI-05: Users can view remaining spend.
+FR-UI-06: Users can execute supported purchases.
+FR-UI-07: Users can understand why a transaction was rejected.
+FR-UI-08: Issuers can view and manage their offerings.
+FR-UI-09: Users can browse offerings retrieved from Arkiv.
+19.6 Arkiv requirements
+FR-A-01: Issuers can publish offering metadata.
+FR-A-02: The application can query offering metadata.
+FR-A-03: The offering directory uses Arkiv data.
+FR-A-04: The application validates enforceable policy information against the blockchain.
+FR-A-05: Arkiv records have documented ownership and expiry.
+FR-A-06: Arkiv failure does not disable onchain purchase enforcement.
+________________
+
+
+20. Non-Functional Requirements
+20.1 Security
+* Critical purchase rules must be enforced onchain.
+* Backend signing keys must remain private.
+* Wallet registrations must be replay-protected.
+* Trade authorizations must be replay-protected.
+* The executor must authenticate the wallet and recipient.
+* Policy updates must be permissioned.
+* The system must not expose sensitive identity data.
+20.2 Reliability
+* Failed swaps must not consume allocation.
+* Backend downtime must not corrupt onchain records.
+* Arkiv downtime must not stop existing pools.
+* The application must display stale-data warnings where appropriate.
+* Contracts must have explicit emergency pause behavior.
+20.3 Performance
+* The purchase check should require a small number of predictable storage reads.
+* The system should avoid unnecessary external API calls during swaps.
+* World verification should happen before registration, not inside the swap.
+* Arkiv queries should not occur during swap execution.
+20.4 Usability
+* The main investor flow should be understandable without blockchain expertise.
+* Users must understand why World ID is required.
+* Users must understand that linked wallets share an allocation.
+* Users must see the remaining allocation before confirming a purchase.
+* Error messages must explain what action the user can take.
+20.5 Maintainability
+* Contracts must have clear responsibilities.
+* Backend endpoints must have documented request and response formats.
+* The Arkiv schema must be documented.
+* The repository must include setup instructions.
+* Deployment addresses must be recorded.
+* Tests must be reproducible.
+20.6 Compatibility
+The MVP targets:
+* EVM-compatible network supported by the selected Uniswap v4 deployment.
+* Compatible PoolManager and router infrastructure.
+* USDC or a compatible six-decimal test token.
+* EOA wallets initially.
+* Modern desktop and mobile browsers.
+The exact target chain and deployed Uniswap infrastructure must be confirmed before deployment.
+________________
+
+
+21. Data Model Summary
+21.1 Onchain data
+Data
+	Location
+	Public?
+	Wallet address
+	Identity registry
+	Yes
+	Opaque allocation key
+	Identity registry
+	Yes
+	Wallet registration status
+	Identity registry
+	Yes
+	Allocation policy
+	Policy registry
+	Yes
+	Allocation group
+	Policy registry
+	Yes
+	Cumulative spend
+	Allocation ledger
+	Yes
+	Remaining allocation
+	Calculated from onchain data
+	Yes
+	World ID session ID
+	Never onchain
+	No
+	World ID proof
+	Never onchain
+	No
+	Backend signing key
+	Backend only
+	No
+	21.2 Backend data
+Data
+	Purpose
+	Encrypted World session reference
+	Session continuity
+	Issuer-scoped allocation identity mapping
+	Link session to allocation
+	Wallet association index
+	Operational lookup
+	Verification status
+	Backend workflow
+	Nonce and authorization state
+	Replay prevention and operations
+	21.3 Arkiv data
+Data
+	Purpose
+	Offering name
+	Public listing
+	Issuer wallet
+	Ownership and attribution
+	Asset category
+	Discovery
+	Token address
+	Offering reference
+	Pool identifiers
+	Pool discovery
+	Policy identifier
+	Link to onchain rules
+	Allocation group
+	Public offering configuration
+	Policy version
+	Version comparison
+	Expiry
+	Entity lifecycle
+	________________
+
+
+22. Testing Strategy
+Testing must cover both individual contract functions and the complete user journey.
+22.1 Smart contract unit tests
+Identity registry
+* Valid registration.
+* Invalid backend signature.
+* Expired authorization.
+* Reused nonce.
+* Wrong chain.
+* Wrong contract address.
+* Wallet already registered.
+* Wallet revocation.
+* Revoked wallet registration attempts.
+* Signer rotation.
+Policy registry
+* Valid policy creation.
+* Unauthorized issuer.
+* Invalid quote token.
+* Zero allocation.
+* Invalid period.
+* Pool registration.
+* Invalid allocation group.
+* Policy pause.
+* Policy resume.
+* Policy version update.
+* Cap reduction below existing spend.
+Allocation ledger
+* Initial spend is zero.
+* Successful spending update.
+* Remaining allocation calculation.
+* Exact-cap purchase.
+* Purchase exceeding cap.
+* Multiple wallets sharing one allocation.
+* Multiple pools sharing one allocation group.
+* Separate humans having separate allocations.
+* Separate allocation periods having separate counters.
+* Selling does not reduce spend.
+22.2 Hook tests
+Test
+	Expected result
+	Unregistered wallet
+	Revert
+	Revoked wallet
+	Revert
+	Invalid executor
+	Revert
+	Invalid trade signature
+	Revert
+	Reused trade nonce
+	Revert
+	Expired trade intent
+	Revert
+	Exact-output swap
+	Revert
+	Wrong input currency
+	Revert
+	Inactive policy
+	Revert
+	Expired policy
+	Revert
+	Purchase below cap
+	Success
+	Purchase exactly at cap
+	Success
+	Purchase above cap
+	Revert
+	Second wallet shares allocation
+	Same counter
+	Second pool shares group
+	Same counter
+	Different human
+	Separate counter
+	Failed swap after spend update
+	Spending update reverted
+	22.3 World ID integration tests
+* Initial Proof of Human succeeds.
+* Initial proof is rejected.
+* User cancels verification.
+* Session is created.
+* Session proof succeeds.
+* Session proof fails.
+* Session proof belongs to a different session.
+* Second wallet links successfully.
+* Second wallet registration authorization expires.
+* Backend cannot find session.
+* Backend verification service is unavailable.
+22.4 Backend tests
+* Valid proof verification.
+* Invalid proof verification.
+* Replayed proof handling.
+* Session mapping retrieval.
+* Issuer-scoped allocation generation.
+* Registration authorization generation.
+* Invalid wallet address.
+* Expired authorization.
+* Rate limiting.
+* Signer unavailable.
+* Database unavailable.
+22.5 Arkiv tests
+* Create offering entity.
+* Query offering entity.
+* Filter by issuer.
+* Filter by asset class.
+* Filter by status.
+* Handle expired entity.
+* Update offering metadata.
+* Handle duplicate offering publication.
+* Handle RPC failure.
+* Handle invalid access key.
+* Validate Arkiv policy reference against onchain data.
+22.6 End-to-end tests
+Scenario 1: Normal purchase
+Alice verifies, registers Wallet A and purchases $700.
+Expected: $300 remaining.
+Scenario 2: Cross-wallet restriction
+Alice registers Wallet B and attempts $500.
+Expected: transaction reverts.
+Scenario 3: Remaining allocation purchase
+Alice attempts $200 through Wallet B.
+Expected: transaction succeeds; $100 remains.
+Scenario 4: Independent human
+Bob verifies and purchases $900.
+Expected: purchase succeeds; Alice's allocation is unchanged.
+Scenario 5: Cross-pool enforcement
+Alice buys through Pool A and then Pool B, both sharing an allocation group.
+Expected: both purchases use the same counter.
+Scenario 6: Failed transaction
+Alice's purchase fails due to slippage or another execution error.
+Expected: spending does not increase.
+________________
+
+
+23. Acceptance Criteria
+The MVP is considered functionally complete only when all P0 requirements are satisfied.
+23.1 Identity acceptance
+* A user can complete World ID Proof of Human.
+* Backend verifies the proof.
+* Initial session is established.
+* A second wallet can provide a valid session proof.
+* Backend recognizes the second wallet as the same session holder.
+* Both wallets receive the same issuer-scoped allocation identity.
+* Invalid session proofs cannot register wallets.
+* Session identifiers remain offchain.
+23.2 Smart contract acceptance
+* Wallet registration works onchain.
+* Policy creation works.
+* Allocation group creation works.
+* Multiple pools can reference one allocation group.
+* Spending is recorded by allocation identity.
+* Purchase limits are enforced by the hook.
+* Invalid purchases revert.
+* Failed transactions do not permanently update spending.
+* Policy updates do not reset spending.
+23.3 Trading acceptance
+* A real Uniswap v4 pool is initialized.
+* Liquidity is added.
+* Supported exact-input USDC purchases work.
+* A registered wallet can purchase below its limit.
+* A second wallet belonging to the same human shares the limit.
+* A purchase exceeding the shared limit reverts.
+* A different human can purchase independently.
+* Transaction hashes are available for the demonstration.
+23.4 Frontend acceptance
+* Wallet connection works.
+* World ID verification works.
+* Second-wallet linking works.
+* Allocation amount is displayed.
+* Cumulative spend is displayed.
+* Remaining allocation is displayed.
+* Purchase succeeds for valid amounts.
+* Purchase failure is explained clearly.
+* Offering directory reads from Arkiv.
+23.5 Arkiv acceptance
+* Issuer can publish an offering.
+* Entity is written to the current testnet.
+* Frontend retrieves the offering from Arkiv.
+* Offering details link to the onchain policy.
+* Entity owner is documented.
+* Entity expiry is documented.
+* Reproducible query is documented.
+* Required Arkiv files are included.
+________________
+
+
+24. Demo Requirements
+The demonstration must prove the core product, not merely show the frontend.
+24.1 Demo setup
+Create:
+* One issuer.
+* One active policy.
+* One allocation group.
+* Two RWA pools sharing the allocation group.
+* Alice's two wallets.
+* Bob's separate wallet.
+* USDC test balances.
+* Liquidity in both pools.
+Policy:
+* Maximum purchase per human: $1,000.
+* Quote currency: USDC.
+* Allocation period: active.
+* Policy status: active.
+24.2 Demo sequence
+Part 1 — Issuer setup
+1. Open issuer dashboard.
+2. Show the $1,000 allocation policy.
+3. Show both pools sharing one allocation group.
+4. Show the active policy.
+Part 2 — Alice's first wallet
+5. Connect Wallet A.
+6. Complete World ID Proof of Human.
+7. Show successful verification.
+8. Show wallet registration transaction.
+9. Purchase $700.
+10. Show successful swap transaction.
+11. Show $300 remaining.
+Part 3 — Alice's second wallet
+12. Switch to Wallet B.
+13. Complete World ID session proof.
+14. Show successful wallet linking.
+15. Show that both wallets belong to the same allocation identity.
+16. Attempt a $500 purchase.
+17. Show the onchain rejection.
+18. Show that spending remains $700.
+19. Purchase $200.
+20. Show successful transaction.
+21. Show $100 remaining.
+Part 4 — Bob
+22. Connect Bob's wallet.
+23. Complete independent verification.
+24. Purchase $900.
+25. Show successful transaction.
+26. Show that Bob has $100 remaining.
+Part 5 — Technical proof
+27. Show the hook contract.
+28. Show the allocation registry.
+29. Show the shared spending mapping.
+30. Show the emitted events.
+31. Show transaction hashes.
+32. Show the Arkiv offering query.
+24.3 Demo success conditions
+The judges should be able to verify:
+* The two wallets belong to the same World ID session.
+* Both wallets share one allocation identity.
+* The spending counter is onchain.
+* The second purchase is rejected by the hook.
+* The failed purchase does not change the spending counter.
+* Bob has a separate allocation.
+* The offering directory reads from Arkiv.
+________________
+
+
+25. Deployment and Environment Requirements
+25.1 Local development
+Use:
+* Foundry.
+* Anvil.
+* Local Uniswap v4 PoolManager deployment.
+* Mock ERC20 tokens.
+* Mock oracle for legacy fee tests.
+* Local backend.
+* Local frontend.
+The complete local demonstration should be reproducible from documented commands.
+25.2 Testnet deployment
+Before selecting the final network, confirm:
+* Uniswap v4 PoolManager is deployed.
+* Required routers or execution infrastructure are available.
+* USDC or an appropriate test token is available.
+* World ID supports the selected application configuration.
+* The deployment is suitable for a public demonstration.
+* Contract verification is supported.
+Do not choose a chain solely because it has a faucet.
+25.3 Deployment order
+Recommended order:
+1. Deploy or configure the required Uniswap v4 infrastructure.
+2. Deploy the identity registry.
+3. Deploy the policy registry.
+4. Deploy the allocation accounting module.
+5. Deploy the RWAComply hook.
+6. Mine a valid hook address with the required permission bits.
+7. Deploy the trusted executor.
+8. Configure the trusted executor in the hook.
+9. Configure the backend signer.
+10. Configure issuer permissions.
+11. Deploy test RWA tokens.
+12. Create allocation groups and policies.
+13. Register pools.
+14. Initialize pools.
+15. Add liquidity.
+16. Configure the backend.
+17. Deploy the frontend.
+18. Publish offerings to Arkiv.
+19. Run end-to-end tests.
+20. Record deployment addresses.
+25.4 Environment variables
+The project should document required variables.
+Examples:
+# Frontend
+NEXT_PUBLIC_CHAIN_ID=
+NEXT_PUBLIC_RPC_URL=
+NEXT_PUBLIC_IDKIT_APP_ID=
+NEXT_PUBLIC_IDKIT_ACTION=
+
+
+# Backend
+WORLD_APP_ID=
+WORLD_SIGNING_KEY=
+WORLD_VERIFY_ENDPOINT=
+BACKEND_SIGNER_PRIVATE_KEY=
+DATABASE_URL=
+
+
+# Contracts
+POOL_MANAGER_ADDRESS=
+IDENTITY_REGISTRY_ADDRESS=
+POLICY_REGISTRY_ADDRESS=
+RWA_COMPLY_HOOK_ADDRESS=
+RWA_COMPLY_EXECUTOR_ADDRESS=
+
+
+# Arkiv
+ARKIV_ACCESS_KEY=
+ARKIV_RPC_URL=
+Actual variable names should follow the selected SDK and project structure.
+Secrets must not use the NEXT_PUBLIC_ prefix.
+________________
+
+
+26. Analytics and Monitoring
+26.1 Investor-facing information
+The application should display:
+* Total allocation.
+* Total spend.
+* Remaining allocation.
+* Number of linked wallets.
+* Number of successful purchases.
+* Recent transaction hashes.
+26.2 Issuer-facing information
+The issuer may see:
+* Total purchases across an offering.
+* Total allocation consumed.
+* Number of registered wallets.
+* Number of active policies.
+* Number of successful purchases.
+* Number of rejected purchases, where observable.
+The issuer should not receive World ID session identifiers or unnecessary personal information.
+26.3 Protocol monitoring
+Monitor:
+* World verification failures.
+* Session-proof failures.
+* Registration failures.
+* Invalid backend signatures.
+* Rejected swaps.
+* Policy pause events.
+* Executor errors.
+* Arkiv write failures.
+* Arkiv query failures.
+________________
+
+
+27. Product Limitations and Explicit Decisions
+This section records decisions that must not be left ambiguous during development.
+Question
+	Decision for V2 MVP
+	Can one person link multiple wallets?
+	Yes, through World ID session proofs.
+	Does every wallet get a separate purchase limit?
+	No. Linked wallets share one allocation.
+	Is the World ID session ID stored onchain?
+	No.
+	Is the allocation identity the World ID nullifier?
+	No. It is an opaque issuer-scoped application identifier.
+	Can the same human have different allocations for different issuers?
+	Yes.
+	Does the system collect legal identity information?
+	No.
+	Does Proof of Human establish KYC?
+	No.
+	Can a user purchase without registration?
+	No, through supported retail routes.
+	Can a user use an unsupported router?
+	No. The hook rejects unsupported routes.
+	Can a user use exact-output swaps?
+	Not in the MVP.
+	Can a user use multiple quote tokens?
+	Not in the MVP. USDC only.
+	Does selling restore allocation?
+	No.
+	Does a failed swap consume allocation?
+	No.
+	Can multiple pools share an allocation?
+	Yes, through a common allocation group.
+	Can an issuer change the cap?
+	Yes, with permission and versioning.
+	Can a policy update reset spend?
+	No.
+	Can an issuer pause an offering?
+	Yes.
+	Does Arkiv enforce purchase limits?
+	No. The contracts do.
+	Does Arkiv store identity information?
+	No.
+	Does Arkiv failure stop swaps?
+	No.
+	Does the MVP prevent direct token transfers?
+	No.
+	Does the MVP enforce ownership across all chains?
+	No.
+	Does the MVP support smart wallets?
+	Not initially; EOA support first.
+	Is Swarm mandatory?
+	No. It is optional.
+	________________
+
+
+28. Risks and Mitigation Plan
+Risk
+	Impact
+	Mitigation
+	World ID session flow is harder than expected
+	High
+	Build a standalone proof-of-concept before the hook changes
+	Session proof cannot be reliably linked to the same backend record
+	High
+	Validate with official SDK and backend verification early
+	Hook cannot reliably identify the end user
+	Critical
+	Use a trusted executor and signed trade intent
+	Existing PoolExecutor is incomplete
+	High
+	Inspect and test it before extending
+	Uniswap v4 hook address deployment fails
+	High
+	Mine the required CREATE2 address and test locally early
+	Exact-input accounting is incorrect
+	Critical
+	Add tests for both token orderings and input directions
+	Shared spending does not work across pools
+	Critical
+	Test two pools using one allocation group before frontend work
+	Backend signer is compromised
+	High
+	Secure key management, expiry and signer rotation
+	Arkiv integration consumes too much time
+	Medium
+	Keep it separate from the swap execution path
+	Arkiv metadata becomes stale
+	Medium
+	Read policy values from chain and compare versions
+	Frontend displays stale balances
+	Medium
+	Refresh from onchain state after every transaction
+	Existing dynamic-fee logic complicates integration
+	Medium
+	Keep it secondary; disable it if it blocks core functionality
+	Too many features delay completion
+	High
+	Enforce P0/P1/P2 scope
+	________________
+
+
+29. Development Roadmap
+Phase 0 — Repository and architecture audit
+Goal: Understand the existing implementation before modifying it.
+Tasks:
+* Inspect RWAComplyHook.sol.
+* Inspect PoolExecutor.sol.
+* Inspect existing interfaces and libraries.
+* Run existing Foundry tests.
+* Run the canonical local demo.
+* Confirm the current PoolManager integration.
+* Identify incomplete components.
+* Record the current contract deployment workflow.
+* Confirm the current frontend structure.
+Deliverable:
+A short architecture audit and a list of files that need changes.
+Phase 1 — World ID session proof-of-concept
+Goal: Prove that two wallets can be associated with the same World ID session.
+Tasks:
+* Configure World Developer Portal.
+* Integrate official IDKit SDK.
+* Implement initial Proof of Human.
+* Verify the proof on the backend.
+* Establish a session.
+* Connect a second wallet.
+* Request a session proof.
+* Verify the session proof.
+* Retrieve the same allocation identity.
+* Test invalid and cancelled flows.
+Deliverable:
+A working demonstration showing two wallets linked to one session.
+This is the first major technical checkpoint.
+Phase 2 — Identity registry
+Goal: Register multiple wallets against one allocation identity.
+Tasks:
+* Implement wallet registration.
+* Implement backend attestation verification.
+* Implement nonces.
+* Implement expiry.
+* Implement signer configuration.
+* Implement revocation.
+* Implement relevant events.
+* Add Foundry tests.
+Deliverable:
+Wallet A and Wallet B are registered to the same allocation identity onchain.
+Phase 3 — Allocation policy and accounting
+Goal: Implement the core shared budget.
+Tasks:
+* Implement policy creation.
+* Implement allocation groups.
+* Implement period IDs.
+* Implement cumulative spend.
+* Implement remaining allocation.
+* Implement policy versioning.
+* Implement issuer pause controls.
+* Add unit tests.
+Deliverable:
+A tested onchain ledger that supports one human across multiple wallets and pools.
+Phase 4 — Uniswap v4 integration
+Goal: Enforce the shared budget during actual swaps.
+Tasks:
+* Inspect and extend the executor.
+* Implement signed trade intents.
+* Validate executor identity.
+* Validate wallet identity.
+* Validate exact-input USDC purchases.
+* Integrate allocation checks into beforeSwap.
+* Record spend atomically.
+* Reject excessive purchases.
+* Test both pool token orderings.
+* Test failed swaps.
+* Test two pools sharing one allocation group.
+Deliverable:
+A working local Uniswap v4 pool where the hook enforces the purchase limit.
+Phase 5 — Frontend integration
+Goal: Make the complete investor journey usable.
+Tasks:
+* Add wallet connection.
+* Add World ID verification.
+* Add session-based wallet linking.
+* Add registration status.
+* Add allocation dashboard.
+* Add purchase interface.
+* Add error messages.
+* Add transaction history.
+* Add issuer dashboard.
+Deliverable:
+An end-to-end frontend demonstration.
+Phase 6 — Arkiv integration
+Goal: Build a real issuer offering directory.
+Tasks:
+* Configure Arkiv Rabdi access.
+* Install the official SDK.
+* Define the offering schema.
+* Implement entity creation.
+* Implement entity querying.
+* Connect issuer dashboard.
+* Connect investor directory.
+* Validate policy references against the chain.
+* Document ownership and expiry.
+Deliverable:
+The frontend displays actual Arkiv-backed offerings.
+Phase 7 — Testnet deployment and verification
+Goal: Demonstrate the real system outside the local development environment.
+Tasks:
+* Deploy contracts.
+* Verify contracts.
+* Configure the backend.
+* Configure the frontend.
+* Create test offerings.
+* Initialize pools.
+* Add liquidity.
+* Execute real swaps.
+* Record transaction hashes.
+* Run end-to-end tests.
+Deliverable:
+A public testnet demonstration.
+Phase 8 — Documentation and submission
+Goal: Make the project easy for judges to verify.
+Tasks:
+* Update README.
+* Document architecture.
+* Document deployment addresses.
+* Document the demo.
+* Add FEEDBACK.md.
+* Complete Uniswap feedback form.
+* Write World integration debrief.
+* Add Arkiv documentation.
+* Document pre-existing versus new functionality.
+* Record demo video.
+* Document AI tool usage.
+Deliverable:
+A complete, reproducible submission.
+________________
+
+
+30. ETHGlobal Partner Deliverables
+These are submission requirements, not optional product features.
+30.1 Uniswap Foundation — Build with Uniswap Continuity
+Required:
+* Public GitHub repository.
+* Open-source license.
+* FEEDBACK.md.
+* Completed Uniswap Developer Feedback Form.
+* Link to FEEDBACK.md in the form.
+* README references to relevant contracts and code lines.
+* Clear evidence of Uniswap integration.
+RWAComply evidence:
+* Actual Uniswap v4 pool.
+* Deployed hook.
+* Hook permissions.
+* Supported executor.
+* Successful purchase.
+* Rejected purchase.
+* Foundry integration tests.
+* Transaction hashes.
+Official resources:
+* https://developers.uniswap.org/docs
+* https://developers.uniswap.org/hackathon-feedback
+* https://github.com/Uniswap/v4-core
+30.2 World — Best Use of IDKit
+Required:
+* Official IDKit integration.
+* Real Proof of Human use case.
+* Secure backend verification.
+* Successful verification path.
+* Unsuccessful or rejected path.
+* Clear explanation of the selected credential.
+* Integration debrief.
+RWAComply evidence:
+* Initial Proof of Human.
+* Session creation.
+* Second-wallet session proof.
+* Wallet registration.
+* Successful purchase.
+* Rejected cross-wallet purchase.
+* Failed session-proof demonstration.
+The debrief should record:
+* Time to first successful integration.
+* Setup friction.
+* Documentation gaps.
+* Errors encountered.
+* Most useful improvement to the SDK or documentation.
+Official resources:
+* https://docs.world.org/world-id/idkit/integrate
+* https://docs.world.org/world-id/idkit/credentials
+* https://developer.worldcoin.org
+30.3 Arkiv — Build on Arkiv, Existing Projects
+Required:
+* Existing eligible Continuity project.
+* New Arkiv work completed during the event.
+* Writes to the current Arkiv testnet.
+* At least one user-visible feature reading Arkiv data.
+* Public repository and open-source license.
+* Writer wallet addresses in README.
+* Reproducible query.
+* /arkiv/schema.md
+* /arkiv/friction.md
+* /arkiv/reach.md
+* /arkiv/why-arkiv.md
+* /arkiv/how-you-use-arkiv.md
+RWAComply evidence:
+* Issuer publishes an offering.
+* Offering is stored on Arkiv.
+* Investor directory queries Arkiv.
+* Offering details link to onchain policy.
+* Stale metadata is handled.
+* Entity ownership and expiry are documented.
+Official resources:
+* https://docs.arkiv.network
+* https://docs.arkiv.network/start-here/first-entity/
+* https://hub.arkiv.network
+The Arkiv + Swarm bonus is optional and should only be attempted after the main Arkiv feature works.
+________________
+
+
+31. Repository Structure Proposal
+The final repository should make each component easy to find.
+RWAComply/
+│
+├── contracts/
+│   ├── src/
+│   │   ├── RWAComplyHook.sol
+│   │   ├── HumanIdentityRegistry.sol
+│   │   ├── RWAAllocationPolicyRegistry.sol
+│   │   ├── RWAAllocationLedger.sol
+│   │   ├── RWAComplyExecutor.sol
+│   │   ├── MockRWAOracle.sol
+│   │   └── MockERC20.sol
+│   │
+│   ├── test/
+│   │   ├── IdentityRegistry.t.sol
+│   │   ├── AllocationPolicy.t.sol
+│   │   ├── AllocationLedger.t.sol
+│   │   ├── RWAComplyHook.t.sol
+│   │   ├── RWAComplyIntegration.t.sol
+│   │   └── Security.t.sol
+│   │
+│   ├── script/
+│   │   ├── Deploy.s.sol
+│   │   ├── ConfigurePolicy.s.sol
+│   │   └── DeployPool.s.sol
+│   │
+│   └── foundry.toml
+│
+├── backend/
+│   ├── src/
+│   │   ├── world/
+│   │   ├── identity/
+│   │   ├── wallet/
+│   │   ├── allocation/
+│   │   ├── arkiv/
+│   │   └── server/
+│   │
+│   └── tests/
+│
+├── frontend/
+│   ├── app/
+│   │   ├── offerings/
+│   │   ├── dashboard/
+│   │   ├── issuer/
+│   │   └── api/
+│   │
+│   ├── components/
+│   ├── hooks/
+│   ├── lib/
+│   └── public/
+│
+├── arkiv/
+│   ├── schema.md
+│   ├── friction.md
+│   ├── reach.md
+│   ├── why-arkiv.md
+│   └── how-you-use-arkiv.md
+│
+├── docs/
+│   ├── architecture.md
+│   ├── identity-flow.md
+│   ├── allocation-accounting.md
+│   ├── security.md
+│   ├── deployment.md
+│   ├── testing.md
+│   └── demo.md
+│
+├── FEEDBACK.md
+├── README.md
+├── LICENSE
+└── .env.example
+This is a proposed structure. Reuse the current repository layout where that avoids unnecessary restructuring.
+________________
+
+
+32. Success Metrics
+32.1 Core product success
+The MVP succeeds if:
+* One human can link at least two wallets.
+* Both wallets share the same onchain spending counter.
+* A purchase below the cap succeeds.
+* A purchase above the cap is rejected.
+* A different human has a separate counter.
+* Two pools can share one allocation group.
+* Failed transactions do not consume allocation.
+32.2 Technical success
+* All critical Foundry tests pass.
+* Hook integration tests use a real PoolManager call path.
+* Contract deployment is reproducible.
+* The backend verifies World ID proofs.
+* Session linking works.
+* The frontend reads allocation data from chain.
+* Arkiv writes and reads work on the current testnet.
+32.3 Submission success
+* Public repository.
+* Clear architecture.
+* Reproducible demo.
+* Verified contracts where supported.
+* Transaction hashes.
+* Complete partner documentation.
+* Clear differentiation from existing projects.
+________________
+
+
+33. Future Roadmap
+These features are outside the first release but may be considered later.
+V2.1 — Better issuer controls
+* More detailed policy configuration.
+* Per-offering and per-investor limits.
+* Scheduled policy activation.
+* More advanced institutional rules.
+* Issuer analytics.
+V2.2 — More flexible identity support
+* Smart contract wallet support.
+* Improved session recovery.
+* More flexible wallet management.
+* Additional credential types where appropriate.
+V2.3 — Broader trading support
+* Additional quote tokens.
+* Oracle-based denomination conversion.
+* More router integrations.
+* Multiple execution routes.
+* Additional Uniswap v4 pool configurations.
+V2.4 — Transfer-level compliance
+* Compatible permissioned RWA token integration.
+* Transfer restrictions.
+* Ownership-level limits.
+* Issuer transfer policies.
+V2.5 — Cross-chain allocation
+* Cross-chain allocation records.
+* Shared identity across multiple networks.
+* Cross-chain policy synchronization.
+* Secure message verification.
+Cross-chain accounting must not be introduced until there is a reliable way to prevent inconsistent spending across networks.
+________________
+
+
+34. Final Product Definition
+RWAComply V2 is a human-level allocation-control system for tokenized asset markets.
+It uses World ID Proof of Human and session proofs to associate multiple wallets with one issuer-scoped allocation identity.
+Issuers configure purchase limits and allocation groups.
+A wallet linked to an allocation identity can trade through supported Uniswap v4 routes.
+During each purchase, the RWAComply hook checks the shared cumulative spending record.
+If the purchase would exceed the issuer's limit, the transaction reverts.
+Arkiv provides a decentralized, queryable directory of public RWA offerings, while onchain contracts remain the authority for policy enforcement.
+The MVP focuses on one clearly demonstrable capability:
+A verified human cannot bypass an issuer's cumulative purchase limit simply by switching to another linked wallet.
+That is the central product feature, the primary technical contribution and the main demonstration around which all other functionality should be built.
+________________
+
+
+35. Important Technical References
+Uniswap
+* Uniswap developer documentation: https://developers.uniswap.org/docs
+* Uniswap v4 hooks: https://developers.uniswap.org/docs/protocols/v4/concepts/hooks
+* Swap hooks: https://developers.uniswap.org/docs/protocols/v4/guides/hooks/swap-hooks
+* Uniswap v4 core: https://github.com/Uniswap/v4-core
+* Uniswap v4 public hooks: https://github.com/Uniswap/v4-hooks-public
+World ID
+* IDKit integration: https://docs.world.org/world-id/idkit/integrate
+* IDKit credentials: https://docs.world.org/world-id/idkit/credentials
+* World ID 4.0 technical specification: https://worldcoin.github.io/world-id-protocol/world-id-4-specs/
+* World Developer Portal: https://developer.worldcoin.org
+* IDKit SDK: https://github.com/worldcoin/idkit
+Arkiv
+* Arkiv documentation: https://docs.arkiv.network
+* First entity tutorial: https://docs.arkiv.network/start-here/first-entity/
+* Rabdi testnet: https://docs.arkiv.network/networks/rabdi/
+* Arkiv Hub: https://hub.arkiv.network
+Existing RWA standards and related systems
+* ERC-3643: https://ercs.ethereum.org/ERCS/erc-3643
+* Centrifuge documentation: https://docs.centrifuge.io/
+________________
+
+
+End of Product Requirements Document

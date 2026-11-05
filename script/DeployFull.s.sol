@@ -80,15 +80,12 @@ contract DeployFull is Script {
 
         PoolExecutor executor = new PoolExecutor(
             IPoolManager(address(poolManager)),
-            key
+            token0,
+            token1,
+            address(hook)
         );
 
         hook.setTier(address(executor), 2);
-
-        tokenA.transfer(address(executor), 1e21);
-        tokenB.transfer(address(executor), 1e21);
-
-        executor.execute();
 
         vm.stopBroadcast();
 
