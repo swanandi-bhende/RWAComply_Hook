@@ -79,7 +79,7 @@ export function ProjectPresentation() {
                 Proves decentralized finance and regulatory compliance are not mutually exclusive.
               </p>
               <p className="text-lg text-black leading-relaxed">
-                By leveraging Uniswap v4's hook architecture, we've built a system that enables tier-based access control, enforces trading limits, implements risk-responsive fees, and maintains admin safeguards—all while preserving decentralization.
+                By leveraging Uniswap v4&apos;s hook architecture, we&apos;ve built a system that enables tier-based access control, enforces trading limits, implements risk-responsive fees, and maintains admin safeguards—all while preserving decentralization.
               </p>
             </div>
           </div>
@@ -120,7 +120,7 @@ export function ProjectPresentation() {
           <div className="bg-yellow-50 border-3 border-black p-10">
             <h3 className="text-3xl font-black mb-6 text-black">The Gap</h3>
             <p className="text-black font-bold text-xl mb-6 leading-relaxed">
-              Regulators want to enable DeFi. Institutions won't enter without:
+              Regulators want to enable DeFi. Institutions won&apos;t enter without:
             </p>
             <ul className="space-y-3 text-black text-lg ml-6">
               <li>Proof of customer verification</li>
@@ -192,7 +192,7 @@ export function ProjectPresentation() {
             <div className="bg-gray-800 p-6 border border-gray-600 text-base font-mono font-bold leading-relaxed">
               <p className="text-green-400 text-lg mb-4">Swap Flow:</p>
               <p className="text-gray-300">1. User → SwapDemo page</p>
-              <p className="text-gray-300">2. Enter amount → Click "Run Real Swap Flow"</p>
+              <p className="text-gray-300">2. Enter amount → Click &quot;Run Real Swap Flow&quot;</p>
               <p className="text-gray-300">3. Hook checks: Is user tier 1+? Under cap? Not paused?</p>
               <p className="text-gray-300">4. If all pass: Approve + Execute swaps on-chain</p>
               <p className="text-gray-300">5. Transaction recorded in TRANSACTION HISTORY</p>
@@ -261,7 +261,7 @@ export function ProjectPresentation() {
             <div className="space-y-4">
               <div className="flex gap-4">
                 <div className="bg-black text-white font-black w-10 h-10 flex items-center justify-center rounded-full text-lg">1</div>
-                <div className="text-black font-bold text-lg">Frontend: User enters amount and clicks "Run Real Swap Flow"</div>
+                <div className="text-black font-bold text-lg">Frontend: User enters amount and clicks &quot;Run Real Swap Flow&quot;</div>
               </div>
               <div className="flex gap-4">
                 <div className="bg-black text-white font-black w-10 h-10 flex items-center justify-center rounded-full text-lg">2</div>
@@ -396,7 +396,7 @@ export function ProjectPresentation() {
               RWAComplyHook proves that decentralized finance and regulatory compliance are not mutually exclusive.
             </p>
             <p className="text-lg font-bold leading-relaxed">
-              By leveraging Uniswap v4's hook architecture, we've created a production-ready compliance layer that enables tier-based access control, enforces trading limits, implements risk-responsive fees, and maintains admin safeguards—all while preserving the core decentralization that makes DeFi powerful.
+              By leveraging Uniswap v4&apos;s hook architecture, we&apos;ve created a production-ready compliance layer that enables tier-based access control, enforces trading limits, implements risk-responsive fees, and maintains admin safeguards—all while preserving the core decentralization that makes DeFi powerful.
             </p>
           </div>
         </div>

@@ -34,8 +34,9 @@ export function AdminObservatory() {
   const [newRetailCap, setNewRetailCap] = useState('1.0');
   const [newOracleAddress, setNewOracleAddress] = useState('');
   const [newVolatility, setNewVolatility] = useState('3');
-  const [targetTierAddress, setTargetTierAddress] = useState('');
+  const [tierAddressDraft, setTierAddressDraft] = useState('');
   const [targetTier, setTargetTier] = useState<'0' | '1' | '2'>('1');
+  const targetTierAddress = tierAddressDraft || address || '';
 
   useEffect(() => {
     const load = async () => {
@@ -49,12 +50,6 @@ export function AdminObservatory() {
 
     load();
   }, []);
-
-  useEffect(() => {
-    if (address && targetTierAddress === '') {
-      setTargetTierAddress(address);
-    }
-  }, [address, targetTierAddress]);
 
   const { data: hookOwner, refetch: refetchOwner } = useReadContract({
     address: addresses?.hook as `0x${string}`,
@@ -374,7 +369,7 @@ export function AdminObservatory() {
               <input
                 type="text"
                 value={targetTierAddress}
-                onChange={(event) => setTargetTierAddress(event.target.value)}
+                onChange={(event) => setTierAddressDraft(event.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded font-mono text-sm"
               />
             </div>

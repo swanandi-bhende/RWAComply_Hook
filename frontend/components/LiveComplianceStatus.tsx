@@ -3,14 +3,14 @@
 import { useEffect, useState } from 'react';
 import { parseAbi } from 'viem';
 import { useAccount, useReadContract } from 'wagmi';
-import { loadDeploymentAddresses } from '@/config/deployments';
+import { loadDeploymentAddresses, type DeploymentAddresses } from '@/config/deployments';
 
 const LIVE_REFETCH_MS = 1000;
 
 export function LiveComplianceStatus() {
   const { address } = useAccount();
   const [deploymentError, setDeploymentError] = useState<string | null>(null);
-  const [addresses, setAddresses] = useState<any>(null);
+  const [addresses, setAddresses] = useState<DeploymentAddresses | null>(null);
 
   // Load deployment addresses
   useEffect(() => {

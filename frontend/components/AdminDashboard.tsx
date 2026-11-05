@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useAccount, useReadContract } from 'wagmi';
 import { HOOK_ADDRESS, HOOK_ABI } from '@/contracts';
 
@@ -8,7 +8,6 @@ export function AdminDashboard() {
   const { address } = useAccount();
   const [newThreshold, setNewThreshold] = useState('');
   const [newCap, setNewCap] = useState('');
-  const [isOwner, setIsOwner] = useState(false);
 
   const { data: owner } = useReadContract({
     address: HOOK_ADDRESS as `0x${string}`,
@@ -17,15 +16,9 @@ export function AdminDashboard() {
   });
 
   const ownerAddress = typeof owner === 'string' ? owner : undefined;
-
-  // Check if connected user is owner
-  useEffect(() => {
-    if (ownerAddress && address && ownerAddress.toLowerCase() === address.toLowerCase()) {
-      setIsOwner(true);
-    } else {
-      setIsOwner(false);
-    }
-  }, [ownerAddress, address]);
+  const isOwner = Boolean(
+    ownerAddress && address && ownerAddress.toLowerCase() === address.toLowerCase()
+  );
 
   if (!address) {
     return (

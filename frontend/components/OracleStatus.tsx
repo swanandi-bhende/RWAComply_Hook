@@ -3,7 +3,6 @@
 import { useEffect } from 'react';
 import { useReadContract } from 'wagmi';
 import { ORACLE_ADDRESS, ORACLE_ABI, HOOK_ADDRESS, HOOK_ABI } from '@/contracts';
-import { formatEther, parseEther } from 'viem';
 import { useTransactions } from '@/app/TransactionContext';
 
 function LoadingSkeleton() {

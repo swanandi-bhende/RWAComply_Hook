@@ -3,12 +3,12 @@
 import { useEffect, useState } from 'react';
 import { parseAbi } from 'viem';
 import { useReadContract } from 'wagmi';
-import { loadDeploymentAddresses } from '@/config/deployments';
+import { loadDeploymentAddresses, type DeploymentAddresses } from '@/config/deployments';
 
 const LIVE_REFETCH_MS = 1000;
 
 export function QuickStats() {
-  const [addresses, setAddresses] = useState<any>(null);
+  const [addresses, setAddresses] = useState<DeploymentAddresses | null>(null);
   const [deploymentError, setDeploymentError] = useState<string | null>(null);
 
   useEffect(() => {

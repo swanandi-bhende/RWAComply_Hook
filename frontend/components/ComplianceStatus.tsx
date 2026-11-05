@@ -1,7 +1,7 @@
 'use client';
 
 import { useAccount, useReadContract } from 'wagmi';
-import { HOOK_ADDRESS, HOOK_ABI, TIER_NAMES, TIER_COLORS } from '@/contracts';
+import { HOOK_ADDRESS, HOOK_ABI, TIER_NAMES } from '@/contracts';
 
 export function ComplianceStatus() {
   const { address } = useAccount();

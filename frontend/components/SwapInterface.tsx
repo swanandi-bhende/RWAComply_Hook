@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useAccount, useReadContract } from 'wagmi';
 import { TOKEN_A_ADDRESS, TOKEN_B_ADDRESS, ERC20_ABI, HOOK_ADDRESS, HOOK_ABI } from '@/contracts';
-import { parseEther } from 'viem';
 import { useTransactions } from '@/app/TransactionContext';
 
 export function SwapInterface() {

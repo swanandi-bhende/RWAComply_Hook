@@ -1,16 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-
 export function HeroSection() {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
-
   return (
     <div className="bg-white border-b-2 border-black">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
@@ -24,7 +14,7 @@ export function HeroSection() {
           </h2>
           <p className="text-lg md:text-xl text-black font-semibold max-w-2xl">
             Regulatory-ready trading with oracle-driven dynamic fees and tier-based access control.
-            Demonstrates how on-chain compliance integrates directly into Uniswap's hook architecture.
+            Demonstrates how on-chain compliance integrates directly into Uniswap&apos;s hook architecture.
           </p>
         </div>
 
@@ -107,7 +97,7 @@ export function HeroSection() {
         <div className="mt-12 bg-black border-2 border-black p-6 md:p-8">
           <p className="text-white font-bold text-lg mb-2">📋 Why This Matters for Uniswap</p>
           <p className="text-white text-sm leading-relaxed">
-            This hook proves that Uniswap v4's architecture can embed regulatory compliance
+            This hook proves that Uniswap v4&apos;s architecture can embed regulatory compliance
             at the protocol level without sacrificing composability. Institutions can now
             trade with confidence on decentralized venues, unlocking trillions in RWA liquidity.
           </p>
