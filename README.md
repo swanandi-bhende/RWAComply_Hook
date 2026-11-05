@@ -50,11 +50,12 @@ anvil
 bash script/run_canonical_demo.sh
 ```
 
-3. Start frontend:
+3. Start frontend. Use Node.js 22.23.4 and npm 10.9.9. See [docs/development.md](docs/development.md).
 
 ```bash
 cd frontend
-npm install
+nvm use
+npm ci
 npm run dev
 ```
 

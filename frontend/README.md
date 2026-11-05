@@ -5,17 +5,18 @@ Modern, Uniswap-inspired Web3 interface for the Uniswap v4 RWA Compliance Hook.
 ## Quick Start
 
 ### Prerequisites
-- Node.js 18+
-- npm or yarn
+- Node.js 22.23.4 and npm 10.9.9. `frontend/.nvmrc` records the Node version. It does not install Node. From `frontend/`, run `nvm install` once, then `nvm use`.
 - Anvil running locally: `anvil`
-- Backend tests passing: `forge test`
 - Contracts deployed: `bash script/run_canonical_demo.sh`
+
+Install, lint, typecheck, and production commands are in [docs/development.md](../docs/development.md).
 
 ### Installation & Run
 
 ```bash
 cd frontend
-npm install
+nvm use
+npm ci
 npm run dev
 ```
 
