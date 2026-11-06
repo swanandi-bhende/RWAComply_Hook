@@ -25,6 +25,7 @@ import {
   type LedgerRegistrationClient,
 } from '@/lib/world/ledgerRegistration';
 import { formatUsdc, purchaseDecision } from '@/lib/product/money';
+import { accessTierMessage, deploymentMessages } from '@/lib/product/readiness';
 import { verificationFailure, walletLinkFailure } from '@/lib/product/copy';
 import type { PublicProductStatus } from '@/lib/product/status';
 import { ERC20_ABI, EXECUTOR_ABI, HOOK_ABI, POOL_FEE, TICK_SPACING } from '@/contracts';
@@ -77,7 +78,8 @@ export default function InvestorExperience() {
   const ledger = status?.ledger?.address;
   const groupId = status?.groupId ?? undefined;
   const periodId = status?.periodId ? BigInt(status.periodId) : undefined;
-  const canRead = !!status?.live && !!ledger && !!groupId && periodId !== undefined;
+  const canRead = !!status?.registrationReady && !!ledger && !!groupId && periodId !== undefined;
+  const canReadBudget = canRead && !!status?.policyReady;
   const onSepolia = chainId === sepolia.id;
 
   const allocation = useReadContract({
@@ -95,7 +97,7 @@ export default function InvestorExperience() {
     abi: LEDGER_VIEW_ABI,
     functionName: 'policyByGroupPeriod',
     args: groupId && periodId !== undefined ? [groupId, periodId] : undefined,
-    query: { enabled: canRead, refetchInterval: 4000 },
+    query: { enabled: canReadBudget, refetchInterval: 4000 },
   });
   const spent = useReadContract({
     chainId: sepolia.id,
@@ -103,7 +105,7 @@ export default function InvestorExperience() {
     abi: LEDGER_VIEW_ABI,
     functionName: 'spentByAllocation',
     args: linked && groupId && periodId !== undefined && allocation.data ? [allocation.data, groupId, periodId] : undefined,
-    query: { enabled: canRead && linked, refetchInterval: 4000 },
+    query: { enabled: canReadBudget && linked, refetchInterval: 4000 },
   });
   const remaining = useReadContract({
     chainId: sepolia.id,
@@ -111,7 +113,7 @@ export default function InvestorExperience() {
     abi: LEDGER_VIEW_ABI,
     functionName: 'remaining',
     args: address && groupId && periodId !== undefined ? [address, groupId, periodId] : undefined,
-    query: { enabled: canRead && linked && !!address, refetchInterval: 4000 },
+    query: { enabled: canReadBudget && linked && !!address, refetchInterval: 4000 },
   });
   const execution = status?.execution;
   const tier = useReadContract({
@@ -120,7 +122,7 @@ export default function InvestorExperience() {
     abi: HOOK_ABI,
     functionName: 'userTier',
     args: address ? [address] : undefined,
-    query: { enabled: !!execution?.available && !!execution.hook && !!address, refetchInterval: 4000 },
+    query: { enabled: !!status?.marketReady && !!execution?.hook && !!address, refetchInterval: 4000 },
   });
   const allowance = useReadContract({
     chainId: sepolia.id,
@@ -338,7 +340,7 @@ export default function InvestorExperience() {
   const spentValue = typeof spent.data === 'bigint' ? spent.data : null;
   const remainingValue = typeof remaining.data === 'bigint' ? remaining.data : null;
   const needsApproval = decision.allowed && typeof allowance.data === 'bigint' && requested !== null && allowance.data < requested;
-  const marketClosed = execution?.available && tier.data === 0;
+  const marketClosed = !!status?.marketReady && tier.data === 0;
 
   return (
     <>
@@ -354,23 +356,12 @@ export default function InvestorExperience() {
           <h2 id="network-title" className="text-xl font-black">Network and contract status</h2>
           {statusQuery.isLoading && <p className="mt-3">Checking Ethereum Sepolia.</p>}
           {statusQuery.isError && <p className="mt-3" role="alert">The allocation status could not be loaded.</p>}
-          {status && !status.live && (
+          {status && (
             <div className="mt-3 space-y-2" role="status">
-              <p>Wallet registration and live allocation amounts are unavailable until the Sepolia ledger is deployed and readable.</p>
+              {deploymentMessages(status).map((item) => <p key={item.code}>{item.text}</p>)}
               {status.missing.length > 0 && <p>Missing configuration: {status.missing.join(', ')}.</p>}
-              {status.configurationError && <p>{status.configurationError}</p>}
-              {status.ledger && !status.ledger.hasCode && <p>The configured ledger has no contract code on Ethereum Sepolia.</p>}
-              {status.ledger?.hasCode && !status.ledger.signerMatches && (
-                <p>The ledger signer does not match the configured allocation signer. Registration stays closed.</p>
-              )}
-              {!status.rpcReady && status.missing.length === 0 && !status.configurationError && (
-                <p>The allocation RPC could not be checked.</p>
-              )}
-              <p>No sample balances are shown in their place.</p>
+              <p>Balances stay hidden until the ledger can be read. Sample amounts are not shown as live.</p>
             </div>
-          )}
-          {status?.live && (
-            <p className="mt-3">Ethereum Sepolia is configured and the allocation contract has code.</p>
           )}
           {isConnected && !onSepolia && (
             <button
@@ -430,7 +421,7 @@ export default function InvestorExperience() {
           <button
             type="button"
             className="mt-4 rounded bg-black px-4 py-2 font-bold text-white disabled:opacity-50"
-            disabled={!isConnected || !onSepolia || !status?.live || linking || !walletClient}
+            disabled={!isConnected || !onSepolia || !status?.registrationReady || linking || !walletClient}
             onClick={() => void linkWallet()}
           >
             {linking ? 'Registration pending' : 'Link this wallet'}
@@ -444,6 +435,9 @@ export default function InvestorExperience() {
           {canRead && allocation.isLoading && <p className="mt-3">Reading this wallet from Ethereum Sepolia.</p>}
           {canRead && allocation.isError && <p className="mt-3" role="alert">The wallet link could not be read.</p>}
           {canRead && allocation.isSuccess && !linked && <p className="mt-3">This wallet is not linked yet.</p>}
+          {linked && !status?.policyReady && (
+            <p className="mt-3">The ledger is deployed, but the purchase policy is not configured.</p>
+          )}
           {linked && (
             <dl className="mt-4 grid gap-4 sm:grid-cols-3">
               <div>
@@ -475,20 +469,19 @@ export default function InvestorExperience() {
 
         <section id="purchase" className="mt-8 border border-black p-5">
           <h2 className="text-xl font-black">Purchase</h2>
-          {!execution?.available && (
-            <p className="mt-3">{execution?.reason ?? 'The supported purchase market is not configured.'}</p>
+          {!status?.marketReady && (
+            <p className="mt-3">{execution?.reason ?? 'The supported purchase market is unavailable.'}</p>
           )}
-          {execution?.available && (
+          {status?.marketReady && execution && (
             <>
               <p className="mt-3 leading-relaxed">
                 This spends an exact amount of USDC through the trusted RWAComply route. The contract rejects a
                 purchase above the remaining allocation. This screen does not estimate price impact because this
                 route has no separate quote.
               </p>
-              {marketClosed && (
-                <p className="mt-3" role="status">
-                  This market is not open to this wallet yet. Linking a wallet does not by itself enable the purchase route.
-                </p>
+              {marketClosed && <p className="mt-3" role="status">{accessTierMessage(0)}</p>}
+              {typeof tier.data === 'number' && tier.data > 0 && (
+                <p className="mt-3" role="status">{accessTierMessage(tier.data)}</p>
               )}
               <label className="mt-4 block font-semibold" htmlFor="usdc-amount">USDC to spend</label>
               <input

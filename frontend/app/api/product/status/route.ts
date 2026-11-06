@@ -1,4 +1,5 @@
-import { createPublicClient, getAddress, http, parseAbi, type Hex } from 'viem';
+import { createPublicClient, getAddress, parseAbi, type Hex } from 'viem';
+import { rpcTransport } from '@/lib/product/rpc';
 import { sepolia } from 'viem/chains';
 import { NextResponse } from 'next/server';
 import { readAllocationConfig } from '@/lib/world/config';
@@ -22,7 +23,7 @@ const EXECUTOR_ABI = parseAbi([
 function probeFor(rpcUrl: string | undefined): ProductProbe {
   const client = createPublicClient({
     chain: sepolia,
-    transport: http(rpcUrl?.trim() || undefined),
+    transport: rpcTransport(rpcUrl),
   });
   return {
     chainId: () => client.getChainId(),

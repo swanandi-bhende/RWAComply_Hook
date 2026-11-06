@@ -1,4 +1,5 @@
-import { createPublicClient, getAddress, http, type Address, type Hex } from 'viem';
+import { createPublicClient, getAddress, type Address, type Hex } from 'viem';
+import { rpcTransport } from '../product/rpc.ts';
 import { readAllocationConfig, WorldConfigError, type WorldEnv } from './config.ts';
 import { EnrollmentStore } from './enrollmentStore.ts';
 import {
@@ -122,7 +123,7 @@ export async function handleRegistrationReceipt(
 }
 
 export function rpcRegistrationReader(rpcUrl: string) {
-  const client = createPublicClient({ transport: http(rpcUrl) });
+  const client = createPublicClient({ transport: rpcTransport(rpcUrl) });
   return async (input: {
     txHash: Hex;
     ledger: Address;

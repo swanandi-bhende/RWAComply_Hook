@@ -166,7 +166,7 @@ export function readEnrollmentConfig(env: WorldEnv = process.env): EnrollmentSer
 }
 
 const BYTES32_PATTERN = /^0x[0-9a-fA-F]{64}$/;
-const HTTP_URL_PATTERN = /^https?:\/\/\S+$/;
+const HTTP_URL_PATTERN = /^(https?|wss?):\/\/\S+$/;
 
 export type AllocationAuthConfig = {
   signingKeyHex: `0x${string}`;

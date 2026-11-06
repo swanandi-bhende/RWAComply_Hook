@@ -56,6 +56,7 @@ The recorded number is the USDC paid, not the RWA received. The same check is co
 
 - Proof of Human enrollment can verify a session-bound `signup` proof, store the session encrypted, and create an allocation id. The investor page can continue that session, ask the wallet to sign, and submit registration. The wallet is treated as linked only after the chain state matches. Live Sepolia balances and purchases stay unavailable until the configured contracts have code. No sample values are shown as live data.
 - The budget applies only to the `PoolExecutor.swapExactInput` route into this hook.
+- Sepolia deployment is prepared in `script/DeploySepolia.s.sol` and has not been broadcast. The hook owner must set an access tier before a linked wallet can purchase. Proof of human does not set that tier.
 - Direct transfers, other pools, and other protocols are outside this check.
 - A sale does not reduce the recorded spend.
 - The tier, retail-cap, pause, and dynamic-fee checks still run on this route. Low volatility uses fee 1000. High volatility uses 5000 for tier 1 and 500 for tier 2.

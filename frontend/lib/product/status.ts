@@ -64,6 +64,9 @@ export type PublicProductStatus = {
     usdc: Address | null;
     rwa: Address | null;
   };
+  registrationReady: boolean;
+  policyReady: boolean;
+  marketReady: boolean;
   live: boolean;
 };
 
@@ -108,6 +111,9 @@ function emptyStatus(partial: Partial<PublicProductStatus> = {}): PublicProductS
       usdc: null,
       rwa: null,
     },
+    registrationReady: false,
+    policyReady: false,
+    marketReady: false,
     live: false,
     ...partial,
   };
@@ -187,7 +193,9 @@ export async function assembleProductStatus(input: {
     }
   }
 
-  const live = hasCode && signerMatches && policy !== null;
+  const registrationReady = hasCode && signerMatches;
+  const policyReady = registrationReady && policy !== null;
+  const marketReady = policyReady && execution.status.available;
   return {
     ...base,
     rpcReady: true,
@@ -195,7 +203,10 @@ export async function assembleProductStatus(input: {
     periodId: periodId.toString(),
     policy,
     execution: execution.status,
-    live,
+    registrationReady,
+    policyReady,
+    marketReady,
+    live: policyReady,
   };
 }
 

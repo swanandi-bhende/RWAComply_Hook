@@ -12,6 +12,7 @@ import {
   type ProductProbe,
 } from './status.ts';
 import { verificationFailure, walletLinkFailure } from './copy.ts';
+import { accessTierMessage, deploymentMessages } from './readiness.ts';
 
 const LEDGER = getAddress('0x0000000000000000000000000000000000000001');
 const SIGNER = getAddress('0x0000000000000000000000000000000000000002');
@@ -131,6 +132,9 @@ test('wrong chain, missing code, signer mismatch, and rpc failure stay unavailab
 test('a matching ledger and market can be live, and a token mismatch cannot', async () => {
   const live = await assembleProductStatus({ env, readConfig: config, probe: probe() });
   assert.equal(live.live, true);
+  assert.equal(live.registrationReady, true);
+  assert.equal(live.policyReady, true);
+  assert.equal(live.marketReady, true);
   assert.equal(live.policy?.cap, '1000000000');
   assert.equal(live.execution.available, true);
   assert.equal(statusContainsSecrets(live), false);
@@ -156,4 +160,28 @@ test('verification and wallet-link failures do not claim success', () => {
   assert.doesNotMatch(verificationFailure('cancelled'), /verified/i);
   assert.match(walletLinkFailure('conflict'), /different allocation/);
   assert.match(walletLinkFailure('signature_rejected'), /cancelled/);
+});
+
+test('registration, policy, market, and access tier stay separate', async () => {
+  const noPolicy = await assembleProductStatus({
+    env,
+    readConfig: config,
+    probe: probe({ policy: async () => ({ cap: BigInt(0), periodId: BigInt(1), usdc: USDC }) }),
+  });
+  assert.equal(noPolicy.registrationReady, true);
+  assert.equal(noPolicy.policyReady, false);
+  assert.equal(noPolicy.marketReady, false);
+  assert.equal(noPolicy.live, false);
+  assert.match(deploymentMessages(noPolicy).map((item) => item.text).join(' '), /policy is not configured/);
+
+  const signer = await assembleProductStatus({
+    env,
+    readConfig: config,
+    probe: probe({ backendSigner: async () => getAddress('0x0000000000000000000000000000000000000099') }),
+  });
+  assert.equal(signer.registrationReady, false);
+  assert.equal(signer.marketReady, false);
+  assert.match(deploymentMessages(signer).map((item) => item.text).join(' '), /signer does not match/);
+  assert.match(accessTierMessage(0), /Issuer approval/);
+  assert.doesNotMatch(accessTierMessage(0), /KYC/);
 });
