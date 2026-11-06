@@ -18,11 +18,13 @@ No production URL is published. The current method is a local preview, not a pro
 
 | Page | What it is |
 |---|---|
-| `/invest` | Ethereum Sepolia investor page |
+| `/` | Product overview |
+| `/offerings` | The Sepolia demo market, labeled as test tokens. Example configurations are separate and are not deployed |
+| `/invest` | Ethereum Sepolia investor journey for that demo market |
+| `/issuer` | Issuer explanation and a local draft. It does not create an offering on Sepolia |
+| `/how` | How the shared budget is enforced |
 | `/getting-started` | Investor guide |
 | `/demo` | Local Anvil market, chain id `31337` |
-| `/offerings` | The live Sepolia offering, plus labeled examples that are not deployed |
-| `/issuer` | Issuer preparation. It does not send a Sepolia transaction |
 
 Commands for that preview are in [setup.md](setup.md).
 

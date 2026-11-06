@@ -1,6 +1,6 @@
 # Documentation guide
 
-This is the map for people changing the repository. [README.md](../README.md) is the entry point. The files below are the only places that should grow a full explanation of their subject.
+This is the map for people changing the repository. [README.md](../README.md) is the entry point. The five primary guides are README, [first-time-setup.md](../first-time-setup.md), [demo.md](../demo.md), [architecture.md](../architecture.md), and [tests.md](../tests.md). [setup.md](../setup.md) remains the command-order file those guides point to. The files below are the only places that should grow a full explanation of their subject.
 
 | Subject | Authoritative file |
 |---|---|

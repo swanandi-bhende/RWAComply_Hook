@@ -6,7 +6,7 @@ This file has two audiences. Part A is for an investor using RWAComply. Part B i
 
 An investor does not create a World ID application, create a relying party, generate signing keys, edit an environment file, install Foundry, run Anvil, or deploy contracts. The product operator configures the World ID application and the backend credentials once.
 
-The investor uses the application the operator is already running. There is no production URL yet. Until one is published, the Sepolia investor page is the local preview at `http://localhost:3000/invest`, and the on-site guide is `/getting-started`. That preview is not a production deployment.
+The investor uses the application the operator is already running. There is no production URL yet. Until one is published, start at the local preview: `/` explains the product, `/offerings` shows the Sepolia demo market, and `/invest` is the investor journey. The on-site guide is `/getting-started`. That preview is not a production deployment.
 
 What the investor needs:
 

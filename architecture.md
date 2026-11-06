@@ -50,7 +50,7 @@ The PoolManager is the pool infrastructure. It is not the budget. The hook is th
 
 ## Frontend
 
-[`frontend/components/product/InvestorExperience.tsx`](frontend/components/product/InvestorExperience.tsx) is the Sepolia investor flow. [`frontend/components/SwapDemo.tsx`](frontend/components/SwapDemo.tsx) is the local technical demo. [`frontend/app/api/product/purchases/route.ts`](frontend/app/api/product/purchases/route.ts) lists `SpendRecorded` logs for one wallet and omits the allocation id.
+[`frontend/components/product/InvestorExperience.tsx`](frontend/components/product/InvestorExperience.tsx) is the Sepolia investor flow. [`frontend/components/product/IssuerDesk.tsx`](frontend/components/product/IssuerDesk.tsx) explains the issuer workflow and reviews a local draft. It does not send a creation transaction, and a connected wallet is not treated as an authorized issuer. [`frontend/components/SwapDemo.tsx`](frontend/components/SwapDemo.tsx) is the local technical demo. [`frontend/app/api/product/purchases/route.ts`](frontend/app/api/product/purchases/route.ts) lists `SpendRecorded` logs for one wallet and omits the allocation id.
 
 ## Source of truth
 

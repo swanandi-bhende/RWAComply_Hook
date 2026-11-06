@@ -13,12 +13,12 @@ export function OfferingDetail() {
     <>
       <SiteNav />
       <main className="page">
-        <p className="kicker">Offering</p>
+        <p className="kicker">Sepolia demo market — test tokens</p>
         <h1 className="page-title">{offeringId}</h1>
         <div className="panel stack">
           <p>
-            Sepolia currently has one published offering, <code>sepolia-demo-rwa</code>. Its cap and spend are read
-            on the investor page from the allocation ledger. Arkiv supplies the public description only.
+            Sepolia currently has one published offering, <code>sepolia-demo-rwa</code>. The token is a mock.
+            Its cap and spend are read on the investor page from the allocation ledger. Arkiv supplies the public description only.
           </p>
           <p>
             A marketplace offering created through <code>OfferingRegistry</code> would show its own group, cap,

@@ -552,308 +552,178 @@ export default function InvestorExperience() {
     confirmed: purchaseSucceeded,
   });
 
+  const journey = [
+    { label: 'Connect wallet', done: isConnected && onSepolia },
+    { label: 'Verify identity', done: verify.tone === 'ok' || linked },
+    { label: 'Register wallet', done: linked },
+    { label: 'Obtain issuer approval', done: typeof tier.data === 'number' && tier.data > 0 },
+    { label: 'Review allocation', done: linked && remainingValue !== null },
+    { label: 'Purchase', done: purchaseSucceeded },
+  ];
+  const currentStep = journey.findIndex((item) => !item.done);
+  const symbol = offeringsQuery.data?.offering?.rwaSymbol ?? 'Demo RWA';
+  const chainCap = offeringsQuery.data?.chain.cap ? formatUsdc(BigInt(offeringsQuery.data.chain.cap)) : 'Unavailable';
+
   return (
     <>
       <SiteNav />
       <main className="page">
-        <header className="stack">
-          <p className="kicker">Investor allocation</p>
-          <h1 className="page-title">One shared purchase budget</h1>
-          <p className="lede">
-            Verify your identity, link this wallet, and see the shared USDC budget. A wallet is linked only after
-            Ethereum confirms the registration.
-          </p>
-          <p className="quiet">
-            {address ? `Wallet ${shortAddress(address)}` : 'No wallet connected'}
-            {isConnected ? (onSepolia ? ' · Ethereum Sepolia' : ' · Wrong network') : ''}
-            {address && (
-              <>
-                {' · '}
-                <button type="button" className="link" onClick={() => void navigator.clipboard.writeText(address)}>Copy</button>
-                {onSepolia && (
-                  <>
-                    {' · '}
-                    <a className="link" href={`https://sepolia.etherscan.io/address/${address}`}>Etherscan</a>
-                  </>
-                )}
-              </>
-            )}
-          </p>
-        </header>
+        <p className="kicker">Sepolia demo market — test tokens</p>
+        <h1 className="page-title">{symbol} / USDC</h1>
+        <p className="lede">
+          This is the mock-token demo pool. Connect your wallet to verify, register, check the shared purchase allocation, and buy through the supported route. A connected address is not an approved investor.
+        </p>
+        <dl className="metric-grid">
+          <div className="metric"><dt>Quote asset</dt><dd>Mock USDC</dd></div>
+          <div className="metric"><dt>Issuer-defined cap</dt><dd>{chainCap}</dd></div>
+          <div className="metric"><dt>Offering status</dt><dd>{status?.marketReady ? 'Market readable' : 'Checking market'}</dd></div>
+          <div className="metric"><dt>This wallet</dt><dd>{address ? (onSepolia ? shortAddress(address) : 'Wrong network') : 'Not connected'}</dd></div>
+        </dl>
 
-        <ol className="steps" aria-label="Investor progress">
-          <li className="step" data-state={identity.state}>Proof of human: {identity.text}</li>
-          <li className="step" data-state={registration.state}>Wallet registration: {registration.text}</li>
-          <li className="step" data-state={approval.state}>Issuer approval: {approval.text}</li>
-          <li className="step" data-state={purchase.state}>Purchase: {purchase.text}</li>
+        <ol className="wizard" aria-label="Investor progress">
+          {journey.map((item, index) => (
+            <li key={item.label} aria-current={index === currentStep ? 'step' : undefined} data-state={item.done ? 'confirmed' : identity.state}>
+              {item.label}
+            </li>
+          ))}
         </ol>
 
         <div className="stack-lg">
-          <section className="panel" aria-labelledby="network-title">
-            <h2 id="network-title" className="section-title">Network and contract status</h2>
-            {statusQuery.isLoading && <p className="quiet">Checking Ethereum Sepolia.</p>}
-            {statusQuery.isError && <p className="notice" data-tone="error" role="alert">The allocation status could not be loaded.</p>}
-            {status && (
-              <>
-                <div className="pills" role="status">
-                  <span className="pill" data-state={status.registrationReady ? 'ready' : 'blocked'}>
-                    {status.registrationReady ? 'Registration ready' : 'Registration unavailable'}
-                  </span>
-                  <span className="pill" data-state={status.policyReady ? 'ready' : 'blocked'}>
-                    {status.policyReady ? 'Policy ready' : 'Policy unavailable'}
-                  </span>
-                  <span className="pill" data-state={status.marketReady ? 'ready' : 'attention'}>
-                    {status.marketReady ? 'Market ready' : 'Market unavailable'}
-                  </span>
-                  <span className="pill" data-state={approval.state === 'confirmed' ? 'ready' : approval.state === 'approval' ? 'attention' : 'blocked'}>
-                    {approval.text === 'Not started' ? 'Issuer approval not read' : `Issuer approval: ${approval.text}`}
-                  </span>
-                </div>
-                <div className="quiet">
-                  {deploymentMessages(status).map((item) => <p key={item.code}>{item.text}</p>)}
-                  {status.missing.length > 0 && <p>Missing configuration: {status.missing.join(', ')}.</p>}
-                  <p>Balances stay hidden until the ledger can be read. Sample amounts are not shown as live.</p>
-                </div>
-              </>
-            )}
-            {isConnected && !onSepolia && (
-              <button
-                type="button"
-                className="btn btn-primary"
-                disabled={switching}
-                onClick={() => switchChain({ chainId: sepolia.id })}
-              >
-                {switching ? 'Switching network…' : 'Switch to Ethereum Sepolia'}
-              </button>
-            )}
-          </section>
-
-          <section className="panel" aria-labelledby="offering-title">
-            <h2 id="offering-title" className="section-title">Public offering</h2>
-            <p className="quiet">
-              This directory entry is public metadata for the mock USDC and RWA demo pool. It is not a real-world asset.
-              Arkiv does not store the purchase cap or the amount already spent.
-            </p>
-            {offeringsQuery.isLoading && <p className="quiet">Reading the offering directory.</p>}
-            {offeringsQuery.isError && (
-              <p className="notice" data-tone="error" role="alert">Offering information could not be refreshed. Trading rules are still checked onchain.</p>
-            )}
-            {offeringsQuery.data?.warning && (
-              <p className="notice" data-tone="pending" role="status">{offeringsQuery.data.warning}</p>
-            )}
-            {offeringsQuery.data && (
-              <dl className="metric-grid">
-                <div className="metric">
-                  <dt>Chain cap</dt>
-                  <dd>{offeringsQuery.data.chain.cap ? formatUsdc(BigInt(offeringsQuery.data.chain.cap)) : 'Unavailable'}</dd>
-                </div>
-                <div className="metric">
-                  <dt>Period</dt>
-                  <dd>{offeringsQuery.data.chain.periodId ?? 'Unavailable'}</dd>
-                </div>
-                <div className="metric">
-                  <dt>Remaining</dt>
-                  <dd>{offeringsQuery.data.chain.remaining ? formatUsdc(BigInt(offeringsQuery.data.chain.remaining)) : address ? 'Unavailable' : 'Connect a wallet'}</dd>
-                </div>
-                <div className="metric">
-                  <dt>Directory</dt>
-                  <dd>{offeringsQuery.data.arkivStatus}</dd>
-                </div>
-              </dl>
-            )}
-            {offeringsQuery.data?.offering && (
-              <p className="quiet">
-                {offeringsQuery.data.offering.rwaSymbol} · offering {offeringsQuery.data.offering.offeringId}
-                · owner {shortAddress(offeringsQuery.data.offering.owner)}
-                · entity {shortAddress(offeringsQuery.data.offering.key)}
-                · expires {new Date(Number(offeringsQuery.data.offering.expiresAt) * 1000).toISOString().slice(0, 10)}
-              </p>
-            )}
-          </section>
+          {(currentStep === 0 || !isConnected || !onSepolia) && (
+            <section className="panel" id="connect">
+              <h2 className="section-title">Connect wallet</h2>
+              <p>Use the wallet button in the header. The purchase, registration, and allocation reads use that address on Ethereum Sepolia.</p>
+              {isConnected && !onSepolia && (
+                <button type="button" className="btn btn-primary" disabled={switching} onClick={() => switchChain({ chainId: sepolia.id })}>
+                  {switching ? 'Switching network…' : 'Switch to Ethereum Sepolia'}
+                </button>
+              )}
+            </section>
+          )}
 
           <section id="verify" className="panel">
-            <h2 className="section-title">Verify your identity</h2>
-            <p className="quiet">
-              World ID proof of human checks uniqueness for this session. It does not prove KYC, AML, accreditation,
-              residency, nationality, or legal eligibility.
-            </p>
-            <button
-              type="button"
-              className="btn btn-primary"
-              disabled={!isConnected || !onSepolia || !status?.registrationReady || verifying || !walletClient}
-              onClick={() => void verifyIdentity()}
-            >
-              {verifying ? 'Enrollment pending' : 'Enroll and register this wallet'}
-            </button>
-            <p className="notice" data-tone={verify.tone} role="status">{verify.text}</p>
+            <h2 className="section-title">Verify identity</h2>
+            {currentStep === 1 ? (
+              <>
+                <p>World App verifies proof of human. The wallet signs ownership separately. Registration is a separate Ethereum transaction. Issuer approval is separate from proof of human.</p>
+                <p className="quiet">Proof of human is not KYC, AML, accreditation, residency, or legal eligibility. <a className="link" href="/how">How it works</a></p>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  disabled={!isConnected || !onSepolia || !status?.registrationReady || verifying || !walletClient}
+                  onClick={() => void verifyIdentity()}
+                >
+                  {verifying ? 'Enrollment pending' : 'Enroll and register this wallet'}
+                </button>
+                {verify.text && <p className="notice" data-tone={verify.tone} role="status">{verify.text}</p>}
+              </>
+            ) : (
+              <p className="quiet">{linked || verify.tone === 'ok' ? 'Identity step recorded for this session or wallet.' : 'Complete wallet connection first.'}</p>
+            )}
           </section>
 
           <section id="link" className="panel">
-            <h2 className="section-title">Second wallet</h2>
-            <p className="quiet">
-              Disconnect the wallet that already purchased, connect the next wallet, and continue the same proof of
-              human. This does not start a new enrollment. Both wallets share one allocation. The remaining amount is
-              the shared budget the first wallet left behind.
-            </p>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              disabled={!isConnected}
-              onClick={() => disconnect()}
-            >
-              Disconnect this wallet
-            </button>
-            <p className="quiet">
-              {address ? `Connected wallet ${shortAddress(address)}` : 'Connect a wallet to continue.'}
-            </p>
-            <p className="quiet">
-              Linking adds this wallet to the pseudonymous allocation created for the verified person. It does not
-              show that allocation identifier. A wallet already used by someone else cannot be moved.
-            </p>
-            {status?.groupId && (
-              <p className="quiet">Allocation group {shortAddress(status.groupId)} on Ethereum Sepolia.</p>
-            )}
-            <button
-              type="button"
-              className="btn btn-primary"
-              disabled={!isConnected || !onSepolia || !status?.registrationReady || linking || !walletClient}
-              onClick={() => void linkWallet()}
-            >
-              {linking ? 'Registering' : 'Continue and register this wallet'}
-            </button>
-            <p className="notice" data-tone={link.tone} role="status">{link.text}</p>
+            <h2 className="section-title">Register wallet</h2>
+            <p>Already registered another wallet? Connect your next wallet and continue the same identity session. Both wallets will share the allocation for this offering.</p>
+            <div className="actions">
+              <button type="button" className="btn btn-secondary" disabled={!isConnected} onClick={() => disconnect()}>Disconnect current wallet</button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={!isConnected || !onSepolia || !status?.registrationReady || linking || !walletClient}
+                onClick={() => void linkWallet()}
+              >
+                {linking ? 'Registering' : 'Continue and register this wallet'}
+              </button>
+            </div>
+            <p className="quiet">{address ? `Connected wallet ${shortAddress(address)}. Sign wallet ownership when the wallet asks. Status: ${registration.text}.` : 'Connect another wallet to continue the existing session.'}</p>
+            {link.text && <p className="notice" data-tone={link.tone} role="status">{link.text}</p>}
+          </section>
+
+          <section className="panel" id="approval">
+            <h2 className="section-title">Issuer approval</h2>
+            {marketClosed && <p className="notice" data-tone="pending" role="status">{accessTierMessage(0)}</p>}
+            {typeof tier.data === 'number' && tier.data > 0 && <p className="notice" data-tone="ok" role="status">{accessTierMessage(tier.data)}</p>}
+            {currentStep < 3 && <p className="quiet">Approval is checked after this wallet is registered. Proof of human does not grant it.</p>}
           </section>
 
           <section id="allocation" className="panel">
-            <h2 className="section-title">Shared allocation</h2>
-            {!canRead && <p className="quiet">Allocation amounts are unavailable until the ledger can be read.</p>}
-            {canRead && allocation.isLoading && <p className="quiet">Reading this wallet from Ethereum Sepolia.</p>}
-            {canRead && allocation.isError && <p className="notice" data-tone="error" role="alert">The wallet link could not be read.</p>}
-            {canRead && allocation.isSuccess && !linked && <p className="quiet">This wallet is not linked yet.</p>}
-            {linked && !status?.policyReady && (
-              <p className="quiet">The ledger is deployed, but the purchase policy is not configured.</p>
-            )}
+            <h2 className="section-title">Allocation</h2>
+            {!canRead && <p>Allocation amounts stay hidden until the ledger can be read.</p>}
+            {canRead && !linked && <p>This wallet is not registered, so its remaining allocation is not shown as zero.</p>}
             {linked && (
-              <dl className="metric-grid">
-                <div className="metric metric-emphasis">
-                  <dt>Remaining</dt>
-                  <dd>{remainingValue === null ? 'Unavailable' : formatUsdc(remainingValue)}</dd>
-                </div>
-                <div className="metric">
-                  <dt>Cap</dt>
-                  <dd>{cap === null ? 'Unavailable' : formatUsdc(cap)}</dd>
-                </div>
-                <div className="metric">
-                  <dt>Gross purchases</dt>
-                  <dd>{spentValue === null ? 'Unavailable' : formatUsdc(spentValue)}</dd>
-                </div>
-                <div className="metric">
-                  <dt>Link status</dt>
-                  <dd>Wallet linked</dd>
-                </div>
-              </dl>
+              <>
+                <p>All linked wallets consume the same offering budget. Selling does not restore it.</p>
+                <dl className="metric-grid">
+                  <div className="metric metric-emphasis"><dt>Remaining</dt><dd>{remainingValue === null ? 'Unavailable' : formatUsdc(remainingValue)}</dd></div>
+                  <div className="metric"><dt>Offering cap</dt><dd>{cap === null ? 'Unavailable' : formatUsdc(cap)}</dd></div>
+                  <div className="metric"><dt>Total gross purchases</dt><dd>{spentValue === null ? 'Unavailable' : formatUsdc(spentValue)}</dd></div>
+                  <div className="metric"><dt>Period</dt><dd>{offeringsQuery.data?.chain.periodId ?? 'Unavailable'}</dd></div>
+                  <div className="metric"><dt>Connected wallet</dt><dd>{address ? shortAddress(address) : 'None'}</dd></div>
+                </dl>
+              </>
             )}
             {linked && (remaining.isError || spent.isError || policy.isError) && (
               <p className="notice" data-tone="error" role="alert">Part of the allocation could not be read from Ethereum Sepolia.</p>
             )}
-            <p className="quiet">
-              Other linked wallets are not listed here. Any wallet linked to the same person shares this remaining
-              amount. Selling does not restore it.
-            </p>
-            {address && (
-              <div>
-                <h3 className="section-title">Purchases by this wallet</h3>
-                {purchasesQuery.isLoading && <p className="quiet">Reading purchase events from Ethereum Sepolia.</p>}
-                {purchasesQuery.isError && (
-                  <p className="notice" data-tone="error" role="alert">Purchase history could not be read from Ethereum.</p>
-                )}
-                {purchasesQuery.data && purchasesQuery.data.length === 0 && (
-                  <p className="quiet">No purchase is recorded for this wallet. A reverted purchase is not listed.</p>
-                )}
-                {purchasesQuery.data && purchasesQuery.data.length > 0 && (
-                  <ul>
-                    {purchasesQuery.data.map((purchase) => (
-                      <li key={purchase.transactionHash}>
-                        {formatUsdc(BigInt(purchase.amount))} USDC
-                        {' · shared total '}
-                        {formatUsdc(BigInt(purchase.newSpent))}
-                        {' · '}
-                        {purchase.transactionHash.slice(0, 10)}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+            {address && purchasesQuery.data && purchasesQuery.data.length > 0 && (
+              <ul>
+                {purchasesQuery.data.map((item) => (
+                  <li key={item.transactionHash}>{formatUsdc(BigInt(item.amount))} USDC · shared total {formatUsdc(BigInt(item.newSpent))}</li>
+                ))}
+              </ul>
             )}
           </section>
 
           <section id="purchase" className="panel">
             <h2 className="section-title">Purchase</h2>
-            {!status?.marketReady && (
-              <p className="quiet">{execution?.reason ?? 'The supported purchase market is unavailable.'}</p>
-            )}
-            {status?.marketReady && execution && (
+            {!linked || marketClosed ? (
+              <p>{marketClosed ? accessTierMessage(0) : 'Register this wallet and obtain issuer approval before purchasing. The purchase action stays disabled until the contract can accept it.'}</p>
+            ) : status?.marketReady && execution ? (
               <>
-                <p className="quiet">
-                  This spends an exact amount of USDC through the trusted RWAComply route. The contract rejects a
-                  purchase above the remaining allocation. This screen does not estimate price impact because this
-                  route has no separate quote.
-                </p>
-                {marketClosed && <p className="notice" data-tone="pending" role="status">{accessTierMessage(0)}</p>}
-                {typeof tier.data === 'number' && tier.data > 0 && (
-                  <p className="notice" data-tone="ok" role="status">{accessTierMessage(tier.data)}</p>
-                )}
-                <p className="quiet">
-                  Available USDC balance: {balanceValue === null ? 'Unavailable' : formatUsdc(balanceValue)}
-                  {' · '}
-                  Remaining shared allocation: {remainingValue === null ? 'Unavailable until this wallet is linked' : formatUsdc(remainingValue)}
-                </p>
+                <p>The purchase is executed through the supported RWAComply route. This screen does not estimate token output because this route has no separate quote.</p>
+                <p>Available USDC balance: {balanceValue === null ? 'Unavailable' : formatUsdc(balanceValue)}. Remaining allocation: {remainingValue === null ? 'Unavailable' : formatUsdc(remainingValue)}.</p>
                 <label className="field" htmlFor="usdc-amount">
-                  USDC to spend
-                  <input
-                    id="usdc-amount"
-                    inputMode="decimal"
-                    value={amount}
-                    onChange={(event) => setAmount(event.target.value)}
-                  />
+                  USDC amount
+                  <input id="usdc-amount" inputMode="decimal" value={amount} onChange={(event) => setAmount(event.target.value)} />
                 </label>
                 {decision.reason === 'exceeds' && remainingValue !== null && requested !== null && (
                   <div className="alert" role="alert">
-                    <strong>Hook rejection</strong>
                     <p>{REMAINING_BUDGET_MESSAGE}</p>
-                    <p>Maximum allocation: {cap === null ? 'Unavailable' : formatUsdc(cap)}</p>
-                    <p>Previous purchases: {spentValue === null ? 'Unavailable' : formatUsdc(spentValue)}</p>
-                    <p>Available allocation: {formatUsdc(remainingValue)}</p>
-                    <p>Requested purchase: {formatUsdc(requested)}</p>
+                    <p>Remaining allocation: {formatUsdc(remainingValue)}. Requested: {formatUsdc(requested)}.</p>
                   </div>
                 )}
-                {decision.reason === 'within' && decision.remainingAfter !== null && (
-                  <p className="quiet">Remaining after this purchase: {formatUsdc(decision.remainingAfter)}</p>
-                )}
+                <p className="quiet">{needsApproval ? 'USDC allowance is below this amount.' : 'Allowance covers this amount, or no amount is entered yet.'}</p>
                 {needsApproval && requested !== null && (
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    disabled={approving || buying || !onSepolia || !linked || marketClosed}
-                    onClick={() => void approveUsdc(requested)}
-                  >
+                  <button type="button" className="btn btn-primary" disabled={approving || buying || !onSepolia || !linked || marketClosed} onClick={() => void approveUsdc(requested)}>
                     {approving ? 'Approving' : 'Approve USDC'}
                   </button>
                 )}
                 {!needsApproval && (
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    disabled={!decision.allowed || buying || approving || !onSepolia || !linked || marketClosed || !execution.available}
-                    onClick={() => requested && void buy(requested)}
-                  >
-                    {buying ? 'Swapping' : 'Buy with USDC'}
+                  <button type="button" className="btn btn-primary" disabled={!decision.allowed || buying || approving || !onSepolia || !linked || marketClosed || !execution.available} onClick={() => requested && void buy(requested)}>
+                    {buying ? 'Purchasing' : 'Purchase'}
                   </button>
                 )}
                 {purchaseNotice.text && <p className="notice" data-tone={purchaseNotice.tone} role="status">{purchaseNotice.text}</p>}
               </>
+            ) : (
+              <p>{execution?.reason ?? 'The supported purchase market is unavailable.'}</p>
             )}
           </section>
+
+          <details className="tech">
+            <summary>Technical details</summary>
+            {statusQuery.isError && <p role="alert">The allocation status could not be loaded.</p>}
+            {status && deploymentMessages(status).map((item) => <p key={item.code}>{item.text}</p>)}
+            {status?.missing && status.missing.length > 0 && <p>Missing configuration: {status.missing.join(', ')}.</p>}
+            {offeringsQuery.data?.offering && (
+              <p>
+                Offering {offeringsQuery.data.offering.offeringId}. Directory {offeringsQuery.data.arkivStatus}. Entity {offeringsQuery.data.offering.key}. Pool {offeringsQuery.data.offering.poolId}.
+              </p>
+            )}
+            {offeringsQuery.data?.warning && <p>{offeringsQuery.data.warning}</p>}
+            <p>Identity: {identity.text}. Registration: {registration.text}. Approval: {approval.text}. Purchase: {purchase.text}.</p>
+          </details>
         </div>
         <SiteFooter />
       </main>
