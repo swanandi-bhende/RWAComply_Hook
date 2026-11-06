@@ -1,5 +1,7 @@
 # Demo
 
+First-time key and wallet setup is [first-time-setup.md](first-time-setup.md). The short page on the site is `/getting-started`.
+
 The point of the demo is one sentence: one human can link two wallets to one USDC purchase budget, and another human keeps a separate budget.
 
 Three parts:

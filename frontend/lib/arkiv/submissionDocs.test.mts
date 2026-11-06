@@ -56,6 +56,8 @@ test('the public guides link to files that exist', () => {
     'integrations/world-id.md',
     'integrations/arkiv.md',
     'docs/DOCUMENTATION_GUIDE.md',
+    'docs/product-scope.md',
+    'first-time-setup.md',
   ];
   const link = /\[[^\]]+\]\(([^)]+)\)/g;
   for (const file of files) {
@@ -78,10 +80,12 @@ test('the World note, the limits, and the demo script stay specific', () => {
   assert.match(world, /IDKit\.proveSession/);
   assert.match(world, /Cursor/);
   assert.match(world, /1629f37/);
-  assert.match(readme, /not KYC or AML/);
-  assert.match(readme, /exact-input USDC purchase/);
-  assert.match(readme, /direct token transfers/);
-  assert.match(readme, /Selling RWA does not restore the budget/);
+  const scope = doc('docs/product-scope.md');
+  assert.match(scope, /not KYC or AML/);
+  assert.match(scope, /exact-input USDC purchase/);
+  assert.match(scope, /direct token transfers/);
+  assert.match(scope, /Selling RWA does not restore the budget/);
+  assert.equal(readme.includes('## Limitations'), false);
   assert.match(script, /720p/);
   assert.match(script, /AI voiceover/);
   assert.match(script, /700/);

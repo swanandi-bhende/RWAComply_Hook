@@ -5,9 +5,12 @@ This is the map for people changing the repository. [README.md](../README.md) is
 | Subject | Authoritative file |
 |---|---|
 | What the product is, and where to go next | [README.md](../README.md) |
+| First machine, keys, World App, and the first demo | [first-time-setup.md](../first-time-setup.md) |
 | Install, environment, Anvil, Sepolia reads, Arkiv commands | [setup.md](../setup.md) |
 | Test commands and what each suite covers | [tests.md](../tests.md) |
 | How to demonstrate the product | [demo.md](../demo.md) |
+| What the product does not do | [docs/product-scope.md](product-scope.md) |
+| On-site onboarding | `/getting-started` in the frontend |
 | Layers and sources of truth | [architecture.md](../architecture.md) |
 | Addresses and deployment proof | [deployment.md](../deployment.md) and [docs/sepolia-deployment.md](sepolia-deployment.md) |
 | Uniswap v4 | [integrations/uniswap-v4.md](../integrations/uniswap-v4.md) |
@@ -27,7 +30,7 @@ This is the map for people changing the repository. [README.md](../README.md) is
 
 ## What goes where
 
-README stays short: the problem, the three primitives, the five steps, links, status, and the hard limits. Commands, environment names, and troubleshooting go in the matching guide.
+README stays short. It links out. It does not grow a limitations section. Product boundaries go in [product-scope.md](product-scope.md). Someone setting up a machine for the first time follows [first-time-setup.md](../first-time-setup.md). [setup.md](../setup.md) stays the command and environment reference. [demo.md](../demo.md) stays the demonstration guide. The website page `/getting-started` explains the same steps for a visitor and links to `first-time-setup.md`. It must not describe a local Anvil walk as a Sepolia purchase, or a fixture as a live World ID proof.
 
 A new feature updates the guide for its subject and adds a link from README only if a new reader needs it on the first page. A new contract or API is linked from [architecture.md](../architecture.md) and, when it changes how to run the app, from [setup.md](../setup.md). A new test file is named in [tests.md](../tests.md) when `npm run test:world` or `forge test` starts running it.
 

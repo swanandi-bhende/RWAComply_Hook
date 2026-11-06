@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { SiteFooter } from './SiteFooter';
 import { SiteNav } from './SiteNav';
 
 export function HowItWorks() {
@@ -77,6 +78,7 @@ export function HowItWorks() {
             </article>
           </div>
         </section>
+        <SiteFooter />
       </main>
     </>
   );

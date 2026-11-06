@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { SiteFooter } from './SiteFooter';
 import { SiteNav } from './SiteNav';
 
 export function Landing() {
@@ -117,6 +118,7 @@ export function Landing() {
             </article>
           </div>
         </section>
+        <SiteFooter />
       </main>
     </>
   );

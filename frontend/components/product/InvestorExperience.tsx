@@ -14,6 +14,7 @@ import {
   useWalletClient,
 } from 'wagmi';
 import { parseUnits, type Hex } from 'viem';
+import { SiteFooter } from './SiteFooter';
 import { SiteNav } from './SiteNav';
 import { browserSessionStore } from '@/lib/world/sessionStore';
 import { enrollProofOfHuman } from '@/lib/world/enrollClient';
@@ -854,6 +855,7 @@ export default function InvestorExperience() {
             )}
           </section>
         </div>
+        <SiteFooter />
       </main>
     </>
   );
