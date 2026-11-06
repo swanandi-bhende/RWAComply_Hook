@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { SiteFooter } from './SiteFooter';
 import { SiteNav } from './SiteNav';
 
-const SETUP_DOC = 'https://github.com/swanandi-bhende/RWAComply_Hook/blob/v2/first-time-setup.md';
+const DEVELOPER_DOC = 'https://github.com/swanandi-bhende/RWAComply_Hook/blob/v2/first-time-setup.md#part-b-running-the-repository';
 
 export function GettingStarted() {
   return (
@@ -10,96 +10,109 @@ export function GettingStarted() {
       <SiteNav />
       <main className="page">
         <p className="kicker">Getting started</p>
-        <h1 className="page-title">What you need before you try this</h1>
+        <h1 className="page-title">Use RWAComply as an investor</h1>
         <p className="lede">
-          Two different things get confused here. World App checks that a person is at the keyboard.
-          The browser wallet checks that you control an address. You need both, and they are not the same step.
+          World App checks that a person is present. The browser wallet checks that the investor controls
+          an address. Both are required, and they are different steps. Creating a World ID application is
+          not one of them.
         </p>
 
         <section className="stack" aria-labelledby="need-title">
-          <h2 id="need-title" className="section-title">Before you open the investor page</h2>
+          <h2 id="need-title" className="section-title">Before opening the investor page</h2>
           <div className="panel">
             <p>
-              Install World App and create a World ID on your phone. In the browser, use a wallet you control
-              and switch it to Ethereum Sepolia, chain id 11155111. The wallet needs a little Sepolia ETH from
-              a faucet so it can pay for registration. The mock USDC on this market is not a real asset, and
-              the page will not pretend that it is.
+              Open the RWAComply application. No production address is published yet, so the current
+              Sepolia preview is <Link href="/invest" className="link">/invest</Link> on the running app.
+              That preview is not a production deployment.
+            </p>
+            <p>
+              Use a browser wallet the investor controls, with a little Ethereum Sepolia ETH for gas.
+              Install World App and prepare a World ID on the phone. The operator has already configured
+              the World ID application. The investor completes the proof World App requests.
             </p>
             <p className="quiet">
-              For the shared-budget walk, prepare two addresses, Wallet A and Wallet B. Leave the deployer,
-              the allocation signer, and the liquidity helper out of that pair.
+              A purchase also needs demo USDC in the wallet. It is mock USDC, not real USDC, and the page
+              does not mint it. The token contract allows a public mint. The token received from a purchase
+              is mock RWA, not a real-world asset.
             </p>
           </div>
         </section>
 
-        <section className="stack" aria-labelledby="human-title">
-          <h2 id="human-title" className="section-title">Human verification, then the wallet</h2>
+        <section className="stack" aria-labelledby="register-title">
+          <h2 id="register-title" className="section-title">Connect, verify, and register</h2>
           <div className="panel">
             <p>
-              On <Link href="/invest" className="link">/invest</Link>, connect Wallet A and choose
-              “Enroll and register this wallet”. World App asks for a proof of human. That proof is checked
-              by the server. It is not KYC, and it does not by itself register the address.
+              On <Link href="/invest" className="link">/invest</Link>, connect the first wallet and switch
+              to Ethereum Sepolia, chain id 11155111. Choose “Enroll and register this wallet”. World App
+              asks for proof of human. The server checks that proof. It is not KYC, and it does not register
+              the address by itself.
             </p>
             <p>
-              After World accepts the proof, the wallet signs a separate message. That signature is how we
-              know this address belongs with that session. You then confirm <code>registerWallet</code> on
-              Sepolia. The page says the wallet is linked only after that transaction is onchain.
+              The wallet then signs a separate ownership message. Confirm <code>registerWallet</code> on
+              Sepolia. The page reports the wallet as linked only after that transaction is onchain.
+              A cancelled World App prompt stops there. Nothing is registered.
             </p>
             <p className="quiet">
-              A cancelled World App prompt stops there. Nothing is registered.
+              The wallet still needs issuer approval before it can buy. Registration does not grant that
+              tier, and the investor cannot set it. The page says “Issuer approval required” until the
+              hook owner approves the address. No investor approval has been sent on Sepolia.
             </p>
           </div>
         </section>
 
         <section className="stack" aria-labelledby="second-title">
-          <h2 id="second-title" className="section-title">The second wallet</h2>
+          <h2 id="second-title" className="section-title">Link a second wallet</h2>
           <div className="panel">
             <p>
-              Disconnect Wallet A and connect Wallet B. Choose “Continue and register this wallet”.
-              That continues the same World ID session. Do not start a new enrollment if both wallets
-              should share one budget. Wallet B signs its own message and sends its own registration.
-              The allocation id stays off the page. Both wallets then read the same remaining USDC budget.
-            </p>
-            <p className="quiet">
-              A second person, with their own World ID, gets a separate budget. I have not completed a live
-              World ID session on this deployment yet, so this Sepolia path is ready for you to run. It is
-              not a recording of a finished enrollment.
+              Disconnect the first wallet and connect the second. Choose “Continue and register this wallet”.
+              That continues the same World ID session. A new enrollment is a different person and a different
+              budget. The second wallet signs its own message and sends its own registration. The allocation
+              id stays off the page. Both wallets then read the same remaining USDC budget.
             </p>
           </div>
         </section>
 
         <section className="stack" aria-labelledby="budget-title">
-          <h2 id="budget-title" className="section-title">The shared allocation</h2>
+          <h2 id="budget-title" className="section-title">Shared allocation and purchase</h2>
           <div className="panel">
             <p>
-              The budget is gross USDC spent through the trusted purchase route. Alice can buy 700 with
-              Wallet A. Wallet B’s request for 500 is too much and is rejected. Wallet B can buy the
-              remaining room, for example 200, and both wallets then show what is left. Selling does not
-              put the budget back. The issuer still has to approve the wallet’s access tier before a
-              purchase. World ID does not grant that tier.
+              The budget is gross USDC spent through the supported purchase route. A request larger than
+              the remainder is rejected, and selling does not restore the budget. The offering panel is
+              public metadata. The cap and the spend are read from Ethereum.
             </p>
             <p className="quiet">
-              Those purchase numbers were run on local Anvil, chain id 31337, through{' '}
-              <Link href="/demo" className="link">/demo</Link>. They have not been sent as an investor
+              A live World ID proof has not been completed on this deployment. The 700, rejected 500, and
+              200 purchase was run on local Anvil, chain id 31337, through{' '}
+              <Link href="/demo" className="link">/demo</Link>. It has not been sent as an investor
               purchase on Sepolia.
             </p>
           </div>
         </section>
 
-        <section className="stack" aria-labelledby="demo-title">
-          <h2 id="demo-title" className="section-title">Follow the demo</h2>
+        <section className="stack" aria-labelledby="operator-title">
+          <h2 id="operator-title" className="section-title">Offering operator</h2>
           <div className="panel">
             <p>
-              Developers: the key setup, Anvil, and the test commands are in{' '}
-              <a className="link" href={SETUP_DOC}>first-time-setup.md</a> on the <code>v2</code> branch.
-              Local Anvil and Sepolia are different markets. Do not treat one as the other.
+              There is no retailer dashboard. Approving a tier, changing the allocation policy, and pausing
+              the pool are owner transactions. On the local demo, those controls appear in Admin Observatory
+              only when the connected wallet is the hook owner. They are not part of this investor page.
+            </p>
+          </div>
+        </section>
+
+        <section className="stack" aria-labelledby="help-title">
+          <h2 id="help-title" className="section-title">When something fails</h2>
+          <div className="panel">
+            <p>
+              The wrong network asks for Ethereum Sepolia. An unregistered wallet asks for World ID before
+              purchasing. A cancelled prompt says no wallet was registered. A purchase above the shared
+              remainder says the purchase exceeds the remaining allocation, and the spend does not increase.
+              If the offering directory is down, trading rules are still checked on Ethereum.
             </p>
             <p className="quiet">
-              If the wallet is on the wrong network, the page asks you to switch to Ethereum Sepolia.
-              If the wallet is not registered, it tells you to verify with World ID before purchasing.
-              If World App is cancelled, it says no wallet was registered. If the purchase is larger than
-              the shared remainder, it says the purchase exceeds the remaining allocation and the spend
-              does not increase. If the offering directory is down, trading rules are still checked on Ethereum.
+              Developers and judges running the repository use a separate setup. It is not required for this
+              page.{' '}
+              <a className="link" href={DEVELOPER_DOC}>Developer setup</a>.
             </p>
           </div>
         </section>

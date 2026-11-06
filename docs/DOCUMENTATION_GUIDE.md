@@ -4,13 +4,13 @@ This is the map for people changing the repository. [README.md](../README.md) is
 
 | Subject | Authoritative file |
 |---|---|
-| What the product is, and where to go next | [README.md](../README.md) |
-| First machine, keys, World App, and the first demo | [first-time-setup.md](../first-time-setup.md) |
-| Install, environment, Anvil, Sepolia reads, Arkiv commands | [setup.md](../setup.md) |
+| What the product is, and where to go next | [README.md](../README.md). Keep it to Problem, Product, How to access, Documentation, and Proof |
+| Investor use of the product, then repository setup | [first-time-setup.md](../first-time-setup.md). Part A is the investor. Part B is the developer |
+| Install, environment, Anvil, Sepolia reads, Arkiv commands | [setup.md](../setup.md). Developers only |
 | Test commands and what each suite covers | [tests.md](../tests.md) |
-| How to demonstrate the product | [demo.md](../demo.md) |
+| Investor demo and issuer operations | [demo.md](../demo.md) |
 | What the product does not do | [docs/product-scope.md](product-scope.md) |
-| On-site onboarding | `/getting-started` in the frontend |
+| On-site investor guide | `/getting-started` in the frontend. No environment-file instructions |
 | Layers and sources of truth | [architecture.md](../architecture.md) |
 | Addresses and deployment proof | [deployment.md](../deployment.md) and [docs/sepolia-deployment.md](sepolia-deployment.md) |
 | Uniswap v4 | [integrations/uniswap-v4.md](../integrations/uniswap-v4.md) |
@@ -30,7 +30,13 @@ This is the map for people changing the repository. [README.md](../README.md) is
 
 ## What goes where
 
-README stays short. It links out. It does not grow a limitations section. Product boundaries go in [product-scope.md](product-scope.md). Someone setting up a machine for the first time follows [first-time-setup.md](../first-time-setup.md). [setup.md](../setup.md) stays the command and environment reference. [demo.md](../demo.md) stays the demonstration guide. The website page `/getting-started` explains the same steps for a visitor and links to `first-time-setup.md`. It must not describe a local Anvil walk as a Sepolia purchase, or a fixture as a live World ID proof.
+README stays the five sections in the table above. It links out. It does not grow a limitations section, a setup procedure, or a development diary. Product boundaries go in [product-scope.md](product-scope.md).
+
+[first-time-setup.md](../first-time-setup.md) splits the audiences. Part A tells an investor how to open the product, use World App, register a wallet, continue a second wallet, and purchase. It does not tell that person to create a World ID application or edit `.env`. Part B is the developer, hacker, or judge running the repository, and it points at [setup.md](../setup.md) for the command order. A self-hosted instance uses its own World ID relying party. It does not reuse the operator’s private credentials.
+
+[demo.md](../demo.md) keeps the investor demonstration separate from issuer operations. Issuer actions that exist only as owner transactions, or only inside the local Admin Observatory, stay described that way. Do not add a retailer dashboard that the app does not have.
+
+`/getting-started` follows Part A. A discreet link can point developers at Part B. The page must not describe a local Anvil walk as a Sepolia purchase, or a fixture as a live World ID proof.
 
 A new feature updates the guide for its subject and adds a link from README only if a new reader needs it on the first page. A new contract or API is linked from [architecture.md](../architecture.md) and, when it changes how to run the app, from [setup.md](../setup.md). A new test file is named in [tests.md](../tests.md) when `npm run test:world` or `forge test` starts running it.
 

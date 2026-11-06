@@ -1,6 +1,6 @@
 # Setup
 
-If this is your first time with the keys, World App, and the wallets, start with [first-time-setup.md](first-time-setup.md). This file is the command reference after that.
+Investors use Part A of [first-time-setup.md](first-time-setup.md) and do not need this file. Developers running the repository use Part B of that file, then the commands here. This file is the command and environment reference.
 
 One environment file, at the repository root: `.env`. Do not create `frontend/.env` or `frontend/.env.local`. The Next.js app starts in `frontend/` and loads the root file. Foundry scripts read the same file.
 

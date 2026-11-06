@@ -141,7 +141,11 @@ export default function Home() {
         {/* Footer CTA */}
         <footer className="site-footer">
           <p>Local Anvil demo for the RWAComply hook. This is not the Sepolia investor experience.</p>
-          <p><a className="link" href="/getting-started">Getting started</a></p>
+          <p>
+            <a className="link" href="/getting-started">Getting started</a>
+            {' · '}
+            <a className="link" href="https://github.com/swanandi-bhende/RWAComply_Hook/blob/v2/first-time-setup.md#part-b-running-the-repository">Developer setup</a>
+          </p>
         </footer>
       </main>
     </>
