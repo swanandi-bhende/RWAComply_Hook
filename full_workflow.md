@@ -1,5 +1,7 @@
 # RWA Compliance Hook (Uniswap v4)
 
+The current demo and setup guides are [demo.md](demo.md) and [setup.md](setup.md). This file is an older workflow note.
+
 ## End-to-End Workflow
 
 ## 1. Purpose

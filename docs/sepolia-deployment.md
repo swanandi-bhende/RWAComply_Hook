@@ -1,5 +1,7 @@
 # Ethereum Sepolia deployment
 
+The public summary is [deployment.md](../deployment.md). This file is the transaction log.
+
 Network: Ethereum Sepolia, chain id `11155111`.
 
 This file records the verified deployment. It is not a simulation. No private keys or RPC credentials belong here.

@@ -1,119 +1,102 @@
 # RWAComply
 
-RWAComply is a Uniswap v4 hook for one compliance-aware pool. Several wallets can share one USDC purchase budget. The budget is enforced only on the supported purchase route.
+One human. Multiple wallets. One shared purchase budget.
 
-The mock USDC and mock RWA on the demo pool are not real-world assets. World ID proof of human is not KYC, AML, accreditation, residency, nationality, or legal eligibility.
+A person can split a purchase across wallets and look like several investors. RWAComply gives an issuer one USDC budget for one verified human. Wallets linked to that human share the budget. A purchase through the trusted Uniswap v4 route consumes it. Another person keeps a separate budget.
 
-## What already existed on `v2`
+Alice has 1,000 USDC. Wallet A buys 700. Wallet B’s 500 request is rejected. Wallet B buys 200. Alice has 100 left across both wallets. Bob still has his own 1,000.
 
-Commit `1629f37` (2026-03-20) is the last commit from before this event. That tree already had:
+CCA helps an issuer discover a launch price and distribute tokens. RWAComply helps an issuer enforce how much a verified investor can cumulatively purchase across linked wallets in supported markets.
 
-- [`src/RWAComplyHook.sol`](src/RWAComplyHook.sol) — tier 0 blocked, tier 1 retail with a cap, tier 2 institutional, pause, and a dynamic fee from [`src/MockRWAOracle.sol`](src/MockRWAOracle.sol).
-- [`src/PoolExecutor.sol`](src/PoolExecutor.sol) — a local swap helper for that hook.
-- [`src/MockERC20.sol`](src/MockERC20.sol) and [`src/MockRWAOracle.sol`](src/MockRWAOracle.sol) — demo tokens and the volatility oracle.
-- [`script/DeployFull.s.sol`](script/DeployFull.s.sol) and [`script/run_canonical_demo.sh`](script/run_canonical_demo.sh) — the local Anvil deployment.
-- [`frontend/app/api/deployment-addresses/route.ts`](frontend/app/api/deployment-addresses/route.ts) — the only backend route, used by the local demo.
-- The Next.js demo under `frontend/`, including [`frontend/components/SwapDemo.tsx`](frontend/components/SwapDemo.tsx).
+The Sepolia pool uses mock USDC and mock RWA. They are not real-world assets. World ID proof of human is not KYC, AML, accreditation, residency, nationality, or legal eligibility.
 
-The earlier demo video is https://youtu.be/oxLZlcRivwM. There are no commits between `1629f37` and `540aeb2` (2026-11-05).
+## Core primitives
 
-## What was added
+- **Linked wallets, one allocation.** A verified human receives a pseudonymous allocation id. Each wallet is registered to it only after a separate ownership signature and an onchain receipt.
+- **One cumulative budget.** [`src/AllocationLedger.sol`](src/AllocationLedger.sol) records gross USDC spend. [`src/RWAComplyHook.sol`](src/RWAComplyHook.sol) enforces the remainder on the supported swap.
+- **A public offering record.** Arkiv stores the offering’s public metadata. It does not store the cap, the spend, or the remainder.
 
-- [`src/AllocationLedger.sol`](src/AllocationLedger.sol) — one allocation id, the wallets registered to it, and the USDC spent for a group and period.
-- [`src/PoolExecutor.sol`](src/PoolExecutor.sol) — `swapExactInput`. The purchaser is `msg.sender`. The router passes that address to the hook and does not accept a different trader.
-- [`src/RWAComplyHook.sol`](src/RWAComplyHook.sol) — `beforeSwap` checks the ledger for that trader. `afterSwap` records the settled USDC. A revert leaves both the tokens and the spend unchanged.
-- [`script/DeploySepolia.s.sol`](script/DeploySepolia.s.sol) — the Ethereum Sepolia deployment against the existing Uniswap v4 PoolManager. Addresses are in [`docs/sepolia-deployment.md`](docs/sepolia-deployment.md).
-- [`script/start_anvil_demo.sh`](script/start_anvil_demo.sh) and [`script/demo_allocation_journey.sh`](script/demo_allocation_journey.sh) — local Anvil deploy and the two-wallet purchase.
-- World ID and product routes, all served by the Next.js app:
-  - [`frontend/app/api/world/rp-context/route.ts`](frontend/app/api/world/rp-context/route.ts)
-  - [`frontend/app/api/world/enroll/route.ts`](frontend/app/api/world/enroll/route.ts)
-  - [`frontend/app/api/world/continue/route.ts`](frontend/app/api/world/continue/route.ts)
-  - [`frontend/app/api/world/wallet-challenge/route.ts`](frontend/app/api/world/wallet-challenge/route.ts)
-  - [`frontend/app/api/world/wallet-authorization/route.ts`](frontend/app/api/world/wallet-authorization/route.ts)
-  - [`frontend/app/api/world/registration-receipt/route.ts`](frontend/app/api/world/registration-receipt/route.ts)
-  - [`frontend/app/api/product/status/route.ts`](frontend/app/api/product/status/route.ts)
-  - [`frontend/app/api/offerings/route.ts`](frontend/app/api/offerings/route.ts)
-- The investor pages `/`, `/invest`, and `/how`, and the Arkiv offering under [`arkiv/schema.md`](arkiv/schema.md).
+## How it works
 
-The offering writer is `0xbfBf7Ca4f33993fA8b918d38286dad927231FB72`. The entity is `0x6feefc2d7a889123485ccb454bba924db7057a8d18d5cb0b3e6a49c66a2a5578`. From `frontend/`:
+1. Prove human uniqueness with World ID.
+2. Prove wallet ownership with a separate signature.
+3. Register the wallet to the shared allocation identity.
+4. Buy exact-input USDC through [`src/PoolExecutor.sol`](src/PoolExecutor.sol).
+5. The hook checks the remaining allocation and records the settled USDC.
 
-```bash
-npm run query:offering
-```
+Proof of human, wallet ownership, onchain registration, issuer approval, and purchase enforcement are separate steps. An investor cannot set their own tier.
 
-That prints the entity key, the writer, and:
+## Quick navigation
 
-```text
-projectTag = str('rwacomply') AND offeringId = str('sepolia-demo-rwa')
-```
+| Guide | What it answers |
+|---|---|
+| [setup.md](setup.md) | Install, environment, Anvil, Sepolia reads, Arkiv |
+| [tests.md](tests.md) | Contract, application, and production checks |
+| [demo.md](demo.md) | Local demo, Sepolia investor path, judge walkthrough |
+| [architecture.md](architecture.md) | Layers and the source of truth for each record |
+| [deployment.md](deployment.md) | Sepolia addresses, pool, and transaction record |
+| [integrations/uniswap-v4.md](integrations/uniswap-v4.md) | Hook, executor, and PoolManager |
+| [integrations/world-id.md](integrations/world-id.md) | Enrollment, continuation, and registration |
+| [integrations/arkiv.md](integrations/arkiv.md) | Offering directory |
+| [FEEDBACK.md](FEEDBACK.md) | Uniswap hook notes |
+| [docs/PRD_COMPLIANCE_AUDIT.md](docs/PRD_COMPLIANCE_AUDIT.md) | Requirement-by-requirement status |
 
-## Identity boundary
+## Core components
 
-World proofs and `session_id` stay in the backend. Enrollment and continuation are [`frontend/app/api/world/enroll/route.ts`](frontend/app/api/world/enroll/route.ts) and [`frontend/app/api/world/continue/route.ts`](frontend/app/api/world/continue/route.ts). The session is encrypted server-side. Neither the proof nor `session_id` is written to the contracts or to Arkiv.
+| Piece | Path |
+|---|---|
+| Hook | [`src/RWAComplyHook.sol`](src/RWAComplyHook.sol) |
+| Allocation ledger | [`src/AllocationLedger.sol`](src/AllocationLedger.sol) |
+| Trusted executor | [`src/PoolExecutor.sol`](src/PoolExecutor.sol) |
+| Oracle | [`src/MockRWAOracle.sol`](src/MockRWAOracle.sol) |
+| Sepolia deploy | [`script/DeploySepolia.s.sol`](script/DeploySepolia.s.sol) |
+| Local deploy | [`script/DeployFull.s.sol`](script/DeployFull.s.sol) |
+| Investor page | [`frontend/components/product/InvestorExperience.tsx`](frontend/components/product/InvestorExperience.tsx) |
+| Offering client | [`frontend/lib/arkiv/offering.ts`](frontend/lib/arkiv/offering.ts) |
 
-The chain stores the allocation id, the wallet registration, and the USDC spent. Those values are in [`src/AllocationLedger.sol`](src/AllocationLedger.sol). The hook reads the remaining budget and records the settled purchase. It does not read a World ID proof.
+The backend is the Next.js server. Routes:
 
-Arkiv stores the public offering metadata and nothing else. The schema is [`arkiv/schema.md`](arkiv/schema.md). The cap, the spent amount, and the remaining budget are not in the entity. Spend accounting stays on the ledger because Arkiv cannot reject a swap.
+- [`frontend/app/api/world/rp-context/route.ts`](frontend/app/api/world/rp-context/route.ts)
+- [`frontend/app/api/world/enroll/route.ts`](frontend/app/api/world/enroll/route.ts)
+- [`frontend/app/api/world/continue/route.ts`](frontend/app/api/world/continue/route.ts)
+- [`frontend/app/api/world/wallet-challenge/route.ts`](frontend/app/api/world/wallet-challenge/route.ts)
+- [`frontend/app/api/world/wallet-authorization/route.ts`](frontend/app/api/world/wallet-authorization/route.ts)
+- [`frontend/app/api/world/registration-receipt/route.ts`](frontend/app/api/world/registration-receipt/route.ts)
+- [`frontend/app/api/product/status/route.ts`](frontend/app/api/product/status/route.ts)
+- [`frontend/app/api/product/purchases/route.ts`](frontend/app/api/product/purchases/route.ts)
+- [`frontend/app/api/offerings/route.ts`](frontend/app/api/offerings/route.ts)
+- [`frontend/app/api/deployment-addresses/route.ts`](frontend/app/api/deployment-addresses/route.ts)
 
-Proof of human, wallet ownership, onchain registration, and the issuer access tier are separate. An investor cannot set their own tier.
+Pages: `/`, `/invest`, `/how`, and `/demo`.
 
-## Run
+## Protocol integrations
 
-From the repository root, in this order. The only environment file is the repository-root `.env`. Do not add `frontend/.env`.
+- [Uniswap v4](integrations/uniswap-v4.md) supplies the pool and the hook callbacks. The official Sepolia PoolManager is `0xE03A1074c86CFeDd5C142C4F04F1a1536e203543`.
+- [World ID](integrations/world-id.md) proves a human for this session. Proofs and `session_id` stay in the backend.
+- [Arkiv](integrations/arkiv.md) publishes the offering. Arkiv stores the public offering metadata and cannot reject a swap.
 
-1. Start Anvil on chain id `31337`, if it is not already listening on `127.0.0.1:8545`:
+Read the current offering from `frontend/` with `npm run query:offering`. The writer is `0xbfBf7Ca4f33993fA8b918d38286dad927231FB72`. The entity is `0x6feefc2d7a889123485ccb454bba924db7057a8d18d5cb0b3e6a49c66a2a5578`. The query is `projectTag = str('rwacomply') AND offeringId = str('sepolia-demo-rwa')`.
 
-```bash
-anvil --host 127.0.0.1 --port 8545 --chain-id 31337
-```
+## Deployments and proof
 
-2. Deploy the local demo. [`script/start_anvil_demo.sh`](script/start_anvil_demo.sh) starts Anvil when step 1 was skipped, funds the deployer on that node only, and broadcasts [`script/DeployFull.s.sol`](script/DeployFull.s.sol). It does not edit `.env` and it does not send a Sepolia transaction.
+Ethereum Sepolia, chain id `11155111`. Addresses, the pool id, and the transaction hashes are in [deployment.md](deployment.md). The local market is Anvil chain id `31337` and is not those addresses.
 
-```bash
-bash script/start_anvil_demo.sh
-```
+## Current implementation status
 
-3. Start the backend. The API routes above are the backend, and they run inside the Next.js server:
+| State | What |
+|---|---|
+| Implemented and covered by tests | Shared USDC budget, exact-input enforcement, registration authorization, offering directory, purchase-history read |
+| Demonstrated on local Anvil | Wallet A buys 700, Wallet B’s 500 reverts, Wallet B buys 200, Bob keeps a separate budget |
+| Deployed on Sepolia and read back | Hook, ledger, executor, oracle, mock tokens, pool, policy cap of 1,000 USDC, Arkiv offering |
+| Awaiting a real person | World ID enrollment, continuation, Sepolia registration, issuer tier, and a Sepolia purchase |
+| Not this release | KYC, transfer restrictions, a second live pool, wallet revocation, a per-swap trade signature |
 
-```bash
-cd frontend
-npm ci
-npm run dev
-```
+Commit `1629f37` (2026-03-20) is the last commit from before this event. What already existed there was the hook, the oracle, the executor, the local deploy, and the demo UI. What was added after it is the ledger, the shared-budget hook path, World ID, the investor pages, and Arkiv. There are no commits between `1629f37` and `540aeb2` (2026-11-05). The earlier demo video is https://youtu.be/oxLZlcRivwM.
 
-4. Start the frontend. The same command serves the pages. Open `http://localhost:3000`. `/demo` is the Anvil market. `/invest` is the Ethereum Sepolia investor page.
+## Limitations
 
-5. Publish the Arkiv offering. From `frontend/`, with `ARKIV_ACCESS_KEY` and `ARKIV_PUBLISHER_PRIVATE_KEY` in the repository-root `.env`:
-
-```bash
-npm run publish:offering
-```
-
-If the current offering is already on Rabdi, the command prints it and does not create another.
-
-6. Run the two-wallet purchase on local Anvil only:
-
-```bash
-bash script/demo_allocation_journey.sh
-```
-
-Wallet A buys 700 USDC, Wallet B's 500 USDC purchase reverts, Wallet B buys 200 USDC, and a second person keeps a separate cap. The script refuses every chain except `31337`.
-
-Tests:
-
-```bash
-forge test
-cd frontend && npm run test:world
-```
-
-Uniswap hook notes for this continuity submission are in [`FEEDBACK.md`](FEEDBACK.md). The World ID note is [`docs/world-integration.md`](docs/world-integration.md). The spoken demo script is [`docs/demo-script.md`](docs/demo-script.md).
-
-## Limits
-
-The World ID credential is not KYC or AML. It is a proof of human for this session.
-
-The cap applies to the router's exact-input USDC purchase, `PoolExecutor.swapExactInput`, through this hook. It does not block direct token transfers, other protocols, or other chains. Selling RWA does not restore the budget. The spent amount stays on `AllocationLedger`.
+The cap applies to the router’s exact-input USDC purchase, `PoolExecutor.swapExactInput`, through this hook. It does not block direct token transfers, other protocols, or other chains. Selling RWA does not restore the budget. The credential is not KYC or AML. The issuer access tier is a separate owner action.
 
 ## License
 
-MIT
+[MIT](LICENSE)

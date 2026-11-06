@@ -44,3 +44,13 @@ If no type-checker is configured, state that explicitly instead of claiming succ
     - Re-exports and barrel file entries
     - Test files and mocks
     Do not assume a single grep caught everything.
+
+## Documentation
+
+12. DOCUMENTATION MAP: Read `docs/DOCUMENTATION_GUIDE.md` before writing project docs. README is the entry point. Setup, tests, demo, architecture, deployment, and integration detail belong in their own guides.
+
+13. SAME-TASK DOCS: Every meaningful feature, API, contract, deployment, or workflow change updates its authoritative document in the same task.
+
+14. HONEST STATUS: Never describe mocked, simulated, local, or unverified behavior as live. Never publish secrets. The only environment file is the repository-root `.env`.
+
+15. LINKS: Verify relative links in every document you change. Do not duplicate a full explanation that already has an authoritative file. Check documentation against the source before calling a task complete.

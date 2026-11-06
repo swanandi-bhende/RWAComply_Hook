@@ -28,20 +28,45 @@ test('the README separates the pre-event hook from the added allocation path', (
   assert.equal(readme.includes('PRIVATE_KEY='), false);
 });
 
-test('the README states the identity boundary and the run order', () => {
+test('the README states the identity boundary and the setup guide keeps the run order', () => {
   const readme = doc('README.md');
+  const setup = doc('setup.md');
   assert.match(readme, /session_id/);
   assert.match(readme, /stay in the backend/);
   assert.match(readme, /allocation id/);
   assert.match(readme, /Arkiv stores the public offering metadata/);
-  const run = readme.slice(readme.indexOf('## Run'));
-  const anvil = run.indexOf('anvil --host');
-  const deploy = run.indexOf('script/start_anvil_demo.sh');
-  const server = run.indexOf('npm run dev');
-  const publish = run.indexOf('npm run publish:offering');
-  const purchase = run.indexOf('script/demo_allocation_journey.sh');
-  const tests = run.indexOf('forge test');
-  assert.ok(anvil < deploy && deploy < server && server < publish && publish < purchase && purchase < tests);
+  assert.match(readme, /setup\.md/);
+  const anvil = setup.indexOf('anvil --host');
+  const deploy = setup.indexOf('script/start_anvil_demo.sh');
+  const server = setup.indexOf('npm run dev');
+  const publish = setup.indexOf('npm run publish:offering');
+  const purchase = setup.indexOf('script/demo_allocation_journey.sh');
+  assert.ok(anvil < deploy && deploy < server && server < publish && publish < purchase);
+});
+
+test('the public guides link to files that exist', () => {
+  const files = [
+    'README.md',
+    'setup.md',
+    'tests.md',
+    'demo.md',
+    'architecture.md',
+    'deployment.md',
+    'integrations/uniswap-v4.md',
+    'integrations/world-id.md',
+    'integrations/arkiv.md',
+    'docs/DOCUMENTATION_GUIDE.md',
+  ];
+  const link = /\[[^\]]+\]\(([^)]+)\)/g;
+  for (const file of files) {
+    const text = doc(file);
+    for (const match of text.matchAll(link)) {
+      const target = match[1].split('#')[0];
+      if (target.startsWith('http') || target.startsWith('mailto:') || target.length === 0) continue;
+      const from = file.includes('/') ? file.slice(0, file.lastIndexOf('/') + 1) : '';
+      doc(decodeURIComponent(`${from}${target}`).replace(/\/\.\//g, '/'));
+    }
+  }
 });
 
 test('the World note, the limits, and the demo script stay specific', () => {

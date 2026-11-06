@@ -1,5 +1,7 @@
 # Local development
 
+Public setup, tests, and the demo are [setup.md](../setup.md), [tests.md](../tests.md), and [demo.md](../demo.md). This file is the internal note. The map of which document owns which subject is [docs/DOCUMENTATION_GUIDE.md](DOCUMENTATION_GUIDE.md).
+
 The frontend lives in `frontend/` and uses npm. There is one lockfile: `frontend/package-lock.json`.
 
 ## Runtime

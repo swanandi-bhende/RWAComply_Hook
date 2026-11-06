@@ -1,5 +1,7 @@
 # RWA Compliance Hook - Frontend Setup Guide
 
+The current setup guide is [../setup.md](../setup.md). This file is an older frontend note.
+
 ## Overview
 
 The frontend is a **contract-showcase** UI designed to demonstrate the RWA Compliance Hook at its best. Every interaction is **real**: reading from contracts, executing swaps, managing compliance tiers, and showcasing the oracle integration.
@@ -143,12 +145,11 @@ export function TierTester() {
 
 The admin controls (Page 5) are only visible when you connect with the **hook owner address**.
 
-### Default Anvil Owner
-- Address: `0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266`
-- Private Key: `0xac0974bec39a17e36ba4a6b4d238ff944bacb476c6b8d6c1f02f1d67e02daeda`
+### Local owner
+`script/start_anvil_demo.sh` funds the deployer from the repository-root environment. Do not paste that key into a document.
 
 To access admin controls:
-1. Import the above private key into MetaMask
+1. Import that local deployer into the browser wallet. Do not copy a key from this repository.
 2. Connect MetaMask to the Anvil network (http://127.0.0.1:8545, Chain ID: 31337)
 3. Navigate to Page 5 (Admin) tab — should show owner controls
 

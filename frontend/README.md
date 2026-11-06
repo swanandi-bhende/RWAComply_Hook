@@ -1,5 +1,7 @@
 # RWA Compliance Hook UI - Next.js Frontend
 
+The current project entry point is [../README.md](../README.md). Setup is [../setup.md](../setup.md). This file is an older frontend note.
+
 Modern, Uniswap-inspired Web3 interface for the Uniswap v4 RWA Compliance Hook.
 
 ## Quick Start
@@ -26,11 +28,8 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 **Admin credentials are based on the contract owner address.**
 
-### Default Admin Account (Anvil)
-When using Anvil with default settings, the first account is the contract owner:
-
-**Address**: `0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266`  
-**Private Key**: `0xac0974bec39a17e36ba4a6b4d238ff944bacb476c6b8d6c1f02f1d67e02daeda`
+### Local owner
+`script/start_anvil_demo.sh` funds the deployer named by the repository-root environment. Do not paste that key into a document or into chat. The hook owner is that deployer, not a key written here.
 
 ### How to Access Admin Controls
 
@@ -48,7 +47,7 @@ When using Anvil with default settings, the first account is the contract owner:
 3. **Import Admin Account**:
    - Click MetaMask profile icon (top-right)
    - Select "Import Account"
-   - Paste the private key: `0xac0974bec39a17e36ba4a6b4d238ff944bacb476c6b8d6c1f02f1d67e02daeda`
+   - Import the local deployer account. Do not copy a key from this repository.
    - Click Import
 
 4. **Connect to Dashboard**:
