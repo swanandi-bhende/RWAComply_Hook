@@ -105,10 +105,17 @@ test('a verified Proof of Human enrollment stores an encrypted session and retur
     const text = await response.text();
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('cache-control'), 'no-store');
-    const body = JSON.parse(text) as { success: boolean; session_id: string };
-    assert.deepEqual(Object.keys(body).sort(), ['session_id', 'success']);
+    const body = JSON.parse(text) as {
+      success: boolean;
+      session_id: string;
+      continuation_token: string;
+      expires_at: number;
+    };
+    assert.deepEqual(Object.keys(body).sort(), ['continuation_token', 'expires_at', 'session_id', 'success']);
     assert.equal(body.success, true);
     assert.equal(body.session_id, sessionId('ab'));
+    assert.match(body.continuation_token, /^[0-9a-f]{64}$/);
+    assert.equal(body.continuation_token.includes(sessionId('ab')), false);
     assert.equal(verifyCalls, 1);
     assert.equal(text.includes(NULLIFIER), false);
     assert.equal(text.includes(SIGNING_KEY), false);
@@ -127,6 +134,7 @@ test('a verified Proof of Human enrollment stores an encrypted session and retur
     assert.equal(stored.includes(sessionId('ab')), false);
     assert.equal(stored.includes(PROOF_MARKER), false);
     assert.equal(stored.includes(ENCRYPTION_KEY.slice(2)), false);
+    assert.equal(stored.includes(body.continuation_token), false);
     assert.equal(stored.includes(SIGNING_KEY.slice(2)), false);
   });
 });

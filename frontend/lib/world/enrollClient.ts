@@ -11,6 +11,7 @@ import type { SessionIdStore } from './sessionStore.ts';
 export type EnrollmentClientSuccess = {
   ok: true;
   sessionId: string;
+  continuationToken?: string;
 };
 
 export type EnrollmentClientFailure = {
@@ -152,10 +153,18 @@ export async function enrollProofOfHuman(options: {
   }
   if (!enrollResponse.ok) return { ok: false, reason: 'unexpected' };
 
-  const body = (await enrollResponse.json()) as { success?: unknown; session_id?: unknown };
+  const body = (await enrollResponse.json()) as {
+    success?: unknown;
+    session_id?: unknown;
+    continuation_token?: unknown;
+  };
   if (body.success !== true || typeof body.session_id !== 'string') {
     return { ok: false, reason: 'unexpected' };
   }
   options.sessionStore?.write(body.session_id);
-  return { ok: true, sessionId: body.session_id };
+  return {
+    ok: true,
+    sessionId: body.session_id,
+    continuationToken: typeof body.continuation_token === 'string' ? body.continuation_token : undefined,
+  };
 }

@@ -8,6 +8,8 @@ import {PoolManager} from "@uniswap/v4-core/PoolManager.sol";
 import {Hooks} from "@uniswap/v4-core/libraries/Hooks.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
+import {DemoLiquidity} from "../script/DemoLiquidity.sol";
+import {DeploySepolia} from "../script/DeploySepolia.s.sol";
 import {HookFlags} from "../src/HookFlags.sol";
 import {SepoliaWiring} from "../script/SepoliaWiring.sol";
 
@@ -37,6 +39,17 @@ contract DeploySepoliaTest is Test {
         assertEq(quote, address(market.usdc));
         assertEq(uint160(address(market.hook)) & Hooks.ALL_HOOK_MASK, HookFlags.toFlags(market.hook.getHookPermissions()));
         assertEq(market.hook.userTier(address(0xCAFE)), 0);
+
+        DeploySepolia deploy = new DeploySepolia();
+        uint256 cpsb = 1530;
+        assertGe(deploy.ORACLE_GAS(), (120 + address(market.oracle).code.length) * cpsb);
+        assertGe(deploy.HOOK_GAS(), (120 + address(market.hook).code.length) * cpsb);
+        assertGe(deploy.USDC_GAS(), (120 + address(market.usdc).code.length) * cpsb);
+        assertGe(deploy.RWA_GAS(), (120 + address(market.rwa).code.length) * cpsb);
+        assertGe(deploy.LEDGER_GAS(), (120 + address(market.ledger).code.length) * cpsb);
+        assertGe(deploy.EXECUTOR_GAS(), (120 + address(market.executor).code.length) * cpsb);
+        DemoLiquidity helper = new DemoLiquidity(official);
+        assertGe(deploy.LIQUIDITY_GAS(), (120 + address(helper).code.length) * cpsb);
     }
 
     function testAWalletCannotGrantItsOwnAccessTier() public {

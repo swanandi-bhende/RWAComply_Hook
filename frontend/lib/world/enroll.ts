@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import { WorldConfigError, readEnrollmentConfig, type WorldEnv } from './config.ts';
 import { EnrollmentStore } from './enrollmentStore.ts';
 import {
@@ -9,9 +10,10 @@ import {
   newAllocationId,
   type PortalCallResult,
 } from './enrollmentProof.ts';
-import { domainHash, encryptSessionId, SESSION_ID_HASH_DOMAIN } from './sessionCrypto.ts';
+import { CONTINUATION_GRANT_HASH_DOMAIN, domainHash, encryptSessionId, SESSION_ID_HASH_DOMAIN } from './sessionCrypto.ts';
 
 const VERIFY_TIMEOUT_MS = 15_000;
+const ENROLLMENT_GRANT_TTL_SECONDS = 300;
 const MAX_BODY_BYTES = 256 * 1024;
 
 export type WorldVerifyClient = (input: {
@@ -140,7 +142,22 @@ export async function handleEnroll(
         sessionIdHash: domainHash(SESSION_ID_HASH_DOMAIN, bound.sessionId),
       });
       if (inserted.ok) {
-        return jsonResponse({ success: true, session_id: bound.sessionId }, 200);
+        const enrollment = store.findBySessionHash(domainHash(SESSION_ID_HASH_DOMAIN, bound.sessionId));
+        if (!enrollment) return jsonResponse({ error: 'Enrollment could not be completed' }, 500);
+        const nowSeconds = Math.floor(Date.now() / 1000);
+        const continuationToken = randomBytes(32).toString('hex');
+        store.insertGrant({
+          tokenHash: domainHash(CONTINUATION_GRANT_HASH_DOMAIN, continuationToken),
+          enrollmentId: enrollment.id,
+          expiresAt: nowSeconds + ENROLLMENT_GRANT_TTL_SECONDS,
+          createdAt: new Date(nowSeconds * 1000).toISOString(),
+        });
+        return jsonResponse({
+          success: true,
+          session_id: bound.sessionId,
+          continuation_token: continuationToken,
+          expires_at: nowSeconds + ENROLLMENT_GRANT_TTL_SECONDS,
+        }, 200);
       }
       if (inserted.reason === 'duplicate_nullifier' || inserted.reason === 'duplicate_session') {
         return jsonResponse({ error: 'This Proof of Human enrollment already exists' }, 409);

@@ -7,10 +7,11 @@ import {
   useReadContract,
   useWriteContract,
 } from 'wagmi';
-import { formatUnits, parseUnits } from 'viem';
+import { formatUnits } from 'viem';
 import { loadDeploymentAddresses } from '@/config/deployments';
 import { ERC20_ABI, EXECUTOR_ABI, HOOK_ABI, ORACLE_ABI, POOL_FEE, TICK_SPACING } from '@/contracts';
 import { calculateDynamicFeeForTier } from '@/lib/hookFee';
+import { usdcPurchasePlan } from '@/lib/product/usdcPurchase';
 import { useTransactions } from '@/app/TransactionContext';
 import { TransactionHistory } from './TransactionHistory';
 
@@ -140,6 +141,20 @@ export function SwapDemo() {
     query: { enabled: !!addresses?.hook, refetchInterval: LIVE_REFETCH_MS },
   });
 
+  const { data: quoteToken } = useReadContract({
+    address: addresses?.executor as `0x${string}`,
+    abi: EXECUTOR_ABI,
+    functionName: 'usdc',
+    query: { enabled: !!addresses?.executor },
+  });
+
+  const { data: rwaToken } = useReadContract({
+    address: addresses?.executor as `0x${string}`,
+    abi: EXECUTOR_ABI,
+    functionName: 'rwa',
+    query: { enabled: !!addresses?.executor },
+  });
+
   const { data: tokenADecimals } = useReadContract({
     address: addresses?.tokenA as `0x${string}`,
     abi: ERC20_ABI,
@@ -154,7 +169,7 @@ export function SwapDemo() {
     query: { enabled: !!addresses?.tokenB },
   });
 
-  const { data: userTokenABalance, refetch: refetchUserTokenABalance } = useReadContract({
+  const { data: userTokenABalance } = useReadContract({
     address: addresses?.tokenA as `0x${string}`,
     abi: ERC20_ABI,
     functionName: 'balanceOf',
@@ -268,26 +283,46 @@ export function SwapDemo() {
       return;
     }
 
+    if (!quoteToken || !rwaToken) {
+      setErrorMessage('The router USDC token is not available. The purchase was not sent.');
+      setPhase('error');
+      return;
+    }
+
     setErrorMessage('');
     setPhase('approving');
 
     try {
-      const beforeA = (userTokenABalance as bigint) ?? BigInt(0);
+      const beforeA = await publicClient.readContract({
+        address: quoteToken,
+        abi: ERC20_ABI,
+        functionName: 'balanceOf',
+        args: [address],
+      });
       const beforeB = (userTokenBBalance as bigint) ?? BigInt(0);
       setBeforeExecutorA(beforeA);
       setBeforeExecutorB(beforeB);
-
-      const amountIn = parseUnits(inputAmount, decimalsA);
-      const [currency0, currency1] =
-        addresses.tokenA.toLowerCase() < addresses.tokenB.toLowerCase()
-          ? [addresses.tokenA, addresses.tokenB]
-          : [addresses.tokenB, addresses.tokenA];
+      const purchase = usdcPurchasePlan({
+        typedAmount: inputAmount,
+        usdc: quoteToken,
+        rwa: rwaToken,
+        executor: addresses.executor,
+        poolManager: addresses.poolManager,
+        hook: addresses.hook,
+        fee: POOL_FEE,
+        tickSpacing: TICK_SPACING,
+      });
+      if (!purchase.ok) {
+        setErrorMessage('Enter a USDC amount. The purchase was not sent.');
+        setPhase('error');
+        return;
+      }
 
       const approveHash = await writeContractAsync({
-        address: addresses.tokenA as `0x${string}`,
+        address: purchase.plan.approval.token as `0x${string}`,
         abi: ERC20_ABI,
         functionName: 'approve',
-        args: [addresses.executor as `0x${string}`, amountIn],
+        args: [purchase.plan.approval.spender as `0x${string}`, purchase.plan.approval.amount],
       });
       setApprovalTxHash(approveHash);
       await publicClient.waitForTransactionReceipt({ hash: approveHash });
@@ -295,28 +330,32 @@ export function SwapDemo() {
       setPhase('executing');
 
       const swapHash = await writeContractAsync({
-        address: addresses.executor as `0x${string}`,
+        address: purchase.plan.swap.router as `0x${string}`,
         abi: EXECUTOR_ABI,
         functionName: 'swapExactInput',
         args: [
           {
-            currency0: currency0 as `0x${string}`,
-            currency1: currency1 as `0x${string}`,
-            fee: POOL_FEE,
-            tickSpacing: TICK_SPACING,
-            hooks: addresses.hook as `0x${string}`,
+            currency0: purchase.plan.swap.poolKey.currency0 as `0x${string}`,
+            currency1: purchase.plan.swap.poolKey.currency1 as `0x${string}`,
+            fee: purchase.plan.swap.poolKey.fee,
+            tickSpacing: purchase.plan.swap.poolKey.tickSpacing,
+            hooks: purchase.plan.swap.poolKey.hooks as `0x${string}`,
           },
-          amountIn,
+          purchase.plan.swap.amountIn,
         ],
       });
       setSwapTxHash(swapHash);
       await publicClient.waitForTransactionReceipt({ hash: swapHash });
 
-      const [afterAResult, afterBResult] = await Promise.all([
-        refetchUserTokenABalance(),
+      const [afterA, afterBResult] = await Promise.all([
+        publicClient.readContract({
+          address: quoteToken,
+          abi: ERC20_ABI,
+          functionName: 'balanceOf',
+          args: [address],
+        }),
         refetchUserTokenBBalance(),
       ]);
-      const afterA = (afterAResult.data as bigint) ?? BigInt(0);
       const afterB = (afterBResult.data as bigint) ?? BigInt(0);
       setAfterExecutorA(afterA);
       setAfterExecutorB(afterB);
@@ -454,8 +493,9 @@ export function SwapDemo() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-black mb-2">Input amount (approval amount)</label>
+                <label className="block text-sm font-semibold text-black mb-2" htmlFor="usdc-purchase-amount">USDC amount</label>
                 <input
+                  id="usdc-purchase-amount"
                   type="number"
                   value={inputAmount}
                   min="0"
@@ -547,7 +587,7 @@ export function SwapDemo() {
                 <p className="text-xs text-gray-600 mb-1">Wallet Balance Delta</p>
                 <div className="text-xs font-mono space-y-1">
                   <p>
-                    USDC: {(Number(formatUnits(beforeExecutorA - afterExecutorA, decimalsA))).toFixed(6)}
+                    USDC: {(Number(formatUnits(beforeExecutorA - afterExecutorA, 6))).toFixed(6)}
                   </p>
                   <p>
                     RWA: {(Number(formatUnits(afterExecutorB - beforeExecutorB, decimalsB))).toFixed(6)}

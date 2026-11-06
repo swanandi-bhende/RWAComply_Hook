@@ -180,11 +180,17 @@ A purchase button is enabled only when the executor, hook, USDC, and RWA address
 
 World ID, wallet ownership, onchain registration, and purchase enforcement are separate. A backend authorization or a database row does not mark a wallet as linked.
 
+The investor page action “Enroll and register this wallet” requests a relying-party context, runs IDKit, and posts the result to `/api/world/enroll`. A cancelled or failed widget stops there. The wallet is not authorized and `registerWallet` is not called. After a verified enrollment, the same action asks the wallet to sign, posts that signature to `/api/world/wallet-authorization`, and submits `registerWallet`. The wallet is shown as registered only after the chain receipt matches. The separate “Link this wallet” action remains for a later wallet on an existing session.
+
+The local Anvil swap demo treats the typed value as a six-decimal USDC amount. It approves that amount to the `PoolExecutor` and calls `swapExactInput` with the same amount. It does not approve the PoolManager. If the router’s USDC address cannot be read, the purchase is not sent.
+
 ## Sepolia deployment preparation
 
 The investor pages target Ethereum Sepolia, chain id `11155111`. Local Anvil deployment stays in `script/DeployFull.s.sol` and is not the Sepolia path.
 
-`script/DeploySepolia.s.sol` uses the official Uniswap v4 PoolManager at `0xE03A1074c86CFeDd5C142C4F04F1a1536e203543`. It does not deploy a new PoolManager. The hook, ledger, executor, oracle, and mock tokens are deployed by `script/SepoliaWiring.sol`. The ledger owner is the deployment account. The ledger backend signer is `ALLOCATION_AUTH_SIGNER_ADDRESS`, not the deployer. No investor wallet is registered, and no investor access tier is set. The liquidity helper receives tier 2 only so it can seed the pool. That is not investor approval.
+`script/DeploySepolia.s.sol` uses the official Uniswap v4 PoolManager at `0xE03A1074c86CFeDd5C142C4F04F1a1536e203543`. It does not deploy a new PoolManager. The script deploys the oracle, hook, mock USDC, mock RWA, ledger, executor, and liquidity helper from the deployer account. `script/SepoliaWiring.sol` remains the local test path. Its bytecode is larger than the 24,576-byte contract limit, so it is not deployed on Sepolia. The ledger owner is the deployment account. The ledger backend signer is `ALLOCATION_AUTH_SIGNER_ADDRESS`, not the deployer. No investor wallet is registered, and no investor access tier is set. The liquidity helper receives tier 2 only so it can seed the pool. That is not investor approval.
+
+The first broadcast reverted. Transaction `0x2285cdd075944609f38007b652a0adcf4ce71b8ceed4e57f8c8272f06a393539` created `MockRWAOracle` in block `12075637` and used its entire 342,737 gas limit. No contract code was stored. The deployer nonce is now 1. Sepolia’s Glamsterdam rules (EIP-8037) charge 1,530 gas per byte of new code, while Foundry 1.5.1 still estimates 200 gas per byte. Solidity cannot set a gas limit on `new`, so the retry uses `--gas-estimate-multiplier 800` for creations and explicit gas on the configuration calls. The 800 percent multiplier is the old estimate times about 6.3, plus margin. A corrected simulation, with no broadcast, put every creation limit above the live `eth_estimateGas` result. The broadcast also caps the max fee at 0.5 gwei so the full gas budget stays inside the deployer balance.
 
 Proof of human does not grant an access tier. The hook owner calls `setTier` for a wallet after registration. A wallet cannot call `setTier` for itself. Tier 0 cannot buy. This is separate from KYC, AML, accreditation, and legal eligibility.
 
@@ -199,10 +205,10 @@ Preflight reads `ALLOCATION_RPC_URL`, checks chain id `11155111`, the official P
 Broadcast is a later explicit step:
 
 ```bash
-forge script script/DeploySepolia.s.sol:DeploySepolia --rpc-url "$ALLOCATION_RPC_URL" --broadcast
+forge script script/DeploySepolia.s.sol:DeploySepolia --sig "run()" --rpc-url "$ALLOCATION_RPC_URL" --gas-estimate-multiplier 800 --with-gas-price 500000000 --broadcast --slow
 ```
 
-Do not run the broadcast command until the preflight succeeds and the deployment account is funded. After a real deployment, copy the logged addresses into the root `.env` as `ALLOCATION_LEDGER_ADDRESS`, `NEXT_PUBLIC_HOOK_ADDRESS`, `NEXT_PUBLIC_EXECUTOR_ADDRESS`, `NEXT_PUBLIC_TOKEN_A_ADDRESS`, and `NEXT_PUBLIC_TOKEN_B_ADDRESS`. The app still checks code, the backend signer, the group, and the policy before it shows registration or the purchase market as ready. A deployed ledger does not make the market ready. A ready market does not mean a wallet is linked or approved.
+Do not run the broadcast command until the preflight succeeds and a fresh broadcast is approved. The corrected simulation has not been sent. After a real deployment, copy the logged addresses into the root `.env` as `ALLOCATION_LEDGER_ADDRESS`, `NEXT_PUBLIC_HOOK_ADDRESS`, `NEXT_PUBLIC_EXECUTOR_ADDRESS`, `NEXT_PUBLIC_ORACLE_ADDRESS`, `NEXT_PUBLIC_TOKEN_A_ADDRESS`, and `NEXT_PUBLIC_TOKEN_B_ADDRESS`. The app still checks code, the backend signer, the group, and the policy before it shows registration or the purchase market as ready. A deployed ledger does not make the market ready. A ready market does not mean a wallet is linked or approved.
 
 `ALLOCATION_RPC_URL` may be `http`, `https`, `ws`, or `wss`.
 

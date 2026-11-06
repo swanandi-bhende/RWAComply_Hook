@@ -16,8 +16,9 @@ import { parseUnits, type Hex } from 'viem';
 import { SiteNav } from './SiteNav';
 import { browserSessionStore } from '@/lib/world/sessionStore';
 import { enrollProofOfHuman } from '@/lib/world/enrollClient';
+import { runEnrollmentAction } from '@/lib/world/enrollmentAction';
 import { continueProofOfHuman } from '@/lib/world/continueClient';
-import { authorizeWalletLink } from '@/lib/world/walletLinkClient';
+import { authorizeWalletLink, type WalletLinkClientResult } from '@/lib/world/walletLinkClient';
 import {
   LEDGER_REGISTRATION_ABI,
   submitRegistration,
@@ -155,19 +156,108 @@ export default function InvestorExperience() {
     requested,
   });
 
+  function registrationClient(): LedgerRegistrationClient | null {
+    if (!address || !publicClient || !walletClient?.account || !ledger) return null;
+    const account = walletClient.account;
+    return {
+      getAllocationId: (wallet) => publicClient.readContract({
+        address: ledger,
+        abi: LEDGER_REGISTRATION_ABI,
+        functionName: 'allocationIdByWallet',
+        args: [wallet],
+      }),
+      getNonceUsed: (nonce) => publicClient.readContract({
+        address: ledger,
+        abi: LEDGER_REGISTRATION_ABI,
+        functionName: 'usedNonce',
+        args: [nonce],
+      }),
+      getBackendSigner: () => publicClient.readContract({
+        address: ledger,
+        abi: LEDGER_REGISTRATION_ABI,
+        functionName: 'backendSigner',
+      }),
+      simulateRegister: async (args) => {
+        await publicClient.simulateContract({
+          account,
+          address: ledger,
+          abi: LEDGER_REGISTRATION_ABI,
+          functionName: 'registerWallet',
+          args: [args.wallet, args.allocationId, args.groupId, args.expiry, args.nonce, args.signature],
+        });
+      },
+      sendRegister: (args) => walletClient.writeContract({
+        account,
+        chain: sepolia,
+        address: ledger,
+        abi: LEDGER_REGISTRATION_ABI,
+        functionName: 'registerWallet',
+        args: [args.wallet, args.allocationId, args.groupId, args.expiry, args.nonce, args.signature],
+      }),
+      waitForReceipt: async (hash) => {
+        const receipt = await publicClient.waitForTransactionReceipt({ hash });
+        const logs = receipt.logs.flatMap((log) => {
+          if (!log.address) return [];
+          const topics = log.topics.filter((topic): topic is Hex => typeof topic === 'string');
+          return [{ address: log.address, topics, data: log.data }];
+        });
+        const receiptStatus: LedgerReceipt['status'] = receipt.status === 'success' ? 'success' : 'reverted';
+        return { status: receiptStatus, to: receipt.to, logs };
+      },
+    };
+  }
+
+  async function registerAuthorized(authorization: Extract<WalletLinkClientResult, { ok: true }>) {
+    if (!address || !groupId || !ledger) return { ok: false };
+    const client = registrationClient();
+    if (!client) return { ok: false };
+    const submitted = await submitRegistration({
+      authorization,
+      connectedWallet: address,
+      chainId,
+      ledgerAddress: ledger,
+      groupId,
+      client,
+      onUpdate: (progress) => setVerify({ tone: 'pending', text: progress.message }),
+    });
+    if (submitted.state === 'confirmed' && submitted.transactionHash) {
+      await fetch('/api/world/registration-receipt', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ nonce: authorization.nonce, txHash: submitted.transactionHash }),
+      });
+      await allocation.refetch();
+    }
+    return { ok: submitted.ok, message: submitted.message, pending: submitted.state === 'pending' };
+  }
+
   async function verifyIdentity() {
+    if (!address || !walletClient) return;
     setVerifying(true);
     setVerify({ tone: 'pending', text: 'Waiting for identity verification.' });
-    const result = await enrollProofOfHuman({ sessionStore: browserSessionStore() });
+    const result = await runEnrollmentAction({
+      enroll: () => enrollProofOfHuman({ sessionStore: browserSessionStore() }),
+      authorize: (continuationToken) => authorizeWalletLink({
+        continuationToken,
+        wallet: address,
+        signTypedData: (typedData) => signTypedDataAsync(typedData as never),
+      }),
+      register: (authorization) => registerAuthorized(authorization),
+    });
     setVerifying(false);
-    if (result.ok) {
+    if (result.registered) {
       setVerify({
         tone: 'ok',
-        text: 'Your identity was verified for this browser session. This is not KYC, AML, accreditation, residency, or nationality.',
+        text: 'This wallet is registered. Proof of human is not KYC, AML, accreditation, residency, or nationality.',
       });
       return;
     }
-    setVerify({ tone: 'error', text: verificationFailure(result.reason) });
+    const detail = result.stage === 'enrollment'
+      ? verificationFailure(result.reason ?? 'unexpected')
+      : result.stage === 'authorization'
+        ? walletLinkFailure(result.reason ?? 'unexpected')
+        : 'Registration was not confirmed.';
+    setVerify({ tone: 'error', text: `${detail} This wallet was not registered.` });
   }
 
   async function linkWallet() {
@@ -384,10 +474,10 @@ export default function InvestorExperience() {
           <button
             type="button"
             className="mt-4 rounded bg-black px-4 py-2 font-bold text-white disabled:opacity-50"
-            disabled={!isConnected || verifying}
+            disabled={!isConnected || !onSepolia || !status?.registrationReady || verifying || !walletClient}
             onClick={() => void verifyIdentity()}
           >
-            {verifying ? 'Verification pending' : 'Verify your identity'}
+            {verifying ? 'Enrollment pending' : 'Enroll and register this wallet'}
           </button>
           <p className="mt-3" role="status">{verify.text}</p>
         </section>
