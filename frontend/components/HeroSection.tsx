@@ -13,8 +13,8 @@ export function HeroSection() {
             for Uniswap v4
           </h2>
           <p className="text-lg md:text-xl text-black font-semibold max-w-2xl">
-            Regulatory-ready trading with oracle-driven dynamic fees and tier-based access control.
-            Demonstrates how on-chain compliance integrates directly into Uniswap&apos;s hook architecture.
+            A local demonstration of oracle-driven fees and tier-based access on a Uniswap v4 hook.
+            Access tiers are not identity verification, KYC, or legal eligibility.
           </p>
         </div>
 

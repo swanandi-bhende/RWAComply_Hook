@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Header } from '@/components/Header';
+import { SiteNav } from '@/components/product/SiteNav';
 import { HeroSection } from '@/components/HeroSection';
 import { LiveComplianceStatus } from '@/components/LiveComplianceStatus';
 import { QuickStats } from '@/components/QuickStats';
@@ -27,32 +28,26 @@ export default function Home() {
 
   return (
     <>
+      <SiteNav />
       <Header />
-      
-      <main className="flex-1 bg-white">
-        {/* Page Navigation */}
-        <div className="border-b-2 border-black bg-white sticky top-16 z-40">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex space-x-2 overflow-x-auto">
-              {PAGES.map((page) => (
-                <button
-                  key={page.id}
-                  onClick={() => setCurrentPage(page.id)}
-                  className={`px-4 py-3 border-b-4 font-bold text-sm transition-colors whitespace-nowrap ${
-                    currentPage === page.id
-                      ? 'border-black text-black bg-gray-100'
-                      : 'border-transparent text-gray-600 hover:text-black hover:bg-gray-50'
-                  }`}
-                >
-                  {page.number}. {page.label}
-                </button>
-              ))}
-            </div>
-          </div>
+      <main className="demo page">
+        <div className="demo-tabs" role="tablist" aria-label="Local demo">
+          {PAGES.map((page) => (
+            <button
+              key={page.id}
+              type="button"
+              role="tab"
+              aria-selected={currentPage === page.id}
+              aria-current={currentPage === page.id ? 'page' : undefined}
+              onClick={() => setCurrentPage(page.id)}
+              className="demo-tab"
+            >
+              {page.number}. {page.label}
+            </button>
+          ))}
         </div>
 
-        {/* Page Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="stack-lg">
           {/* Page 1: Dashboard */}
           {currentPage === 'page1' && (
             <div>
@@ -60,7 +55,7 @@ export default function Home() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-12">
                 <div className="lg:col-span-2">
                   <div className="mb-8">
-                    <h2 className="text-3xl font-black text-black mb-6">YOUR COMPLIANCE STATUS</h2>
+                    <h2 className="section-title">Your compliance status</h2>
                     <LiveComplianceStatus />
                   </div>
                 </div>
@@ -69,49 +64,41 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="bg-black text-white border-t-2 border-black py-12 mt-12">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <h2 className="text-3xl font-black mb-8">HOW THE HOOK WORKS</h2>
-
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div className="border-2 border-white p-6">
-                      <div className="text-3xl font-black mb-3">1️⃣</div>
-                      <h3 className="text-lg font-bold mb-2">Access Control</h3>
-                      <p className="text-sm text-gray-300">
+              <section className="stack">
+                <h2 className="section-title">How the hook works</h2>
+                <div className="flow">
+                    <div className="panel">
+                      <h3 className="card-title">Access control</h3>
+                      <p className="quiet">
                         User connects wallet. Hook checks compliance tier against{' '}
                         <code className="bg-gray-800 px-1">userTier</code> mapping.
                       </p>
                     </div>
 
-                    <div className="border-2 border-white p-6">
-                      <div className="text-3xl font-black mb-3">2️⃣</div>
-                      <h3 className="text-lg font-bold mb-2">Fee Calculation</h3>
-                      <p className="text-sm text-gray-300">
+                    <div className="panel">
+                      <h3 className="card-title">Fee calculation</h3>
+                      <p className="quiet">
                         Oracle volatility is queried. If above threshold, dynamic fee applies.
                         Otherwise, base fee.
                       </p>
                     </div>
 
-                    <div className="border-2 border-white p-6">
-                      <div className="text-3xl font-black mb-3">3️⃣</div>
-                      <h3 className="text-lg font-bold mb-2">Swap Execution</h3>
-                      <p className="text-sm text-gray-300">
+                    <div className="panel">
+                      <h3 className="card-title">Swap execution</h3>
+                      <p className="quiet">
                         PoolManager executes swap at calculated fee. Hook emits{' '}
                         <code className="bg-gray-800 px-1">BeforeSwapCalled</code> event.
                       </p>
                     </div>
 
-                    <div className="border-2 border-white p-6">
-                      <div className="text-3xl font-black mb-3">4️⃣</div>
-                      <h3 className="text-lg font-bold mb-2">Compliance Logged</h3>
-                      <p className="text-sm text-gray-300">
-                        All transactions are tied to verified user tiers, enabling regulatory
-                        audit trails.
+                    <div className="panel">
+                      <h3 className="card-title">Compliance logged</h3>
+                      <p className="quiet">
+                        Supported swaps are checked against the access tier of the connected wallet. That tier is not proof of identity.
                       </p>
                     </div>
-                  </div>
                 </div>
-              </div>
+              </section>
             </div>
           )}
 
@@ -152,15 +139,8 @@ export default function Home() {
         </div>
 
         {/* Footer CTA */}
-        <footer className="bg-black border-t-2 border-black py-8 mt-12">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <p className="text-white text-center text-sm font-semibold">
-              🔬 Exploring RWA Compliance integration with Uniswap v4
-            </p>
-            <p className="text-gray-400 text-center text-xs mt-4">
-              Uniswap v4 Hookathon 2026 • RWA Compliance Hook
-            </p>
-          </div>
+        <footer className="site-footer">
+          <p>Local Anvil demo for the RWAComply hook. This is not the Sepolia investor experience.</p>
         </footer>
       </main>
     </>

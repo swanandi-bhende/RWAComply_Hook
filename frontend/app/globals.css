@@ -1,26 +1,644 @@
 @import "tailwindcss";
 
+/*
+  Product tokens. The page stays light on purpose.
+  The previous unlayered body rule, combined with a dark color-scheme
+  override, painted #0a0a0a over the whole page and beat the layout's
+  bg-white utility. There was no dialog behind that dimming.
+*/
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-lavender: #efabff;
+  --color-orchid: #eda2f2;
+  --color-rose: #dc6bad;
+  --color-muted: #8c7aa9;
+  --color-blue: #7192be;
+  --color-blue-ink: #2f5584;
+  --color-ink: #000000;
+  --color-paper: #fbf8fc;
+  --color-surface: #ffffff;
+  --color-text: #141216;
+  --color-text-secondary: #3f3948;
+  --color-border: #ddd4e6;
+  --color-highlight: #f7effc;
+  --color-disabled: #efeaf3;
+  --color-disabled-text: #5c5666;
+  --shadow-soft: 0 1px 2px rgba(20, 18, 22, 0.04), 0 10px 28px rgba(140, 122, 169, 0.1);
+  --radius-panel: 16px;
+  --radius-control: 10px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 72px;
+  --content-width: 1120px;
+  --nav-height: 72px;
+  --font-sans: var(--font-geist-sans), "Segoe UI", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  color-scheme: light;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@layer base {
+  html {
+    background: var(--color-paper);
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  body {
+    min-height: 100%;
+    background: var(--color-paper);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: 17px;
+    line-height: 1.6;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-blue-ink);
+    outline-offset: 3px;
+  }
+
+  ::selection {
+    background: var(--color-lavender);
+    color: var(--color-ink);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.page {
+  width: min(var(--content-width), calc(100% - 40px));
+  margin: 0 auto;
+  padding: var(--space-7) 0 var(--space-8);
+}
+
+.kicker {
+  margin: 0;
+  color: var(--color-blue-ink);
+  font-size: 0.82rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.page-title,
+.section-title,
+.card-title {
+  margin: 0;
+  color: var(--color-ink);
+  font-weight: 640;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.page-title {
+  max-width: 16ch;
+  font-size: clamp(2.4rem, 5vw, 4.4rem);
+}
+
+.section-title {
+  font-size: clamp(1.5rem, 2vw, 2rem);
+}
+
+.card-title {
+  font-size: 1.15rem;
+}
+
+.lede,
+.quiet {
+  max-width: 68ch;
+  color: var(--color-text-secondary);
+}
+
+.lede {
+  margin: var(--space-4) 0 0;
+  font-size: 1.12rem;
+}
+
+.quiet {
+  margin: var(--space-3) 0 0;
+}
+
+.stack {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.stack-lg {
+  display: grid;
+  gap: var(--space-7);
+  margin-top: var(--space-8);
+}
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: rgba(255, 255, 255, 0.94);
+  border-bottom: 1px solid var(--color-border);
+  backdrop-filter: blur(10px);
+}
+
+.site-header-inner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  width: min(var(--content-width), calc(100% - 32px));
+  min-height: var(--nav-height);
+  margin: 0 auto;
+}
+
+.brand {
+  color: var(--color-ink);
+  font-size: 1.15rem;
+  font-weight: 680;
+  letter-spacing: -0.04em;
+  text-decoration: none;
+}
+
+.nav-toggle {
+  display: none;
+  margin-left: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 0.95rem;
+}
+
+.nav-links {
+  display: flex;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.nav-link {
+  border-radius: 8px;
+  color: var(--color-text);
+  padding: 8px 10px;
+  font-size: 0.92rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.nav-link:hover {
+  background: var(--color-highlight);
+}
+
+.nav-link[aria-current="page"] {
+  background: var(--color-lavender);
+  box-shadow: inset 0 -2px 0 var(--color-rose);
+  color: var(--color-ink);
+}
+
+.wallet-slot {
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  padding: 0 16px;
+  font: inherit;
+  font-size: 0.98rem;
+  font-weight: 620;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: var(--color-blue);
+  border-color: #5d7eab;
+  color: var(--color-ink);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #6286b4;
+}
+
+.btn-secondary {
+  background: var(--color-surface);
+  border-color: var(--color-muted);
+  color: var(--color-ink);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--color-highlight);
+}
+
+.btn:disabled {
+  background: var(--color-disabled);
+  border-color: #d9d0e2;
+  color: var(--color-disabled-text);
+  cursor: not-allowed;
+}
+
+.panel {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-soft);
+  padding: var(--space-5);
+}
+
+.panel > .btn {
+  margin-top: var(--space-4);
+}
+
+.panel + .panel,
+.stack > .panel {
+  margin: 0;
+}
+
+.grid-3,
+.grid-4,
+.metric-grid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.metric-grid {
+  grid-template-columns: 1.4fr repeat(3, 1fr);
+  margin-top: var(--space-4);
+}
+
+.metric dt,
+.label {
+  color: var(--color-text-secondary);
+  font-size: 0.86rem;
+  font-weight: 620;
+}
+
+.metric dd {
+  margin: 6px 0 0;
+  color: var(--color-ink);
+  font-size: 1.35rem;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+}
+
+.metric-emphasis {
+  background: linear-gradient(180deg, var(--color-highlight), var(--color-surface));
+  border-radius: 12px;
+  padding: var(--space-4);
+}
+
+.metric-emphasis dd {
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+  max-width: 280px;
+  margin-top: var(--space-4);
+  color: var(--color-ink);
+  font-weight: 620;
+}
+
+.field input {
+  width: 100%;
+  border: 1px solid var(--color-muted);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  padding: 12px 14px;
+  font: inherit;
+}
+
+.pills,
+.steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: var(--space-5);
+}
+
+.pill,
+.step {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  padding: 6px 10px;
+  font-size: 0.86rem;
+}
+
+.pill::before,
+.step::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-muted);
+}
+
+.pill[data-state="ready"]::before,
+.step[data-state="confirmed"]::before {
+  background: var(--color-blue-ink);
+}
+
+.pill[data-state="attention"]::before,
+.step[data-state="pending"]::before,
+.step[data-state="approval"]::before {
+  background: var(--color-rose);
+}
+
+.pill[data-state="blocked"]::before,
+.step[data-state="failed"]::before,
+.step[data-state="unavailable"]::before {
+  background: var(--color-ink);
+}
+
+.notice {
+  margin-top: var(--space-4);
+  border-left: 3px solid var(--color-muted);
+  padding: 2px 0 2px 12px;
+}
+
+.notice[data-tone="ok"] {
+  border-color: var(--color-blue-ink);
+}
+
+.notice[data-tone="pending"] {
+  border-color: var(--color-rose);
+}
+
+.notice[data-tone="error"] {
+  border-color: var(--color-ink);
+}
+
+.alert {
+  margin-top: var(--space-4);
+  border: 1px solid var(--color-rose);
+  border-radius: 12px;
+  background: #fff7fb;
+  padding: var(--space-4);
+}
+
+.alert strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.link {
+  color: var(--color-blue-ink);
+  font-weight: 620;
+}
+
+button.link {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 620;
+  cursor: pointer;
+}
+
+.hero-layout,
+.split,
+.flow {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.hero-layout {
+  grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
+  align-items: center;
+}
+
+.share-diagram {
+  display: grid;
+  gap: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 20% 20%, var(--color-lavender), transparent 42%),
+    var(--color-surface);
+  padding: var(--space-5);
+}
+
+.share-person,
+.share-wallet {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  padding: 12px 14px;
+}
+
+.share-person {
+  justify-self: center;
+  background: var(--color-lavender);
+}
+
+.share-wallets {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.share-budget {
+  border-top: 3px solid var(--color-rose);
+  padding-top: 10px;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.example-rejected {
+  color: var(--color-text);
+  font-weight: 650;
+}
+
+.flow {
+  grid-template-columns: repeat(4, 1fr);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: flow;
+}
+
+.flow li,
+.example-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+  padding: var(--space-4);
+}
+
+.flow li::before {
+  counter-increment: flow;
+  content: counter(flow);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-bottom: 12px;
+  border-radius: 50%;
+  background: var(--color-highlight);
+  color: var(--color-ink);
+  font-weight: 680;
+}
+
+.local-banner {
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-highlight);
+  color: var(--color-text);
+  padding: 10px 16px;
+  text-align: center;
+}
+
+.demo-tabs {
+  position: sticky;
+  top: var(--nav-height);
+  z-index: 20;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-paper);
+  padding: 0 0 0 4px;
+}
+
+.demo-tab {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--color-text-secondary);
+  padding: 14px 12px;
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.demo-tab[aria-current="page"] {
+  border-bottom-color: var(--color-rose);
+  color: var(--color-ink);
+}
+
+.site-footer {
+  margin-top: var(--space-7);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  padding: var(--space-5) 0;
+  text-align: center;
+}
+
+/*
+  RainbowKit mounts its dialog and backdrop with a portal only while the
+  connect dialog is open, then removes both. Do not add a page-level scrim.
+*/
+
+@media (max-width: 1100px) {
+  .nav-toggle {
+    display: inline-flex;
+  }
+
+  .nav-links {
+    display: none;
+    position: absolute;
+    top: calc(100% + 1px);
+    right: 14px;
+    left: 14px;
+    flex-direction: column;
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    background: var(--color-surface);
+    box-shadow: var(--shadow-soft);
+    padding: 8px;
+  }
+
+  .nav-links.is-open {
+    display: flex;
+  }
+
+  .wallet-slot {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 980px) {
+  .hero-layout,
+  .flow,
+  .metric-grid,
+  .grid-4 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .metric-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .page {
+    width: min(var(--content-width), calc(100% - 28px));
+    padding-top: var(--space-6);
+  }
+
+  .hero-layout,
+  .flow,
+  .grid-3,
+  .grid-4,
+  .metric-grid,
+  .share-wallets {
+    grid-template-columns: 1fr;
+  }
+}
+
+/*
+  The local Anvil screens still use their original utility class names.
+  These scoped rules map that markup onto the same surfaces. They do not
+  apply outside .demo.
+*/
+.demo :where(.bg-black) {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.demo :where(.text-white) {
+  color: var(--color-text);
+}
+
+.demo :where(.border-black, .border-white) {
+  border-color: var(--color-border);
+}
+
+.demo :where(.text-gray-300, .text-gray-400, .text-gray-600) {
+  color: var(--color-text-secondary);
+}
+
+.demo :where(.bg-gray-50, .bg-gray-100, .bg-gray-800) {
+  background: var(--color-highlight);
+  color: var(--color-text);
+}
+
+.demo button.bg-black,
+.demo a.bg-black {
+  background: var(--color-blue);
+  border-color: #5d7eab;
+  color: var(--color-ink);
+}
+
+.demo button.bg-black:disabled {
+  background: var(--color-disabled);
+  color: var(--color-disabled-text);
 }

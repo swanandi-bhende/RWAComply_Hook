@@ -45,6 +45,18 @@ npm run start
 
 `npm run start` serves the production build, also on port 3000. Stop the dev server first if it is already using that port.
 
+## Interface
+
+The product UI is a light fintech layout. Tokens live in `frontend/app/globals.css` under `:root`: lavender `#EFABFF`, light orchid `#EDA2F2`, rose `#DC6BAD`, muted purple `#8C7AA9`, blue `#7192BE`, and black. Small text uses darker ink, `--color-text-secondary` and `--color-blue-ink`, because the pale palette colors do not meet WCAG AA on white.
+
+Base color and type sit in `@layer base`. Component classes (`.page`, `.panel`, `.btn`, `.nav-link`, `.pill`, `.step`, `.notice`, `.field`) are unlayered so they stay consistent. Product pages should use those classes. Do not add a new page-specific stylesheet for a color or spacing change.
+
+The page does not follow the operating system's dark color scheme. An earlier unlayered `body` background, set to near-black in dark mode, covered `/invest` even though no dialog was open. RainbowKit's connect dialog and backdrop are portaled onto `document.body` only while that dialog is open, then removed. Do not leave a fixed scrim in the page tree.
+
+Breakpoints are 1100px, 980px, and 760px. Below 1100px the header links move into a Menu button so a tablet does not clip them. Escape closes it. The content width is 1120px with a 20px gutter, 14px on a narrow screen.
+
+The local demo at `/demo` still contains older utility-class markup. Rules scoped to `.demo` map those utilities onto the same surfaces. New product UI should not rely on that block.
+
 `npm ci` must succeed without `--force` or `--legacy-peer-deps`. Do not add another package manager or lockfile.
 
 World ID checks:
