@@ -6,7 +6,10 @@ const FORBIDDEN_FIELDS = [
   'signingKey',
   'signing_key',
   'signingKeyHex',
+  'WORLD_PRIVATE_KEY',
   'WORLD_RP_SIGNING_KEY',
+  'WORLD_RP_SIGNER_ADDRESS',
+  'WORLD_SESSION_ENCRYPTION_KEY',
 ] as const;
 
 function clientError(message: string, status: number): Response {

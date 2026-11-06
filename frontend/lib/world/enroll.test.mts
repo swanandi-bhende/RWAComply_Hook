@@ -3,6 +3,7 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
+import { privateKeyToAccount } from 'viem/accounts';
 import { decryptSessionId } from './sessionCrypto.ts';
 import { handleEnroll } from './enroll.ts';
 import { EnrollmentStore } from './enrollmentStore.ts';
@@ -10,7 +11,7 @@ import type { PortalCallResult } from './enrollmentProof.ts';
 
 const APP_ID = 'app_test_fixture';
 const RP_ID = 'rp_a11ce';
-const SIGNING_KEY = `0x${'ab'.repeat(32)}`;
+const SIGNING_KEY = `0x${'ab'.repeat(32)}` as const;
 const ENCRYPTION_KEY = `0x${'cd'.repeat(32)}`;
 const NULLIFIER = '123456789012345678901234567890';
 const OTHER_NULLIFIER = '987654321098765432109876543210';
@@ -24,7 +25,8 @@ function env() {
   return {
     WORLD_APP_ID: APP_ID,
     WORLD_RP_ID: RP_ID,
-    WORLD_RP_SIGNING_KEY: SIGNING_KEY,
+    WORLD_PRIVATE_KEY: SIGNING_KEY,
+    WORLD_RP_SIGNER_ADDRESS: privateKeyToAccount(SIGNING_KEY).address,
     WORLD_SESSION_ENCRYPTION_KEY: ENCRYPTION_KEY,
     WORLD_ID_ENVIRONMENT: 'staging',
   };
@@ -332,6 +334,33 @@ test('duplicate and distinct nullifiers are enforced by the database', async () 
   } finally {
     first.close();
     second.close();
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('a rejected duplicate rolls back and leaves the stored enrollment unchanged', async () => {
+  const directory = mkdtempSync(path.join(tmpdir(), 'rwacomply-enroll-'));
+  const file = path.join(directory, 'enroll.sqlite');
+  const store = new EnrollmentStore(file);
+  try {
+    const ok = await handleEnroll(post(proof()), {
+      env: env(),
+      store,
+      verify: async () => portal(),
+    });
+    assert.equal(ok.status, 200);
+    const before = store.records();
+
+    const duplicate = await handleEnroll(post(proof({ session_id: sessionId('cd') })), {
+      env: env(),
+      store,
+      verify: async () => portal(),
+    });
+    assert.equal(duplicate.status, 409);
+    assert.deepEqual(store.records(), before);
+    assert.equal(store.records().length, 1);
+  } finally {
+    store.close();
     rmSync(directory, { recursive: true, force: true });
   }
 });

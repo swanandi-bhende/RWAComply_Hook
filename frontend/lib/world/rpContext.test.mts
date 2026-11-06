@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { computeRpSignatureMessage } from '@worldcoin/idkit-core/signing';
-import { privateKeyToAddress } from 'viem/accounts';
+import { privateKeyToAccount, privateKeyToAddress } from 'viem/accounts';
 import { bytesToHex, hashMessage, hexToBytes, recoverAddress } from 'viem';
 import { handleRpContext } from './rpContextRoute.ts';
 
@@ -19,7 +19,8 @@ function env() {
   return {
     WORLD_APP_ID: APP_ID,
     WORLD_RP_ID: RP_ID,
-    WORLD_RP_SIGNING_KEY: SIGNING_KEY,
+    WORLD_PRIVATE_KEY: SIGNING_KEY,
+    WORLD_RP_SIGNER_ADDRESS: privateKeyToAccount(SIGNING_KEY).address,
   };
 }
 
@@ -137,7 +138,7 @@ test('missing server configuration returns a controlled error', async () => {
   );
   assert.equal(response.status, 500);
   const payload = (await response.json()) as { error: string };
-  assert.equal(payload.error, 'WORLD_RP_SIGNING_KEY is not configured');
+  assert.equal(payload.error, 'WORLD_PRIVATE_KEY is not configured');
   assert.equal(JSON.stringify(payload).includes('stack'), false);
 });
 

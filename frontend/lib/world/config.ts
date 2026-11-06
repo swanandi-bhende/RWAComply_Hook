@@ -1,3 +1,7 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { privateKeyToAccount } from 'viem/accounts';
+
 export class WorldConfigError extends Error {
   constructor(message: string) {
     super(message);
@@ -8,7 +12,11 @@ export class WorldConfigError extends Error {
 export type WorldEnv = {
   WORLD_APP_ID?: string;
   WORLD_RP_ID?: string;
-  WORLD_RP_SIGNING_KEY?: string;
+  WORLD_PRIVATE_KEY?: string;
+  WORLD_RP_SIGNER_ADDRESS?: string;
+  WORLD_SESSION_ENCRYPTION_KEY?: string;
+  WORLD_ID_ENVIRONMENT?: string;
+  WORLD_ENROLLMENT_DB_PATH?: string;
   [key: string]: string | undefined;
 };
 
@@ -26,6 +34,7 @@ export type WorldPublicConfig = {
 const APP_ID_PATTERN = /^app_[A-Za-z0-9_]+$/;
 const RP_ID_PATTERN = /^rp_[0-9a-fA-F]{1,16}$/;
 const SIGNING_KEY_PATTERN = /^(0x)?[0-9a-fA-F]{64}$/;
+const ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
 
 function requiredValue(value: string | undefined, missingMessage: string): string {
   const trimmed = value?.trim() ?? '';
@@ -42,6 +51,23 @@ function requireFormat(value: string, pattern: RegExp, invalidMessage: string): 
   return value;
 }
 
+function normalizedSigningKey(value: string): `0x${string}` {
+  const hex = value.startsWith('0x') || value.startsWith('0X') ? value.slice(2) : value;
+  return `0x${hex.toLowerCase()}`;
+}
+
+function assertPortalSigner(signingKeyHex: string, signerAddress: string): void {
+  let derived = '';
+  try {
+    derived = privateKeyToAccount(normalizedSigningKey(signingKeyHex)).address;
+  } catch {
+    throw new WorldConfigError('WORLD_PRIVATE_KEY is invalid');
+  }
+  if (derived.toLowerCase() !== signerAddress.toLowerCase()) {
+    throw new WorldConfigError('WORLD_PRIVATE_KEY does not match WORLD_RP_SIGNER_ADDRESS');
+  }
+}
+
 export function readWorldConfig(env: WorldEnv = process.env): WorldServerConfig {
   const appId = requireFormat(
     requiredValue(env.WORLD_APP_ID, 'WORLD_APP_ID is not configured'),
@@ -54,10 +80,16 @@ export function readWorldConfig(env: WorldEnv = process.env): WorldServerConfig 
     'WORLD_RP_ID is invalid',
   );
   const signingKeyHex = requireFormat(
-    requiredValue(env.WORLD_RP_SIGNING_KEY, 'WORLD_RP_SIGNING_KEY is not configured'),
+    requiredValue(env.WORLD_PRIVATE_KEY, 'WORLD_PRIVATE_KEY is not configured'),
     SIGNING_KEY_PATTERN,
-    'WORLD_RP_SIGNING_KEY is invalid',
+    'WORLD_PRIVATE_KEY is invalid',
   );
+  const signerAddress = requireFormat(
+    requiredValue(env.WORLD_RP_SIGNER_ADDRESS, 'WORLD_RP_SIGNER_ADDRESS is not configured'),
+    ADDRESS_PATTERN,
+    'WORLD_RP_SIGNER_ADDRESS is invalid',
+  );
+  assertPortalSigner(signingKeyHex, signerAddress);
 
   return { appId, rpId, signingKeyHex };
 }
@@ -113,8 +145,10 @@ export function readEnrollmentConfig(env: WorldEnv = process.env): EnrollmentSer
   }
 
   const configuredPath = env.WORLD_ENROLLMENT_DB_PATH?.trim() ?? '';
-  const databasePath =
-    configuredPath || `${process.cwd()}/data/world-enrollments.sqlite`;
+  const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+  const databasePath = configuredPath
+    ? path.resolve(repositoryRoot, configuredPath)
+    : path.join(repositoryRoot, 'frontend', 'data', 'world-enrollments.sqlite');
 
   return {
     appId: world.appId,

@@ -1,7 +1,9 @@
-import type { NextConfig } from "next";
+import path from 'node:path';
+import type { NextConfig } from 'next';
+import { loadRepositoryEnv } from './lib/world/loadRootEnv';
 
-const nextConfig: NextConfig = {
-  /* config options here */
-};
+loadRepositoryEnv(path.resolve(process.cwd(), '..'));
+
+const nextConfig: NextConfig = {};
 
 export default nextConfig;

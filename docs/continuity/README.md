@@ -29,8 +29,9 @@ These commits are in the repository history. Their dates are the git author date
 | `7bcc85a` | 2026-11-06 | Ledger spend accounting, the trusted `PoolExecutor.swapExactInput` router, router tests, and `docs/PRD v1.txt`. |
 | `b2b0b45` | 2026-11-06 | Hook budget checks, settled-USDC recording, deployment wiring, the frontend `swapExactInput` call, and CREATE2 permission mining. |
 | `2dadaf3` | 2026-11-06 | World ID server configuration and relying-party context signing. |
+| `92263ef` | 2026-11-06 | Proof of Human enrollment, encrypted session storage, and the IDKit request helper. |
 
-`2dadaf3` is the current `HEAD` of branch `v2`. Enrollment verification after that commit is in the working tree and is not part of the commit.
+`92263ef` is the current committed `HEAD` of branch `v2`. Later signer-key and root-env changes stay uncommitted until they are committed.
 
 ## What V2 adds
 
