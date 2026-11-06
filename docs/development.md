@@ -178,7 +178,7 @@ A purchase button is enabled only when the executor, hook, USDC, and RWA address
 
 World ID, wallet ownership, onchain registration, and purchase enforcement are separate. A backend authorization or a database row does not mark a wallet as linked.
 
-The investor page action “Enroll and register this wallet” requests a relying-party context, runs IDKit, and posts the result to `/api/world/enroll`. A cancelled or failed widget stops there. The wallet is not authorized and `registerWallet` is not called. After a verified enrollment, the same action asks the wallet to sign, posts that signature to `/api/world/wallet-authorization`, and submits `registerWallet`. The wallet is shown as registered only after the chain receipt matches. The separate “Link this wallet” action remains for a later wallet on an existing session.
+The investor page action “Verify with World App” requests a relying-party context, runs IDKit, and posts the result to `/api/world/enroll`. A cancelled or failed widget stops there. The wallet is not authorized and `registerWallet` is not called. After a verified enrollment, the same action asks the wallet to sign, posts that signature to `/api/world/wallet-authorization`, and submits `registerWallet`. The wallet is shown as registered only after the chain receipt matches. The separate “Link this wallet” action remains for a later wallet on an existing session.
 
 The local Anvil swap demo treats the typed value as a six-decimal USDC amount. It approves that amount to the `PoolExecutor` and calls `swapExactInput` with the same amount. It does not approve the PoolManager. If the router’s USDC address cannot be read, the purchase is not sent.
 

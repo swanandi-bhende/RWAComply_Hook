@@ -1,8 +1,10 @@
+import path from 'node:path';
 import { createPublicClient, getAddress, parseAbi, type Hex } from 'viem';
 import { rpcTransport } from '@/lib/product/rpc';
 import { sepolia } from 'viem/chains';
 import { NextResponse } from 'next/server';
 import { readAllocationConfig } from '@/lib/world/config';
+import { loadRepositoryEnv } from '@/lib/world/loadRootEnv';
 import { assembleProductStatus, type ProductProbe } from '@/lib/product/status';
 
 const LEDGER_ABI = parseAbi([
@@ -63,6 +65,7 @@ function probeFor(rpcUrl: string | undefined): ProductProbe {
 }
 
 export async function GET() {
+  loadRepositoryEnv(path.resolve(process.cwd(), '..'));
   const status = await assembleProductStatus({
     env: process.env,
     readConfig: () => {

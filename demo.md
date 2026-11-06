@@ -13,7 +13,7 @@ No demo video has been recorded. The purchase numbers below were produced on loc
 | Step | Where it stands |
 |---|---|
 | 1. Connect a wallet | Available on `/invest` |
-| 2. Complete proof of human in World App | The button is “Enroll and register this wallet”. A live World ID proof has not been completed |
+| 2. Complete proof of human in World App | The button is “Verify with World App”. A live World ID proof has not been completed |
 | 3. Sign wallet ownership | The browser wallet signs after World accepts the proof |
 | 4. Register the wallet | `registerWallet` on Sepolia. The page reports success only after the receipt matches. No investor registration has been sent |
 | 5. View the allocation and the offering | The cap and the remainder come from Ethereum. The offering panel reads Arkiv. The allocation id is not shown |

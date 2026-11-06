@@ -13,7 +13,7 @@ import {
   useSwitchChain,
   useWalletClient,
 } from 'wagmi';
-import { parseUnits, type Hex } from 'viem';
+import { parseUnits, type Address, type Hex } from 'viem';
 import { SiteFooter } from './SiteFooter';
 import { SiteNav } from './SiteNav';
 import { browserSessionStore } from '@/lib/world/sessionStore';
@@ -30,6 +30,7 @@ import {
   type LedgerRegistrationClient,
 } from '@/lib/world/ledgerRegistration';
 import { formatUsdc, purchaseDecision } from '@/lib/product/money';
+import { enrollmentButton, registrationPreflight, type EnrollmentPhase } from '@/lib/product/enrollmentGate';
 import { accessTierMessage, deploymentMessages } from '@/lib/product/readiness';
 import { verificationFailure, walletLinkFailure } from '@/lib/product/copy';
 import type { PublicProductStatus } from '@/lib/product/status';
@@ -211,7 +212,8 @@ export default function InvestorExperience() {
     query: { enabled: !!execution?.available && !!address && !!execution?.usdc, refetchInterval: 4000 },
   });
 
-  const [verify, setVerify] = useState<Notice>({ tone: 'idle', text: 'Verify your identity before linking a wallet.' });
+  const [verify, setVerify] = useState<Notice>({ tone: 'idle', text: '' });
+  const [enrollmentPhase, setEnrollmentPhase] = useState<EnrollmentPhase>('idle');
   const [link, setLink] = useState<Notice>({ tone: 'idle', text: 'Link this wallet after verification.' });
   const [purchaseNotice, setPurchaseNotice] = useState<Notice>({ tone: 'idle', text: '' });
   const [amount, setAmount] = useState('');
@@ -233,31 +235,31 @@ export default function InvestorExperience() {
     requested,
   });
 
-  function registrationClient(): LedgerRegistrationClient | null {
-    if (!address || !publicClient || !walletClient?.account || !ledger) return null;
+  function registrationClient(ledgerAddress: Address): LedgerRegistrationClient | null {
+    if (!address || !publicClient || !walletClient?.account) return null;
     const account = walletClient.account;
     return {
       getAllocationId: (wallet) => publicClient.readContract({
-        address: ledger,
+        address: ledgerAddress,
         abi: LEDGER_REGISTRATION_ABI,
         functionName: 'allocationIdByWallet',
         args: [wallet],
       }),
       getNonceUsed: (nonce) => publicClient.readContract({
-        address: ledger,
+        address: ledgerAddress,
         abi: LEDGER_REGISTRATION_ABI,
         functionName: 'usedNonce',
         args: [nonce],
       }),
       getBackendSigner: () => publicClient.readContract({
-        address: ledger,
+        address: ledgerAddress,
         abi: LEDGER_REGISTRATION_ABI,
         functionName: 'backendSigner',
       }),
       simulateRegister: async (args) => {
         await publicClient.simulateContract({
           account,
-          address: ledger,
+          address: ledgerAddress,
           abi: LEDGER_REGISTRATION_ABI,
           functionName: 'registerWallet',
           args: [args.wallet, args.allocationId, args.groupId, args.expiry, args.nonce, args.signature],
@@ -266,7 +268,7 @@ export default function InvestorExperience() {
       sendRegister: (args) => walletClient.writeContract({
         account,
         chain: sepolia,
-        address: ledger,
+        address: ledgerAddress,
         abi: LEDGER_REGISTRATION_ABI,
         functionName: 'registerWallet',
         args: [args.wallet, args.allocationId, args.groupId, args.expiry, args.nonce, args.signature],
@@ -284,18 +286,32 @@ export default function InvestorExperience() {
     };
   }
 
-  async function registerAuthorized(authorization: Extract<WalletLinkClientResult, { ok: true }>) {
-    if (!address || !groupId || !ledger) return { ok: false };
-    const client = registrationClient();
-    if (!client) return { ok: false };
+  async function registerAuthorized(
+    authorization: Extract<WalletLinkClientResult, { ok: true }>,
+    snapshot: PublicProductStatus | undefined = status,
+  ) {
+    const ledgerAddress = snapshot?.ledger?.address;
+    const snapshotGroup = snapshot?.groupId ?? undefined;
+    const gate = registrationPreflight({
+      registrationReady: snapshot?.registrationReady === true,
+      ledgerKnown: Boolean(ledgerAddress && snapshotGroup),
+    });
+    if (!gate.ok || !address || !ledgerAddress || !snapshotGroup) {
+      return { ok: false, message: gate.ok ? 'Wallet registration could not be started.' : gate.message };
+    }
+    const client = registrationClient(ledgerAddress);
+    if (!client) return { ok: false, message: 'Wallet registration could not be started.' };
     const submitted = await submitRegistration({
       authorization,
       connectedWallet: address,
       chainId,
-      ledgerAddress: ledger,
-      groupId,
+      ledgerAddress,
+      groupId: snapshotGroup,
       client,
-      onUpdate: (progress) => setVerify({ tone: 'pending', text: progress.message }),
+      onUpdate: (progress) => {
+        if (progress.state === 'ready' || progress.state === 'pending') setEnrollmentPhase('awaiting_transaction');
+        setVerify({ tone: 'pending', text: progress.message });
+      },
     });
     if (submitted.state === 'confirmed' && submitted.transactionHash) {
       await fetch('/api/world/registration-receipt', {
@@ -309,36 +325,48 @@ export default function InvestorExperience() {
   }
 
   async function verifyIdentity() {
-    if (!address || !walletClient) return;
+    if (!address || !walletClient || !isConnected || !onSepolia || linked) return;
     setVerifying(true);
-    setVerify({ tone: 'pending', text: 'Waiting for identity verification.' });
+    setEnrollmentPhase('verifying');
+    setVerify({ tone: 'pending', text: 'Complete the proof in World App.' });
     const result = await runEnrollmentAction({
       enroll: () => enrollProofOfHuman({ sessionStore: browserSessionStore() }),
-      authorize: (continuationToken) => authorizeWalletLink({
-        continuationToken,
-        wallet: address,
-        signTypedData: (typedData) => signTypedDataAsync(typedData as never),
-      }),
-      register: (authorization) => registerAuthorized(authorization),
+      authorize: (continuationToken) => {
+        setEnrollmentPhase('awaiting_signature');
+        setVerify({ tone: 'pending', text: 'Sign the wallet ownership message.' });
+        return authorizeWalletLink({
+          continuationToken,
+          wallet: address,
+          signTypedData: (typedData) => signTypedDataAsync(typedData as never),
+        });
+      },
+      register: async (authorization) => {
+        setEnrollmentPhase('awaiting_transaction');
+        const fresh = (await statusQuery.refetch()).data;
+        return registerAuthorized(authorization, fresh);
+      },
     });
     setVerifying(false);
     if (result.registered) {
+      setEnrollmentPhase('idle');
       setVerify({
         tone: 'ok',
-        text: 'This wallet is registered. Proof of human is not KYC, AML, accreditation, residency, or nationality.',
+        text: 'Wallet linked. Proof of human is not KYC, AML, accreditation, residency, or nationality.',
       });
       return;
     }
-    const detail = result.stage === 'enrollment'
-      ? verificationFailure(result.reason ?? 'unexpected')
-      : result.stage === 'authorization'
-        ? walletLinkFailure(result.reason ?? 'unexpected')
-        : 'Registration was not confirmed.';
+    setEnrollmentPhase('failed');
+    const detail = result.message
+      ?? (result.stage === 'enrollment'
+        ? verificationFailure(result.reason ?? 'unexpected')
+        : result.stage === 'authorization'
+          ? walletLinkFailure(result.reason ?? 'unexpected')
+          : 'Registration was not confirmed.');
     setVerify({ tone: 'error', text: `${detail} This wallet was not registered.` });
   }
 
   async function linkWallet() {
-    if (!address || !publicClient || !walletClient?.account || !ledger || !groupId || !periodId || !status) return;
+    if (!address || !walletClient?.account || !onSepolia) return;
     setLinking(true);
     setLink({ tone: 'pending', text: routerPhaseLabel('registering') });
     const account = walletClient.account;
@@ -350,6 +378,18 @@ export default function InvestorExperience() {
         signTypedData: (typedData) => signTypedDataAsync(typedData as never),
       }),
       register: async (authorization) => {
+    const fresh = (await statusQuery.refetch()).data;
+    const ledgerAddress = fresh?.ledger?.address;
+    const snapshotGroup = fresh?.groupId;
+    const gate = registrationPreflight({
+      registrationReady: fresh?.registrationReady === true,
+      ledgerKnown: Boolean(publicClient && ledgerAddress && snapshotGroup),
+    });
+    if (!gate.ok || !publicClient || !ledgerAddress || !snapshotGroup) {
+      return { ok: false, message: gate.ok ? 'Wallet registration could not be started.' : gate.message };
+    }
+    const ledger = ledgerAddress;
+    const groupId = snapshotGroup;
     const client: LedgerRegistrationClient = {
       getAllocationId: (wallet) => publicClient.readContract({
         address: ledger,
@@ -413,14 +453,19 @@ export default function InvestorExperience() {
       });
       await allocation.refetch();
     }
-    return { ok: submitted.ok };
+    return { ok: submitted.ok, message: submitted.message };
       },
-      readRemaining: () => publicClient.readContract({
-        address: ledger,
-        abi: LEDGER_VIEW_ABI,
-        functionName: 'remaining',
-        args: [address, groupId, periodId],
-      }),
+      readRemaining: () => {
+        if (!publicClient || !ledger || !groupId || periodId === undefined) {
+          return Promise.reject(new Error('remaining unavailable'));
+        }
+        return publicClient.readContract({
+          address: ledger,
+          abi: LEDGER_VIEW_ABI,
+          functionName: 'remaining',
+          args: [address, groupId, periodId],
+        });
+      },
     });
     setLinking(false);
     if (!result.registered) {
@@ -428,7 +473,7 @@ export default function InvestorExperience() {
         ? verificationFailure(result.reason ?? 'unexpected')
         : result.stage === 'authorization'
           ? walletLinkFailure(result.reason ?? 'unexpected')
-          : 'Registration was not confirmed.';
+          : (result.message ?? 'Registration was not confirmed.');
       setLink({ tone: 'error', text: `${detail} This wallet was not registered.` });
       return;
     }
@@ -561,6 +606,13 @@ export default function InvestorExperience() {
     { label: 'Purchase', done: purchaseSucceeded },
   ];
   const currentStep = journey.findIndex((item) => !item.done);
+  const enrollment = enrollmentButton({
+    connected: isConnected,
+    onSupportedNetwork: onSepolia,
+    walletReady: !!walletClient,
+    alreadyRegistered: linked,
+    phase: enrollmentPhase === 'failed' ? 'idle' : enrollmentPhase,
+  });
   const symbol = offeringsQuery.data?.offering?.rwaSymbol ?? 'Demo RWA';
   const chainCap = offeringsQuery.data?.chain.cap ? formatUsdc(BigInt(offeringsQuery.data.chain.cap)) : 'Unavailable';
 
@@ -575,8 +627,8 @@ export default function InvestorExperience() {
         </p>
         <dl className="metric-grid">
           <div className="metric"><dt>Quote asset</dt><dd>Mock USDC</dd></div>
-          <div className="metric"><dt>Issuer-defined cap</dt><dd>{chainCap}</dd></div>
-          <div className="metric"><dt>Offering status</dt><dd>{status?.marketReady ? 'Market readable' : 'Checking market'}</dd></div>
+          <div className="metric"><dt>Issuer-defined cap</dt><dd>{offeringsQuery.isLoading ? 'Reading the ledger' : chainCap}</dd></div>
+          <div className="metric"><dt>Offering status</dt><dd>{statusQuery.isLoading ? 'Checking market' : status?.marketReady ? 'Market readable' : 'Market unavailable'}</dd></div>
           <div className="metric"><dt>This wallet</dt><dd>{address ? (onSepolia ? shortAddress(address) : 'Wrong network') : 'Not connected'}</dd></div>
         </dl>
 
@@ -603,23 +655,18 @@ export default function InvestorExperience() {
 
           <section id="verify" className="panel">
             <h2 className="section-title">Verify identity</h2>
-            {currentStep === 1 ? (
-              <>
-                <p>World App verifies proof of human. The wallet signs ownership separately. Registration is a separate Ethereum transaction. Issuer approval is separate from proof of human.</p>
-                <p className="quiet">Proof of human is not KYC, AML, accreditation, residency, or legal eligibility. <a className="link" href="/how">How it works</a></p>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  disabled={!isConnected || !onSepolia || !status?.registrationReady || verifying || !walletClient}
-                  onClick={() => void verifyIdentity()}
-                >
-                  {verifying ? 'Enrollment pending' : 'Enroll and register this wallet'}
-                </button>
-                {verify.text && <p className="notice" data-tone={verify.tone} role="status">{verify.text}</p>}
-              </>
-            ) : (
-              <p className="quiet">{linked || verify.tone === 'ok' ? 'Identity step recorded for this session or wallet.' : 'Complete wallet connection first.'}</p>
-            )}
+            <p>World App verifies proof of human. The wallet signs ownership separately. Registration is a separate Ethereum transaction. Issuer approval is separate from proof of human.</p>
+            <p className="quiet">Proof of human is not KYC, AML, accreditation, residency, or legal eligibility. <a className="link" href="/how">How it works</a></p>
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={enrollment.disabled}
+              onClick={() => void verifyIdentity()}
+            >
+              {enrollment.label}
+            </button>
+            {enrollment.explanation && <p className="notice" role="status">{enrollment.explanation}</p>}
+            {verify.text && <p className="notice" data-tone={verify.tone} role="status">{verify.text}</p>}
           </section>
 
           <section id="link" className="panel">
@@ -630,7 +677,7 @@ export default function InvestorExperience() {
               <button
                 type="button"
                 className="btn btn-primary"
-                disabled={!isConnected || !onSepolia || !status?.registrationReady || linking || !walletClient}
+                disabled={!isConnected || !onSepolia || linking || !walletClient}
                 onClick={() => void linkWallet()}
               >
                 {linking ? 'Registering' : 'Continue and register this wallet'}

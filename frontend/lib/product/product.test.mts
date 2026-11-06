@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { getAddress, type Hex } from 'viem';
 import { formatUsdc, purchaseDecision } from './money.ts';
+import { rpcHttpUrl } from './rpc.ts';
 import {
   assembleProductStatus,
   missingAllocationEnv,
@@ -186,4 +187,10 @@ test('registration, policy, market, and access tier stay separate', async () => 
   assert.match(deploymentMessages(signer).map((item) => item.text).join(' '), /signer does not match/);
   assert.match(accessTierMessage(0), /Issuer approval/);
   assert.doesNotMatch(accessTierMessage(0), /KYC/);
+});
+
+test('server reads use HTTP even when the configured URL is a websocket', () => {
+  assert.equal(rpcHttpUrl('wss://rpc.example/sepolia'), 'https://rpc.example/sepolia');
+  assert.equal(rpcHttpUrl('https://rpc.example/sepolia'), 'https://rpc.example/sepolia');
+  assert.equal(rpcHttpUrl(''), '');
 });

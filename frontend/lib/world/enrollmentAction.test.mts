@@ -3,8 +3,8 @@ import test from 'node:test';
 import { runEnrollmentAction } from './enrollmentAction.ts';
 import type { EnrollmentClientResult } from './enrollClient.ts';
 
-test('a cancelled or failed World ID widget does not authorize or register the wallet', async () => {
-  for (const reason of ['cancelled', 'proof_failed', 'timeout'] as const) {
+test('a cancelled, failed, timed out, or rejected proof does not authorize or register the wallet', async () => {
+  for (const reason of ['cancelled', 'proof_failed', 'timeout', 'verification_rejected'] as const) {
     let authorizeCalls = 0;
     let registerCalls = 0;
     const result = await runEnrollmentAction({
@@ -59,4 +59,20 @@ test('a rejected wallet authorization does not call registerWallet', async () =>
   assert.equal(result.registered, false);
   assert.equal(result.stage, 'authorization');
   assert.equal(registerCalls, 0);
+});
+
+test('a missing ledger returns the registration error and does not mark the wallet linked', async () => {
+  let authorizeCalls = 0;
+  const result = await runEnrollmentAction({
+    enroll: async () => ({ ok: true as const, sessionId: 'session_test', continuationToken: 'grant' }),
+    authorize: async () => {
+      authorizeCalls += 1;
+      return { ok: true as const };
+    },
+    register: async () => ({ ok: false, message: 'Wallet registration is unavailable because the allocation ledger could not be read.' }),
+  });
+  assert.equal(authorizeCalls, 1);
+  assert.equal(result.registered, false);
+  assert.equal(result.stage, 'registration');
+  assert.match(result.message ?? '', /allocation ledger/);
 });

@@ -1,7 +1,9 @@
-import { http, webSocket, type Transport } from 'viem';
+import { http, type Transport } from 'viem';
+
+export function rpcHttpUrl(url?: string): string {
+  return (url?.trim() ?? '').replace(/^wss:/, 'https:').replace(/^ws:/, 'http:');
+}
 
 export function rpcTransport(url?: string): Transport {
-  const trimmed = url?.trim() ?? '';
-  if (trimmed.startsWith('ws://') || trimmed.startsWith('wss://')) return webSocket(trimmed);
-  return http(trimmed || undefined);
+  return http(rpcHttpUrl(url) || undefined);
 }

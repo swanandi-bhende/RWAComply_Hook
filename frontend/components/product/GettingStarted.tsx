@@ -43,7 +43,7 @@ export function GettingStarted() {
           <div className="panel">
             <p>
               On <Link href="/invest" className="link">/invest</Link>, connect the first wallet and switch
-              to Ethereum Sepolia, chain id 11155111. Choose “Enroll and register this wallet”. World App
+              to Ethereum Sepolia, chain id 11155111. Choose “Verify with World App”. World App
               asks for proof of human. The server checks that proof. It is not KYC, and it does not register
               the address by itself.
             </p>

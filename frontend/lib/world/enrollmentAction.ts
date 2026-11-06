@@ -4,12 +4,13 @@ export type EnrollmentActionResult = {
   registered: boolean;
   stage: 'enrollment' | 'authorization' | 'registration';
   reason?: string;
+  message?: string;
 };
 
 export async function runEnrollmentAction<TAuth extends { ok: true }>(options: {
   enroll: () => Promise<EnrollmentClientResult>;
   authorize: (continuationToken: string) => Promise<({ ok: false; reason: string }) | ({ ok: true } & TAuth)>;
-  register: (authorization: { ok: true } & TAuth) => Promise<{ ok: boolean }>;
+  register: (authorization: { ok: true } & TAuth) => Promise<{ ok: boolean; message?: string }>;
 }): Promise<EnrollmentActionResult> {
   const enrolled = await options.enroll();
   if (!enrolled.ok) {
@@ -27,5 +28,6 @@ export async function runEnrollmentAction<TAuth extends { ok: true }>(options: {
     registered: registered.ok,
     stage: 'registration',
     reason: registered.ok ? undefined : 'register_failed',
+    message: registered.message,
   };
 }
