@@ -10,7 +10,7 @@ export type AnvilMarket = {
   tokenA: string;
   tokenB: string;
   executor: string;
-  ledger?: string;
+  ledger: string;
 };
 
 type Creation = {
@@ -39,7 +39,7 @@ export function marketFromCreations(transactions: Creation[]): AnvilMarket | nul
       if (name === 'RWA' || name === 'TokenB') market.tokenB = deployed;
     }
   }
-  if (!market.poolManager || !market.hook || !market.oracle || !market.tokenA || !market.tokenB || !market.executor) {
+  if (!market.poolManager || !market.hook || !market.oracle || !market.tokenA || !market.tokenB || !market.executor || !market.ledger) {
     return null;
   }
   return market as AnvilMarket;
@@ -70,7 +70,7 @@ export function selectAnvilMarket(
 ): AnvilMarket | null {
   const merged: Partial<AnvilMarket> = { chainId: ANVIL_CHAIN_ID, ...demoLog, ...broadcast };
   if (merged.chainId !== ANVIL_CHAIN_ID) return null;
-  if (!merged.poolManager || !merged.hook || !merged.oracle || !merged.tokenA || !merged.tokenB || !merged.executor) {
+  if (!merged.poolManager || !merged.hook || !merged.oracle || !merged.tokenA || !merged.tokenB || !merged.executor || !merged.ledger) {
     return null;
   }
   return merged as AnvilMarket;

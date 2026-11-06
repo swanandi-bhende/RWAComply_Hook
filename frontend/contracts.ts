@@ -8,6 +8,7 @@ export const ORACLE_ADDRESS = process.env.NEXT_PUBLIC_ORACLE_ADDRESS || "";
 export const TOKEN_A_ADDRESS = process.env.NEXT_PUBLIC_TOKEN_A_ADDRESS || "";
 export const TOKEN_B_ADDRESS = process.env.NEXT_PUBLIC_TOKEN_B_ADDRESS || "";
 export const EXECUTOR_ADDRESS = process.env.NEXT_PUBLIC_EXECUTOR_ADDRESS || "";
+export const LEDGER_ADDRESS = process.env.ALLOCATION_LEDGER_ADDRESS || "";
 
 export const ANVIL_CHAIN_ID = 31337;
 

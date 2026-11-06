@@ -10,7 +10,7 @@ export interface DeploymentAddresses {
   tokenA: string;
   tokenB: string;
   executor: string;
-  ledger?: string;
+  ledger: string;
 }
 
 let cachedAddresses: DeploymentAddresses | null = null;
@@ -37,7 +37,7 @@ export async function loadDeploymentAddresses(): Promise<DeploymentAddresses> {
     tokenA: data.tokenA || '',
     tokenB: data.tokenB || '',
     executor: data.executor || '',
-    ledger: data.ledger,
+    ledger: data.ledger || '',
   };
   validateAddresses(addresses);
   cachedAddresses = addresses;
@@ -45,13 +45,14 @@ export async function loadDeploymentAddresses(): Promise<DeploymentAddresses> {
 }
 
 function validateAddresses(addresses: DeploymentAddresses) {
-  const required = ['poolManager', 'hook', 'oracle', 'tokenA', 'tokenB', 'executor'];
+  const required = ['ledger', 'executor', 'tokenA', 'poolManager', 'hook', 'oracle', 'tokenB'] as const;
   for (const key of required) {
-    const addr = addresses[key as keyof DeploymentAddresses];
+    const addr = addresses[key];
     if (!addr || !addr.startsWith('0x')) {
+      const label = key === 'executor' ? 'router' : key === 'tokenA' ? 'USDC' : key;
       throw new Error(
-        `Invalid or missing deployment address: ${key}. ` +
-        `Ensure contracts are deployed and broadcast data is available. ` +
+        `The local deployment is missing the ${label} address. ` +
+        `The ledger, router, and USDC addresses must come from the Anvil deploy log. ` +
         `Run: bash script/start_anvil_demo.sh`
       );
     }

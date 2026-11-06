@@ -22,6 +22,21 @@ test('an Anvil broadcast supplies the local market and ignores unrelated address
   assert.equal(market.executor, '0x0000000000000000000000000000000000000007');
 });
 
+test('a broadcast without the ledger, router, or USDC is rejected', () => {
+  assert.equal(marketFromCreations(creations.filter((item) => item.contractName !== 'AllocationLedger')), null);
+  assert.equal(marketFromCreations(creations.filter((item) => item.contractName !== 'PoolExecutor')), null);
+  assert.equal(marketFromCreations(creations.filter((item) => item.contractName !== 'MockUSDC')), null);
+  assert.equal(selectAnvilMarket(null, {
+    chainId: 31337,
+    poolManager: '0x0000000000000000000000000000000000000001',
+    hook: '0x0000000000000000000000000000000000000003',
+    oracle: '0x0000000000000000000000000000000000000002',
+    tokenA: '0x0000000000000000000000000000000000000004',
+    tokenB: '0x0000000000000000000000000000000000000005',
+    executor: '0x0000000000000000000000000000000000000007',
+  }), null);
+});
+
 test('a partial broadcast does not become a market by borrowing other addresses', () => {
   const partial = marketFromCreations(creations.slice(0, 2));
   assert.equal(partial, null);

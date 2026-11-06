@@ -77,10 +77,10 @@ export function missingAllocationEnv(env: Record<string, string | undefined>): A
 }
 
 export function parseExecutionAddresses(env: Record<string, string | undefined>): ExecutionAddresses | null {
-  const executor = publicAddress(env.NEXT_PUBLIC_EXECUTOR_ADDRESS);
-  const hook = publicAddress(env.NEXT_PUBLIC_HOOK_ADDRESS);
-  const usdc = publicAddress(env.NEXT_PUBLIC_TOKEN_A_ADDRESS);
-  const rwa = publicAddress(env.NEXT_PUBLIC_TOKEN_B_ADDRESS);
+  const executor = publicAddress(env['NEXT_PUBLIC_EXECUTOR_ADDRESS']);
+  const hook = publicAddress(env['NEXT_PUBLIC_HOOK_ADDRESS']);
+  const usdc = publicAddress(env['NEXT_PUBLIC_TOKEN_A_ADDRESS']);
+  const rwa = publicAddress(env['NEXT_PUBLIC_TOKEN_B_ADDRESS']);
   if (!executor || !hook || !usdc || !rwa) return null;
   return { executor, hook, usdc, rwa };
 }

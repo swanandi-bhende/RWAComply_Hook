@@ -37,7 +37,7 @@ export async function GET() {
   if (!market) {
     return NextResponse.json(
       {
-        error: 'Local Anvil deployment is not available. Run bash script/start_anvil_demo.sh, then refresh.',
+        error: 'The local deployment is missing the ledger, router, or USDC address. Run bash script/start_anvil_demo.sh, then refresh.',
       },
       { status: 503 },
     );

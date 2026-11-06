@@ -26,3 +26,17 @@ test('repository env loading reads the given directory and does not print values
     rmSync(directory, { recursive: true, force: true });
   }
 });
+
+test('a blank value is filled from the repository env file', () => {
+  const directory = mkdtempSync(path.join(tmpdir(), 'rwacomply-env-'));
+  const probe = 'RWA_ENV_LOAD_PROBE_BLANK';
+  writeFileSync(path.join(directory, '.env'), `${probe}=from-file\n`);
+  process.env[probe] = '';
+  try {
+    loadRepositoryEnv(directory);
+    assert.equal(process.env[probe], 'from-file');
+  } finally {
+    delete process.env[probe];
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
