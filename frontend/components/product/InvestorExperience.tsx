@@ -6,6 +6,7 @@ import { sepolia } from 'wagmi/chains';
 import {
   useAccount,
   useChainId,
+  useDisconnect,
   usePublicClient,
   useReadContract,
   useSignTypedData,
@@ -17,6 +18,8 @@ import { SiteNav } from './SiteNav';
 import { browserSessionStore } from '@/lib/world/sessionStore';
 import { enrollProofOfHuman } from '@/lib/world/enrollClient';
 import { runEnrollmentAction } from '@/lib/world/enrollmentAction';
+import { runSecondWallet } from '@/lib/world/secondWallet';
+import { REMAINING_BUDGET_MESSAGE, routerPhaseLabel, routerRejectionMessage } from '@/lib/product/purchaseFlow';
 import { continueProofOfHuman } from '@/lib/world/continueClient';
 import { authorizeWalletLink, type WalletLinkClientResult } from '@/lib/world/walletLinkClient';
 import {
@@ -48,19 +51,18 @@ function shortAddress(value: string): string {
 
 function purchaseError(error: unknown): string {
   const message = error instanceof Error ? error.message : '';
+  const mapped = routerRejectionMessage(message);
+  if (mapped) return mapped;
   const lowered = message.toLowerCase();
   if (lowered.includes('user rejected')) return 'The purchase was cancelled.';
-  if (message.includes('CapExceeded') || message.includes('AllocationExceeded')) {
-    return 'This purchase is above the remaining allocation.';
-  }
   if (message.includes('AccessDenied')) return 'This market is not open to this wallet yet.';
-  if (message.includes('WalletNotRegistered')) return 'Link this wallet before purchasing.';
   if (lowered.includes('insufficient')) return 'The wallet does not have enough gas or USDC.';
   return 'The purchase could not be submitted.';
 }
 
 export default function InvestorExperience() {
   const { address, isConnected } = useAccount();
+  const { disconnect } = useDisconnect();
   const chainId = useChainId();
   const { switchChain, isPending: switching } = useSwitchChain();
   const publicClient = usePublicClient({ chainId: sepolia.id });
@@ -261,27 +263,18 @@ export default function InvestorExperience() {
   }
 
   async function linkWallet() {
-    if (!address || !publicClient || !walletClient?.account || !ledger || !groupId || !status) return;
+    if (!address || !publicClient || !walletClient?.account || !ledger || !groupId || !periodId || !status) return;
     setLinking(true);
-    setLink({ tone: 'pending', text: 'Confirm this is the same verified person.' });
-    const continued = await continueProofOfHuman({ sessionStore: browserSessionStore() });
-    if (!continued.ok) {
-      setLinking(false);
-      setLink({ tone: 'error', text: verificationFailure(continued.reason) });
-      return;
-    }
-    setLink({ tone: 'pending', text: 'Sign to prove this wallet is yours.' });
-    const authorized = await authorizeWalletLink({
-      continuationToken: continued.continuationToken,
-      wallet: address,
-      signTypedData: (typedData) => signTypedDataAsync(typedData as never),
-    });
-    if (!authorized.ok) {
-      setLinking(false);
-      setLink({ tone: 'error', text: walletLinkFailure(authorized.reason) });
-      return;
-    }
+    setLink({ tone: 'pending', text: routerPhaseLabel('registering') });
     const account = walletClient.account;
+    const result = await runSecondWallet({
+      continueSession: () => continueProofOfHuman({ sessionStore: browserSessionStore() }),
+      authorize: (continuationToken) => authorizeWalletLink({
+        continuationToken,
+        wallet: address,
+        signTypedData: (typedData) => signTypedDataAsync(typedData as never),
+      }),
+      register: async (authorization) => {
     const client: LedgerRegistrationClient = {
       getAllocationId: (wallet) => publicClient.readContract({
         address: ledger,
@@ -329,7 +322,7 @@ export default function InvestorExperience() {
       },
     };
     const submitted = await submitRegistration({
-      authorization: authorized,
+      authorization,
       connectedWallet: address,
       chainId,
       ledgerAddress: ledger,
@@ -341,21 +334,43 @@ export default function InvestorExperience() {
       await fetch('/api/world/registration-receipt', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ nonce: authorized.nonce, txHash: submitted.transactionHash }),
+        body: JSON.stringify({ nonce: authorization.nonce, txHash: submitted.transactionHash }),
       });
       await allocation.refetch();
     }
+    return { ok: submitted.ok };
+      },
+      readRemaining: () => publicClient.readContract({
+        address: ledger,
+        abi: LEDGER_VIEW_ABI,
+        functionName: 'remaining',
+        args: [address, groupId, periodId],
+      }),
+    });
     setLinking(false);
+    if (!result.registered) {
+      const detail = result.stage === 'continuation'
+        ? verificationFailure(result.reason ?? 'unexpected')
+        : result.stage === 'authorization'
+          ? walletLinkFailure(result.reason ?? 'unexpected')
+          : 'Registration was not confirmed.';
+      setLink({ tone: 'error', text: `${detail} This wallet was not registered.` });
+      return;
+    }
+    await remaining.refetch();
+    const shown = result.remaining === undefined
+      ? 'The shared remaining budget could not be read.'
+      : `Remaining shared budget: ${formatUsdc(result.remaining)}.`;
     setLink({
-      tone: submitted.ok ? 'ok' : submitted.state === 'pending' ? 'pending' : 'error',
-      text: submitted.message,
+      tone: 'ok',
+      text: `This wallet is registered to the same person. ${shown} This is the budget left by the previously linked wallet. Selling does not restore it.`,
     });
   }
 
   async function approveUsdc(value: bigint) {
     if (!walletClient || !execution?.usdc || !execution.executor) return;
     setApproving(true);
-    setPurchaseNotice({ tone: 'pending', text: 'Approve USDC for the purchase route.' });
+    setPurchaseNotice({ tone: 'pending', text: routerPhaseLabel('approving') });
     try {
       const hash = await walletClient.writeContract({
         account: walletClient.account,
@@ -384,7 +399,7 @@ export default function InvestorExperience() {
       return;
     }
     setBuying(true);
-    setPurchaseNotice({ tone: 'pending', text: 'Checking this purchase against the shared allocation.' });
+    setPurchaseNotice({ tone: 'pending', text: routerPhaseLabel('swapping') });
     const [currency0, currency1] = execution.usdc.toLowerCase() < execution.rwa.toLowerCase()
       ? [execution.usdc, execution.rwa]
       : [execution.rwa, execution.usdc];
@@ -403,7 +418,7 @@ export default function InvestorExperience() {
         functionName: 'swapExactInput',
         args: [poolKey, value],
       });
-      setPurchaseNotice({ tone: 'pending', text: 'Confirm the purchase in your wallet.' });
+      setPurchaseNotice({ tone: 'pending', text: routerPhaseLabel('swapping') });
       const hash = await walletClient.writeContract({
         account: walletClient.account,
         chain: sepolia,
@@ -418,9 +433,9 @@ export default function InvestorExperience() {
         return;
       }
       await Promise.all([spent.refetch(), remaining.refetch()]);
-      setPurchaseNotice({ tone: 'ok', text: 'Purchase confirmed. The remaining allocation was read again from Ethereum.' });
+      setPurchaseNotice({ tone: 'ok', text: `${routerPhaseLabel('success')}. The remaining allocation was read again from Ethereum.` });
     } catch (error) {
-      setPurchaseNotice({ tone: 'error', text: purchaseError(error) });
+      setPurchaseNotice({ tone: 'error', text: `${routerPhaseLabel('rejected')}. ${purchaseError(error)}` });
     } finally {
       setBuying(false);
     }
@@ -482,8 +497,21 @@ export default function InvestorExperience() {
           <p className="mt-3" role="status">{verify.text}</p>
         </section>
 
-        <section id="link" className="mt-8 border border-black p-5">
-          <h2 className="text-xl font-black">Link this wallet</h2>
+        <section id="second-wallet" className="mt-8 border border-black p-5">
+          <h2 className="text-xl font-black">Second wallet</h2>
+          <p className="mt-2 leading-relaxed">
+            Disconnect the wallet that already purchased, connect the next wallet, and continue the same proof of
+            human. This does not start a new enrollment. The remaining amount is the shared budget the first wallet
+            left behind.
+          </p>
+          <button
+            type="button"
+            className="mt-4 rounded border border-black px-4 py-2 font-bold disabled:opacity-50"
+            disabled={!isConnected}
+            onClick={() => disconnect()}
+          >
+            Disconnect this wallet
+          </button>
           <p className="mt-2">
             {address ? `Connected wallet ${shortAddress(address)}` : 'Connect a wallet to continue.'}
             {address && (
@@ -514,7 +542,7 @@ export default function InvestorExperience() {
             disabled={!isConnected || !onSepolia || !status?.registrationReady || linking || !walletClient}
             onClick={() => void linkWallet()}
           >
-            {linking ? 'Registration pending' : 'Link this wallet'}
+            {linking ? 'Registering' : 'Continue and register this wallet'}
           </button>
           <p className="mt-3" role="status">{link.text}</p>
         </section>
@@ -583,8 +611,8 @@ export default function InvestorExperience() {
               />
               {decision.reason === 'exceeds' && remainingValue !== null && requested !== null && (
                 <div className="mt-4 border border-black p-4" role="alert">
-                  <p className="font-black">Purchase rejected</p>
-                  <p>Your allocation limit would be exceeded.</p>
+                  <p className="font-black">Hook rejection</p>
+                  <p>{REMAINING_BUDGET_MESSAGE}</p>
                   <p>Maximum allocation: {cap === null ? 'Unavailable' : formatUsdc(cap)}</p>
                   <p>Previous purchases: {spentValue === null ? 'Unavailable' : formatUsdc(spentValue)}</p>
                   <p>Available allocation: {formatUsdc(remainingValue)}</p>
@@ -601,7 +629,7 @@ export default function InvestorExperience() {
                   disabled={approving || buying || !onSepolia || !linked || marketClosed}
                   onClick={() => void approveUsdc(requested)}
                 >
-                  {approving ? 'Approving USDC…' : 'Approve USDC'}
+                  {approving ? 'Approving' : 'Approve USDC'}
                 </button>
               )}
               {!needsApproval && (
@@ -611,7 +639,7 @@ export default function InvestorExperience() {
                   disabled={!decision.allowed || buying || approving || !onSepolia || !linked || marketClosed || !execution.available}
                   onClick={() => requested && void buy(requested)}
                 >
-                  {buying ? 'Purchase pending' : 'Buy with USDC'}
+                  {buying ? 'Swapping' : 'Buy with USDC'}
                 </button>
               )}
               {purchaseNotice.text && <p className="mt-3" role="status">{purchaseNotice.text}</p>}

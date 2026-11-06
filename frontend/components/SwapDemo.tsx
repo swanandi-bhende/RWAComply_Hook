@@ -3,19 +3,33 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   useAccount,
+  useChainId,
   usePublicClient,
   useReadContract,
+  useSwitchChain,
   useWriteContract,
 } from 'wagmi';
-import { formatUnits } from 'viem';
+import { anvil } from 'wagmi/chains';
+import { formatUnits, parseAbi, type Hex } from 'viem';
 import { loadDeploymentAddresses } from '@/config/deployments';
 import { ERC20_ABI, EXECUTOR_ABI, HOOK_ABI, ORACLE_ABI, POOL_FEE, TICK_SPACING } from '@/contracts';
 import { calculateDynamicFeeForTier } from '@/lib/hookFee';
+import {
+  PAUSED_POOL_MESSAGE,
+  UNREGISTERED_WALLET_MESSAGE,
+  routerPhaseLabel,
+  routerRejectionMessage,
+} from '@/lib/product/purchaseFlow';
 import { usdcPurchasePlan } from '@/lib/product/usdcPurchase';
 import { useTransactions } from '@/app/TransactionContext';
 import { TransactionHistory } from './TransactionHistory';
 
-type SwapPhase = 'idle' | 'approving' | 'executing' | 'success' | 'error';
+type SwapPhase = 'idle' | 'approving' | 'registering' | 'swapping' | 'success' | 'rejected';
+
+const ZERO_ALLOCATION = `0x${'0'.repeat(64)}` as Hex;
+const LEDGER_READ_ABI = parseAbi([
+  'function allocationIdByWallet(address wallet) view returns (bytes32)',
+]);
 
 const LIVE_REFETCH_MS = 1000;
 
@@ -30,17 +44,8 @@ function formatSwapError(raw: string): string {
     return 'Swap blocked by compliance tier. Set the swap actor tier to 1 or 2, then retry.';
   }
 
-  if (lowered.includes('poolpaused')) {
-    return 'Pool is paused. Unpause from Admin page and retry.';
-  }
-
-  if (lowered.includes('retaillimitexceeded')) {
-    return 'Retail swap cap exceeded. Reduce amount or update cap in Admin page.';
-  }
-
-  if (lowered.includes('allocationexceeded')) {
-    return 'This purchase is above the remaining USDC allocation for the connected wallet.';
-  }
+  const rejection = routerRejectionMessage(raw);
+  if (rejection) return rejection;
 
   if (lowered.includes('insufficient funds')) {
     return 'Insufficient gas balance in connected wallet. Fund the wallet with local ETH and retry.';
@@ -51,7 +56,9 @@ function formatSwapError(raw: string): string {
 
 export function SwapDemo() {
   const { address } = useAccount();
-  const publicClient = usePublicClient();
+  const walletChainId = useChainId();
+  const { switchChain, isPending: switchingChain } = useSwitchChain();
+  const publicClient = usePublicClient({ chainId: anvil.id });
   const { writeContractAsync } = useWriteContract();
   const { addTransaction } = useTransactions();
 
@@ -62,6 +69,7 @@ export function SwapDemo() {
     tokenB: string;
     poolManager: string;
     executor: string;
+    ledger?: string;
   } | null>(null);
   const [deploymentError, setDeploymentError] = useState<string | null>(null);
 
@@ -81,6 +89,26 @@ export function SwapDemo() {
     const load = async () => {
       try {
         const addr = await loadDeploymentAddresses();
+        if (!publicClient) return;
+        const rpcChainId = await publicClient.getChainId();
+        if (rpcChainId !== anvil.id) {
+          throw new Error('The configured RPC is not local Anvil chain 31337.');
+        }
+        const checks: Array<[string, string]> = [
+          ['PoolManager', addr.poolManager],
+          ['Hook', addr.hook],
+          ['Oracle', addr.oracle],
+          ['USDC', addr.tokenA],
+          ['RWA', addr.tokenB],
+          ['PoolExecutor', addr.executor],
+        ];
+        if (addr.ledger) checks.push(['AllocationLedger', addr.ledger]);
+        for (const [label, deployed] of checks) {
+          const code = await publicClient.getBytecode({ address: deployed as `0x${string}` });
+          if (!code || code === '0x') {
+            throw new Error(`${label} has no code on local Anvil. Run bash script/start_anvil_demo.sh and refresh.`);
+          }
+        }
         setAddresses({
           hook: addr.hook,
           oracle: addr.oracle,
@@ -88,16 +116,19 @@ export function SwapDemo() {
           tokenB: addr.tokenB,
           poolManager: addr.poolManager,
           executor: addr.executor,
+          ledger: addr.ledger,
         });
+        setDeploymentError(null);
       } catch (error) {
         setDeploymentError(error instanceof Error ? error.message : 'Failed to load deployment');
       }
     };
 
-    load();
-  }, []);
+    void load();
+  }, [publicClient]);
 
   const { data: userTier } = useReadContract({
+    chainId: anvil.id,
     address: addresses?.hook as `0x${string}`,
     abi: HOOK_ABI,
     functionName: 'userTier',
@@ -106,6 +137,7 @@ export function SwapDemo() {
   });
 
   const { data: userDynamicFee } = useReadContract({
+    chainId: anvil.id,
     address: addresses?.hook as `0x${string}`,
     abi: HOOK_ABI,
     functionName: 'getDynamicFee',
@@ -114,6 +146,7 @@ export function SwapDemo() {
   });
 
   const { data: volatility } = useReadContract({
+    chainId: anvil.id,
     address: addresses?.oracle as `0x${string}`,
     abi: ORACLE_ABI,
     functionName: 'getVolatility',
@@ -121,6 +154,7 @@ export function SwapDemo() {
   });
 
   const { data: threshold } = useReadContract({
+    chainId: anvil.id,
     address: addresses?.hook as `0x${string}`,
     abi: HOOK_ABI,
     functionName: 'volatilityThreshold',
@@ -128,6 +162,7 @@ export function SwapDemo() {
   });
 
   const { data: poolPaused } = useReadContract({
+    chainId: anvil.id,
     address: addresses?.hook as `0x${string}`,
     abi: HOOK_ABI,
     functionName: 'poolPaused',
@@ -135,6 +170,7 @@ export function SwapDemo() {
   });
 
   const { data: retailSwapCap } = useReadContract({
+    chainId: anvil.id,
     address: addresses?.hook as `0x${string}`,
     abi: HOOK_ABI,
     functionName: 'retailSwapCap',
@@ -142,6 +178,7 @@ export function SwapDemo() {
   });
 
   const { data: quoteToken } = useReadContract({
+    chainId: anvil.id,
     address: addresses?.executor as `0x${string}`,
     abi: EXECUTOR_ABI,
     functionName: 'usdc',
@@ -149,13 +186,25 @@ export function SwapDemo() {
   });
 
   const { data: rwaToken } = useReadContract({
+    chainId: anvil.id,
     address: addresses?.executor as `0x${string}`,
     abi: EXECUTOR_ABI,
     functionName: 'rwa',
     query: { enabled: !!addresses?.executor },
   });
 
+  const { data: allocationId } = useReadContract({
+    chainId: anvil.id,
+    address: addresses?.ledger as `0x${string}`,
+    abi: LEDGER_READ_ABI,
+    functionName: 'allocationIdByWallet',
+    args: [address as `0x${string}`],
+    query: { enabled: !!addresses?.ledger && !!address },
+  });
+  const walletRegistered = typeof allocationId === 'string' && allocationId !== ZERO_ALLOCATION;
+
   const { data: tokenADecimals } = useReadContract({
+    chainId: anvil.id,
     address: addresses?.tokenA as `0x${string}`,
     abi: ERC20_ABI,
     functionName: 'decimals',
@@ -163,6 +212,7 @@ export function SwapDemo() {
   });
 
   const { data: tokenBDecimals } = useReadContract({
+    chainId: anvil.id,
     address: addresses?.tokenB as `0x${string}`,
     abi: ERC20_ABI,
     functionName: 'decimals',
@@ -170,6 +220,7 @@ export function SwapDemo() {
   });
 
   const { data: userTokenABalance } = useReadContract({
+    chainId: anvil.id,
     address: addresses?.tokenA as `0x${string}`,
     abi: ERC20_ABI,
     functionName: 'balanceOf',
@@ -178,6 +229,7 @@ export function SwapDemo() {
   });
 
   const { data: userTokenBBalance, refetch: refetchUserTokenBBalance } = useReadContract({
+    chainId: anvil.id,
     address: addresses?.tokenB as `0x${string}`,
     abi: ERC20_ABI,
     functionName: 'balanceOf',
@@ -186,6 +238,7 @@ export function SwapDemo() {
   });
 
   const { data: executorTokenABalance } = useReadContract({
+    chainId: anvil.id,
     address: addresses?.tokenA as `0x${string}`,
     abi: ERC20_ABI,
     functionName: 'balanceOf',
@@ -194,6 +247,7 @@ export function SwapDemo() {
   });
 
   const { data: executorTokenBBalance } = useReadContract({
+    chainId: anvil.id,
     address: addresses?.tokenB as `0x${string}`,
     abi: ERC20_ABI,
     functionName: 'balanceOf',
@@ -229,32 +283,44 @@ export function SwapDemo() {
   const handleExecuteSwap = async () => {
     if (!address) {
       setErrorMessage('Connect wallet first.');
-      setPhase('error');
+      setPhase('rejected');
+      return;
+    }
+
+    if (walletChainId !== anvil.id) {
+      setErrorMessage('Switch the wallet to local Anvil before sending a purchase.');
+      setPhase('rejected');
       return;
     }
 
     if (!addresses?.executor) {
       setErrorMessage('Missing PoolExecutor address in deployment.');
-      setPhase('error');
+      setPhase('rejected');
+      return;
+    }
+
+    if (addresses.ledger && !walletRegistered) {
+      setErrorMessage(UNREGISTERED_WALLET_MESSAGE);
+      setPhase('registering');
       return;
     }
 
     if (Boolean(poolPaused)) {
-      setErrorMessage('Pool is paused. Swaps are disabled by admin control.');
-      setPhase('error');
+      setErrorMessage(PAUSED_POOL_MESSAGE);
+      setPhase('rejected');
       return;
     }
 
     const amount = Number(inputAmount || '0');
     if (!Number.isFinite(amount) || amount <= 0) {
       setErrorMessage('Enter a valid positive amount.');
-      setPhase('error');
+      setPhase('rejected');
       return;
     }
 
     if (!publicClient) {
       setErrorMessage('Public client unavailable.');
-      setPhase('error');
+      setPhase('rejected');
       return;
     }
 
@@ -272,20 +338,20 @@ export function SwapDemo() {
         setErrorMessage(
           `${label} is not deployed on current chain. Start Anvil, run bash script/run_canonical_demo.sh, then refresh.`
         );
-        setPhase('error');
+        setPhase('rejected');
         return;
       }
     }
 
     if (tier === 0) {
       setErrorMessage('Connected wallet is Tier 0, so beforeSwap will revert. Set this wallet to tier 1 or 2 from Admin.');
-      setPhase('error');
+      setPhase('rejected');
       return;
     }
 
     if (!quoteToken || !rwaToken) {
       setErrorMessage('The router USDC token is not available. The purchase was not sent.');
-      setPhase('error');
+      setPhase('rejected');
       return;
     }
 
@@ -314,7 +380,7 @@ export function SwapDemo() {
       });
       if (!purchase.ok) {
         setErrorMessage('Enter a USDC amount. The purchase was not sent.');
-        setPhase('error');
+        setPhase('rejected');
         return;
       }
 
@@ -327,7 +393,7 @@ export function SwapDemo() {
       setApprovalTxHash(approveHash);
       await publicClient.waitForTransactionReceipt({ hash: approveHash });
 
-      setPhase('executing');
+      setPhase('swapping');
 
       const swapHash = await writeContractAsync({
         address: purchase.plan.swap.router as `0x${string}`,
@@ -385,7 +451,7 @@ export function SwapDemo() {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Swap execution failed';
       setErrorMessage(formatSwapError(message));
-      setPhase('error');
+      setPhase('rejected');
     }
   };
 
@@ -492,6 +558,20 @@ export function SwapDemo() {
             </div>
 
             <div className="space-y-4">
+              {address && walletChainId !== anvil.id && (
+                <div className="border-2 border-black p-3 text-sm" role="status">
+                  <p>The connected wallet is not on local Anvil (chain 31337). The purchase form is showing the Anvil market, and no transaction will be sent on another network.</p>
+                  <button
+                    type="button"
+                    className="mt-2 bg-black px-3 py-2 font-bold text-white disabled:opacity-50"
+                    disabled={switchingChain}
+                    onClick={() => switchChain({ chainId: anvil.id })}
+                  >
+                    {switchingChain ? 'Switching network' : 'Switch to Anvil'}
+                  </button>
+                </div>
+              )}
+              <p className="text-sm font-bold" role="status">Router state: {routerPhaseLabel(phase)}</p>
               <div>
                 <label className="block text-sm font-semibold text-black mb-2" htmlFor="usdc-purchase-amount">USDC amount</label>
                 <input
@@ -501,7 +581,7 @@ export function SwapDemo() {
                   min="0"
                   step="0.01"
                   onChange={(event) => setInputAmount(event.target.value)}
-                  disabled={phase === 'approving' || phase === 'executing'}
+                  disabled={phase === 'approving' || phase === 'swapping'}
                   className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg font-mono"
                 />
                 <p className="text-xs text-black mt-2">
@@ -513,14 +593,16 @@ export function SwapDemo() {
                 <button
                   type="button"
                   onClick={handleExecuteSwap}
-                  disabled={phase === 'approving' || phase === 'executing' || !address}
+                  disabled={phase === 'approving' || phase === 'swapping' || !address || (!!address && walletChainId !== anvil.id)}
                   className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-3 rounded-lg transition"
                 >
                   {phase === 'approving'
-                    ? 'Approving...'
-                    : phase === 'executing'
-                      ? 'Executing swap...'
-                      : 'Run Real Swap Flow'}
+                    ? 'Approving'
+                    : phase === 'registering'
+                      ? 'Registering'
+                      : phase === 'swapping'
+                        ? 'Swapping'
+                        : 'Run Real Swap Flow'}
                 </button>
                 <button
                   type="button"
@@ -539,22 +621,22 @@ export function SwapDemo() {
             <h3 className="font-bold text-lg mb-4">Transaction Breakdown</h3>
             <div className="space-y-3 text-sm">
               <StepRow
-                title="1) Approval"
+                title="1) Registration"
+                description={walletRegistered ? 'This wallet is already registered' : 'Registering is required before a purchase'}
+                done={walletRegistered}
+                running={phase === 'registering'}
+              />
+              <StepRow
+                title="2) Approval"
                 description="approve(USDC -> router)"
                 done={!!approvalTxHash}
                 running={phase === 'approving'}
               />
               <StepRow
-                title="2) beforeSwap hook"
-                description="Checks the connected wallet and remaining USDC"
-                done={phase === 'success' || phase === 'executing'}
-                running={phase === 'executing'}
-              />
-              <StepRow
                 title="3) Swap execution"
                 description="swapExactInput settles the purchase"
                 done={!!swapTxHash}
-                running={phase === 'executing'}
+                running={phase === 'swapping'}
               />
               <StepRow
                 title="4) afterSwap hook"
@@ -605,9 +687,9 @@ export function SwapDemo() {
             </div>
           )}
 
-          {phase === 'error' && (
+          {(phase === 'rejected' || phase === 'registering') && (
             <div className="border-2 border-red-400 rounded-lg p-6 bg-red-50">
-              <h3 className="font-bold text-lg text-red-800 mb-2">Execution Error</h3>
+              <h3 className="font-bold text-lg text-red-800 mb-2">{phase === 'registering' ? 'Registering' : 'Hook rejection'}</h3>
               <p className="text-sm text-red-700 wrap-break-word">{errorMessage || 'Transaction failed'}</p>
               <p className="text-xs text-red-700 mt-3">
                 Tier-0 failures are expected when swap actor tier is unverified, demonstrating

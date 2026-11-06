@@ -1,7 +1,6 @@
 /**
  * Deployment config loader
- * Reads from broadcast/DeployFull.s.sol/31337/run-latest.json or env
- * Fails fast if deployment is stale or addresses don't match
+ * Reads the local Anvil broadcast. It does not use Sepolia environment addresses.
  */
 
 export interface DeploymentAddresses {
@@ -11,55 +10,38 @@ export interface DeploymentAddresses {
   tokenA: string;
   tokenB: string;
   executor: string;
+  ledger?: string;
 }
 
 let cachedAddresses: DeploymentAddresses | null = null;
-let loadError: string | null = null;
 
 /**
- * Load deployment addresses from environment
- * Must be called after connecting to chain
+ * Load the verified local Anvil deployment.
+ * The caller still has to read contract code on chain 31337.
  */
 export async function loadDeploymentAddresses(): Promise<DeploymentAddresses> {
   if (cachedAddresses) return cachedAddresses;
-  if (loadError) throw new Error(loadError);
 
-  try {
-    // Try to load from broadcast data first (most recent deployment)
-    const broadcastResponse = await fetch('/api/deployment-addresses');
-    if (broadcastResponse.ok) {
-      const data = await broadcastResponse.json();
-      cachedAddresses = {
-        poolManager: data.poolManager || data.POOL_MANAGER,
-        hook: data.hook || data.HOOK_ADDRESS,
-        oracle: data.oracle || data.ORACLE_ADDRESS,
-        tokenA: data.tokenA || data.TOKEN_A_ADDRESS,
-        tokenB: data.tokenB || data.TOKEN_B_ADDRESS,
-        executor: data.executor || data.EXECUTOR_ADDRESS || '',
-      };
-
-      // Validate all addresses are present and valid
-      validateAddresses(cachedAddresses);
-      return cachedAddresses;
-    }
-
-    // Fallback to env variables
-    const addresses: DeploymentAddresses = {
-      poolManager: process.env.NEXT_PUBLIC_POOL_MANAGER || '',
-      hook: process.env.NEXT_PUBLIC_HOOK_ADDRESS || '',
-      oracle: process.env.NEXT_PUBLIC_ORACLE_ADDRESS || '',
-      tokenA: process.env.NEXT_PUBLIC_TOKEN_A_ADDRESS || '',
-      tokenB: process.env.NEXT_PUBLIC_TOKEN_B_ADDRESS || '',
-      executor: process.env.NEXT_PUBLIC_EXECUTOR_ADDRESS || '',
-    };
-
-    validateAddresses(addresses);
-    cachedAddresses = addresses;
-    return addresses;
-  } catch (error) {
-    loadError = `Failed to load deployment addresses: ${error instanceof Error ? error.message : String(error)}`;
-    throw new Error(loadError);
+  const broadcastResponse = await fetch('/api/deployment-addresses', { cache: 'no-store' });
+  const data = await broadcastResponse.json() as Partial<DeploymentAddresses> & { error?: string; chainId?: number };
+  if (!broadcastResponse.ok) {
+    throw new Error(data.error || 'Local Anvil deployment is unavailable.');
   }
+  if (data.chainId !== 31337) {
+    throw new Error('The loaded deployment is not local Anvil.');
+  }
+  const addresses: DeploymentAddresses = {
+    poolManager: data.poolManager || '',
+    hook: data.hook || '',
+    oracle: data.oracle || '',
+    tokenA: data.tokenA || '',
+    tokenB: data.tokenB || '',
+    executor: data.executor || '',
+    ledger: data.ledger,
+  };
+  validateAddresses(addresses);
+  cachedAddresses = addresses;
+  return addresses;
 }
 
 function validateAddresses(addresses: DeploymentAddresses) {
@@ -70,7 +52,7 @@ function validateAddresses(addresses: DeploymentAddresses) {
       throw new Error(
         `Invalid or missing deployment address: ${key}. ` +
         `Ensure contracts are deployed and broadcast data is available. ` +
-        `Run: bash script/run_canonical_demo.sh`
+        `Run: bash script/start_anvil_demo.sh`
       );
     }
   }
@@ -82,5 +64,4 @@ export function getAddressesOrNull(): DeploymentAddresses | null {
 
 export function clearCache() {
   cachedAddresses = null;
-  loadError = null;
 }

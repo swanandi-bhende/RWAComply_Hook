@@ -58,31 +58,15 @@ npm run verify:world-signer
 
 ## Contracts the UI expects
 
-The local technical demo at `/demo` reads and writes Anvil at `http://127.0.0.1:8545`, chain id `31337`. The investor pages target Ethereum Sepolia, chain id `11155111`. Start Anvil, then deploy, when using the local demo:
+The local technical demo at `/demo` reads and writes Anvil at `http://127.0.0.1:8545`, chain id `31337`. The investor pages target Ethereum Sepolia, chain id `11155111`. From the repository root:
 
 ```bash
-anvil
+bash script/start_anvil_demo.sh
 ```
 
-In another shell, from the repository root:
+That command starts Anvil when port 8545 is not already serving chain `31337`, funds the deployer on that local node, and broadcasts `script/DeployFull.s.sol` only to Anvil. It does not edit `.env` and it does not send a Sepolia transaction. `PRIVATE_KEY` stays in the repository-root `.env`.
 
-```bash
-# Put PRIVATE_KEY in the repository-root .env. Do not commit .env.
-bash script/run_canonical_demo.sh
-```
-
-`script/DeployFull.s.sol` reads `PRIVATE_KEY` from the environment.
-
-The page loads contract addresses from `broadcast/DeployFull.s.sol/31337/run-latest.json`. That file is created by the deploy script and is gitignored. If that file is missing, set the public addresses in the repository-root `.env`:
-
-- `NEXT_PUBLIC_POOL_MANAGER`
-- `NEXT_PUBLIC_HOOK_ADDRESS`
-- `NEXT_PUBLIC_ORACLE_ADDRESS`
-- `NEXT_PUBLIC_TOKEN_A_ADDRESS`
-- `NEXT_PUBLIC_TOKEN_B_ADDRESS`
-- `NEXT_PUBLIC_EXECUTOR_ADDRESS`
-
-Without a deploy or those variables, the homepage still renders. `/api/deployment-addresses` returns an error until addresses exist.
+The page loads addresses from `broadcast/DeployFull.s.sol/31337/run-latest.json`. That file is gitignored local Anvil state. `/api/deployment-addresses` returns those addresses with `chainId: 31337`. It does not read `NEXT_PUBLIC_*` values, so a Sepolia PoolManager address in `.env` cannot fill the Anvil form. The Swap Demo then reads bytecode on chain `31337` and shows the purchase form only after the hook, executor, tokens, oracle, and PoolManager have code. A connected wallet on another chain sees a switch control, and the purchase button does not send.
 
 The wallet control is RainbowKit’s Connect button, configured with the injected connector on the Anvil chain. No WalletConnect project id is required for that setup.
 
@@ -184,6 +168,12 @@ The investor page action “Enroll and register this wallet” requests a relyin
 
 The local Anvil swap demo treats the typed value as a six-decimal USDC amount. It approves that amount to the `PoolExecutor` and calls `swapExactInput` with the same amount. It does not approve the PoolManager. If the router’s USDC address cannot be read, the purchase is not sent.
 
+The purchase panel shows Approving, Registering, Swapping, Success, and Hook rejection. `RetailLimitExceeded`, `AllocationExceeded`, and `CapExceeded` are shown as “remaining budget is not enough.” An unregistered wallet is shown as “This wallet is not registered.” A paused pool is shown as “The pool is paused.” Registering does not send a purchase.
+
+`/invest` has a Second wallet section. Disconnect the current wallet, connect the next one, and use “Continue and register this wallet.” That path calls `/api/world/continue`, then the existing wallet signature and `registerWallet`. It does not start a new enrollment and it does not show the allocation id. After registration, the page reads `remaining` for the connected wallet. A cancelled continuation does not authorize or register the wallet. This live World ID continuation still needs a real World ID session and a deployed Sepolia ledger.
+
+A local Anvil purchase of 2 USDC through the executor reduced the deployer USDC balance by 2 USDC and increased recorded spend by 2 USDC. The approval spender was the executor. The PoolManager allowance stayed 0. A later 1,000 USDC purchase reverted with `AllocationExceeded` and left the recorded spend unchanged. Those transactions were on chain `31337` only.
+
 ## Sepolia deployment preparation
 
 The investor pages target Ethereum Sepolia, chain id `11155111`. Local Anvil deployment stays in `script/DeployFull.s.sol` and is not the Sepolia path.
@@ -208,7 +198,7 @@ Broadcast is a later explicit step:
 forge script script/DeploySepolia.s.sol:DeploySepolia --sig "run()" --rpc-url "$ALLOCATION_RPC_URL" --gas-estimate-multiplier 800 --with-gas-price 500000000 --broadcast --slow
 ```
 
-Do not run the broadcast command until the preflight succeeds and a fresh broadcast is approved. The corrected simulation has not been sent. After a real deployment, copy the logged addresses into the root `.env` as `ALLOCATION_LEDGER_ADDRESS`, `NEXT_PUBLIC_HOOK_ADDRESS`, `NEXT_PUBLIC_EXECUTOR_ADDRESS`, `NEXT_PUBLIC_ORACLE_ADDRESS`, `NEXT_PUBLIC_TOKEN_A_ADDRESS`, and `NEXT_PUBLIC_TOKEN_B_ADDRESS`. The app still checks code, the backend signer, the group, and the policy before it shows registration or the purchase market as ready. A deployed ledger does not make the market ready. A ready market does not mean a wallet is linked or approved.
+Do not run the broadcast command until the preflight succeeds and a fresh broadcast is approved. The latest check found deployer nonce 1, both confirmed and pending, base fee below the 0.5 gwei cap, and no code at the predicted addresses. `forge script` without `--broadcast` completed the simulation and wrote a dry-run only. No Sepolia transaction was sent. After a real deployment, copy the logged addresses into the root `.env` as `ALLOCATION_LEDGER_ADDRESS`, `NEXT_PUBLIC_HOOK_ADDRESS`, `NEXT_PUBLIC_EXECUTOR_ADDRESS`, `NEXT_PUBLIC_ORACLE_ADDRESS`, `NEXT_PUBLIC_TOKEN_A_ADDRESS`, and `NEXT_PUBLIC_TOKEN_B_ADDRESS`. The app still checks code, the backend signer, the group, and the policy before it shows registration or the purchase market as ready. A deployed ledger does not make the market ready. A ready market does not mean a wallet is linked or approved.
 
 `ALLOCATION_RPC_URL` may be `http`, `https`, `ws`, or `wss`.
 
