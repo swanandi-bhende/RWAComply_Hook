@@ -155,10 +155,12 @@ test('a matching ledger and market can be live, and a token mismatch cannot', as
 
 test('verification and wallet-link failures do not claim success', () => {
   assert.match(verificationFailure('cancelled'), /cancelled/i);
-  assert.match(verificationFailure('proof_failed'), /not accepted/);
+  assert.match(verificationFailure('proof_failed'), /could not be completed/);
   assert.match(verificationFailure('unexpected'), /could not be completed/);
+  assert.match(verificationFailure('cancelled'), /No wallet was registered/);
   assert.doesNotMatch(verificationFailure('cancelled'), /verified/i);
-  assert.match(walletLinkFailure('conflict'), /different allocation/);
+  assert.match(walletLinkFailure('conflict'), /another allocation/);
+  assert.match(walletLinkFailure('expired'), /expired/);
   assert.match(walletLinkFailure('signature_rejected'), /cancelled/);
 });
 

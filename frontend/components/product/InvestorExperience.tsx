@@ -102,7 +102,7 @@ export default function InvestorExperience() {
     queryFn: async () => {
       const url = address ? `/api/offerings?wallet=${address}` : '/api/offerings';
       const response = await fetch(url, { cache: 'no-store' });
-      if (!response.ok) throw new Error('The offering directory could not be loaded');
+      if (!response.ok) throw new Error('Offering information could not be refreshed. Trading rules are still checked onchain.');
       return response.json() as Promise<{
         arkivStatus: 'ready' | 'missing' | 'expired' | 'mismatch' | 'unavailable';
         warning: string | null;
@@ -119,6 +119,19 @@ export default function InvestorExperience() {
         } | null;
         chain: { cap: string | null; periodId: string | null; remaining: string | null; usdc: string | null; rwa: string | null };
       }>;
+    },
+  });
+  const purchasesQuery = useQuery({
+    queryKey: ['purchases', address ?? 'none'],
+    enabled: !!address,
+    queryFn: async () => {
+      const response = await fetch(`/api/product/purchases?wallet=${address}`, { cache: 'no-store' });
+      const body = await response.json() as {
+        purchases?: Array<{ transactionHash: string; amount: string; newSpent: string }>;
+        error?: string;
+      };
+      if (!response.ok) throw new Error(body.error ?? 'Purchase history could not be read from Ethereum.');
+      return body.purchases ?? [];
     },
   });
   const statusQuery = useQuery({
@@ -490,7 +503,7 @@ export default function InvestorExperience() {
       });
       const receipt = await publicClient.waitForTransactionReceipt({ hash });
       if (receipt.status !== 'success') {
-        setPurchaseNotice({ tone: 'error', text: 'The purchase failed. Your allocation was not increased by a reverted purchase.' });
+        setPurchaseNotice({ tone: 'error', text: 'The transaction failed. Your allocation was not used.' });
         return;
       }
       await Promise.all([spent.refetch(), remaining.refetch()]);
@@ -622,7 +635,7 @@ export default function InvestorExperience() {
             </p>
             {offeringsQuery.isLoading && <p className="quiet">Reading the offering directory.</p>}
             {offeringsQuery.isError && (
-              <p className="notice" data-tone="error" role="alert">The offering directory could not be loaded. The purchase button still uses the Ethereum contract.</p>
+              <p className="notice" data-tone="error" role="alert">Offering information could not be refreshed. Trading rules are still checked onchain.</p>
             )}
             {offeringsQuery.data?.warning && (
               <p className="notice" data-tone="pending" role="status">{offeringsQuery.data.warning}</p>
@@ -746,6 +759,31 @@ export default function InvestorExperience() {
               Other linked wallets are not listed here. Any wallet linked to the same person shares this remaining
               amount. Selling does not restore it.
             </p>
+            {address && (
+              <div>
+                <h3 className="section-title">Purchases by this wallet</h3>
+                {purchasesQuery.isLoading && <p className="quiet">Reading purchase events from Ethereum Sepolia.</p>}
+                {purchasesQuery.isError && (
+                  <p className="notice" data-tone="error" role="alert">Purchase history could not be read from Ethereum.</p>
+                )}
+                {purchasesQuery.data && purchasesQuery.data.length === 0 && (
+                  <p className="quiet">No purchase is recorded for this wallet. A reverted purchase is not listed.</p>
+                )}
+                {purchasesQuery.data && purchasesQuery.data.length > 0 && (
+                  <ul>
+                    {purchasesQuery.data.map((purchase) => (
+                      <li key={purchase.transactionHash}>
+                        {formatUsdc(BigInt(purchase.amount))} USDC
+                        {' · shared total '}
+                        {formatUsdc(BigInt(purchase.newSpent))}
+                        {' · '}
+                        {purchase.transactionHash.slice(0, 10)}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
           </section>
 
           <section id="purchase" className="panel">

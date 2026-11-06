@@ -44,6 +44,45 @@ test('the README states the identity boundary and the run order', () => {
   assert.ok(anvil < deploy && deploy < server && server < publish && publish < purchase && purchase < tests);
 });
 
+test('the World note, the limits, and the demo script stay specific', () => {
+  const world = doc('docs/world-integration.md');
+  const script = doc('docs/demo-script.md');
+  const readme = doc('README.md');
+  assert.match(world, /has not been completed/);
+  assert.match(world, /portal failures do not create an enrollment/);
+  assert.match(world, /IDKit\.proveSession/);
+  assert.match(world, /Cursor/);
+  assert.match(world, /1629f37/);
+  assert.match(readme, /not KYC or AML/);
+  assert.match(readme, /exact-input USDC purchase/);
+  assert.match(readme, /direct token transfers/);
+  assert.match(readme, /Selling RWA does not restore the budget/);
+  assert.match(script, /720p/);
+  assert.match(script, /AI voiceover/);
+  assert.match(script, /700/);
+  assert.match(script, /500/);
+  assert.match(script, /200/);
+  assert.match(script, /Bob/);
+  assert.equal(world.includes('PRIVATE_KEY='), false);
+});
+
+test('the partner file list is present and Swarm is not added', () => {
+  const readme = doc('README.md');
+  for (const file of [
+    'FEEDBACK.md',
+    'arkiv/schema.md',
+    'arkiv/friction.md',
+    'arkiv/reach.md',
+    'arkiv/why-arkiv.md',
+    'arkiv/how-you-use-arkiv.md',
+  ]) {
+    doc(file);
+  }
+  assert.match(readme, /0xbfBf7Ca4f33993fA8b918d38286dad927231FB72/);
+  assert.match(readme, /projectTag = str\('rwacomply'\) AND offeringId = str\('sepolia-demo-rwa'\)/);
+  assert.throws(() => doc('arkiv/swarm.md'));
+});
+
 test('the Uniswap feedback note points at the hook callbacks and the router', () => {
   const feedback = doc('FEEDBACK.md');
   assert.match(feedback, /https:\/\/developers\.uniswap\.org\/hackathon-feedback/);

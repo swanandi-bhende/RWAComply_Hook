@@ -1,14 +1,17 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  EXACT_INPUT_MESSAGE,
   PAUSED_POOL_MESSAGE,
+  QUOTE_TOKEN_MESSAGE,
   REMAINING_BUDGET_MESSAGE,
+  ROUTE_MESSAGE,
   UNREGISTERED_WALLET_MESSAGE,
   routerPhaseLabel,
   routerRejectionMessage,
 } from './purchaseFlow.ts';
 
-test('retail and allocation rejections say the remaining budget is not enough', () => {
+test('retail and allocation rejections name the remaining allocation', () => {
   assert.equal(routerRejectionMessage('RetailLimitExceeded()'), REMAINING_BUDGET_MESSAGE);
   assert.equal(routerRejectionMessage('AllocationExceeded(100, 20)'), REMAINING_BUDGET_MESSAGE);
   assert.equal(routerRejectionMessage('CapExceeded(1, 2, 3)'), REMAINING_BUDGET_MESSAGE);
@@ -29,6 +32,15 @@ test('an unregistered wallet and a paused pool keep their own messages', () => {
   assert.equal(routerRejectionMessage('WalletNotRegistered(0x1)'), UNREGISTERED_WALLET_MESSAGE);
   assert.equal(routerRejectionMessage('PoolPaused()'), PAUSED_POOL_MESSAGE);
   assert.equal(routerRejectionMessage('user rejected the request'), null);
+});
+
+test('exact input, quote token, and router failures keep the section 18 sentences', () => {
+  assert.equal(routerRejectionMessage('ExactInputRequired()'), EXACT_INPUT_MESSAGE);
+  assert.equal(routerRejectionMessage('custom error 0x3674ff33'), EXACT_INPUT_MESSAGE);
+  assert.equal(routerRejectionMessage('UnsupportedInputCurrency()'), QUOTE_TOKEN_MESSAGE);
+  assert.equal(routerRejectionMessage('custom error 0x62e5a4d2'), QUOTE_TOKEN_MESSAGE);
+  assert.equal(routerRejectionMessage('UntrustedRouter(0x1)'), ROUTE_MESSAGE);
+  assert.equal(routerRejectionMessage('custom error 0x9e5aca9d'), ROUTE_MESSAGE);
 });
 
 test('router phases use the approved labels', () => {

@@ -589,6 +589,11 @@ button.link {
 }
 
 @media (max-width: 760px) {
+  .site-header > .site-header-inner {
+    width: min(var(--content-width), calc(100% - 16px));
+    gap: 8px;
+  }
+
   .page {
     width: min(var(--content-width), calc(100% - 28px));
     padding-top: var(--space-6);

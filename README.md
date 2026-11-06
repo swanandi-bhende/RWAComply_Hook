@@ -106,7 +106,13 @@ forge test
 cd frontend && npm run test:world
 ```
 
-Uniswap hook notes for this continuity submission are in [`FEEDBACK.md`](FEEDBACK.md).
+Uniswap hook notes for this continuity submission are in [`FEEDBACK.md`](FEEDBACK.md). The World ID note is [`docs/world-integration.md`](docs/world-integration.md). The spoken demo script is [`docs/demo-script.md`](docs/demo-script.md).
+
+## Limits
+
+The World ID credential is not KYC or AML. It is a proof of human for this session.
+
+The cap applies to the router's exact-input USDC purchase, `PoolExecutor.swapExactInput`, through this hook. It does not block direct token transfers, other protocols, or other chains. Selling RWA does not restore the budget. The spent amount stays on `AllocationLedger`.
 
 ## License
 

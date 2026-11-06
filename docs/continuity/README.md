@@ -4,6 +4,20 @@ RWAComply V2 extends the existing Uniswap v4 hook. The earlier product checks wh
 
 The allocation id is an opaque server identifier. Proof of Human enrollment can create one after World verifies a session-bound uniqueness proof. That check is not KYC, AML, accreditation, or legal eligibility. The ledger registration of a wallet is separate and is not issued by this enrollment step.
 
+## Verified deployment
+
+The sections below keep the history of this note. They are not the current deployment record.
+
+On 6 November 2026 a read of Ethereum Sepolia, chain id `11155111`, showed:
+
+- Ledger `0xc74c64fee3b4C2D1E2ed37F218f0179026A9ceeA` owner `0x36Dc780DA078Ab4b8C5923bEd34eF4546DCb8ce6`.
+- `backendSigner()` `0x28FB61Dc27a37091f53C0c37b5026AdBbF5E1F46`. That is the configured allocation signer. It is not the deployer and not the World ID signer.
+- Authorized hook `0xD092CbB8De7cCa60807Ca73213f12920Afd308c0`. Trusted router `0x0E4f7a7D8bA8d629784056A04105d0a322b9768D`.
+- Group `0xa6d68dbbe026d4e383d3af4257793a771d58cc2c2388bde9d3273a210e581677`, period `1`, cap `1000000000`.
+- Deployer tier `0`. Liquidity helper tier `2`, which is seeding, not investor approval.
+
+The deployment record is `docs/sepolia-deployment.md`. No investor wallet was registered by that read.
+
 ## Earlier product
 
 Commits `15f1a4e` (2026-02-27) through `1629f37` (2026-03-20) contain the earlier hook. As described by the repository README, that product has:
@@ -33,7 +47,7 @@ These commits are in the repository history. Their dates are the git author date
 | `12fe9f5` | 2026-11-06 | World ID signer check, root `.env` loading, and enrollment API hardening. |
 | `2f9dc28` | 2026-11-06 | World ID session continuation and wallet-association authorization. |
 
-`2f9dc28` is the current committed `HEAD` of branch `v2`. Onchain registration submission after that commit is in the working tree and is not part of the commit.
+`2f9dc28` was the committed `HEAD` when this table was written. Later commits on `v2` deployed the Sepolia market and published the Arkiv offering. Do not treat this table as the full history.
 
 ## What V2 adds
 
@@ -56,7 +70,7 @@ The recorded number is the USDC paid, not the RWA received. The same check is co
 
 - Proof of Human enrollment can verify a session-bound `signup` proof, store the session encrypted, and create an allocation id. The investor page can continue that session, ask the wallet to sign, and submit registration. The wallet is treated as linked only after the chain state matches. Live Sepolia balances and purchases stay unavailable until the configured contracts have code. No sample values are shown as live data.
 - The budget applies only to the `PoolExecutor.swapExactInput` route into this hook.
-- Sepolia deployment was attempted once. The oracle creation `0x2285cdd075944609f38007b652a0adcf4ce71b8ceed4e57f8c8272f06a393539` reverted out of gas in block `12075637`, and the deployer nonce is 1. A corrected gas limit is prepared in `script/DeploySepolia.s.sol` and has not been broadcast. The hook owner must set an access tier before a linked wallet can purchase. Proof of human does not set that tier.
+- The first Sepolia attempt reverted. That oracle creation `0x2285cdd075944609f38007b652a0adcf4ce71b8ceed4e57f8c8272f06a393539` ran out of gas in block `12075637`. A later broadcast succeeded. See the verified deployment section above. The hook owner must set an access tier before a linked wallet can purchase. Proof of human does not set that tier.
 - Direct transfers, other pools, and other protocols are outside this check.
 - A sale does not reduce the recorded spend.
 - The tier, retail-cap, pause, and dynamic-fee checks still run on this route. Low volatility uses fee 1000. High volatility uses 5000 for tier 1 and 500 for tier 2.
