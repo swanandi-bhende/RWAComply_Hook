@@ -6,6 +6,7 @@ import {
   type RpContext,
 } from '@worldcoin/idkit-core';
 import type { WorldEnvironment } from './config.ts';
+import type { SessionIdStore } from './sessionStore.ts';
 
 export type EnrollmentClientSuccess = {
   ok: true;
@@ -84,6 +85,7 @@ function completionFailure(error: string): EnrollmentClientFailure {
 export async function enrollProofOfHuman(options: {
   fetchImpl?: typeof fetch;
   openRequest?: (config: IDKitRequestConfig) => Promise<ProofOfHumanRequest>;
+  sessionStore?: SessionIdStore;
   signal?: AbortSignal;
   timeoutMs?: number;
 } = {}): Promise<EnrollmentClientResult> {
@@ -154,5 +156,6 @@ export async function enrollProofOfHuman(options: {
   if (body.success !== true || typeof body.session_id !== 'string') {
     return { ok: false, reason: 'unexpected' };
   }
+  options.sessionStore?.write(body.session_id);
   return { ok: true, sessionId: body.session_id };
 }

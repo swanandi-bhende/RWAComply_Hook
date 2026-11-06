@@ -17,6 +17,12 @@ export type WorldEnv = {
   WORLD_SESSION_ENCRYPTION_KEY?: string;
   WORLD_ID_ENVIRONMENT?: string;
   WORLD_ENROLLMENT_DB_PATH?: string;
+  ALLOCATION_AUTH_SIGNING_KEY?: string;
+  ALLOCATION_AUTH_SIGNER_ADDRESS?: string;
+  ALLOCATION_LEDGER_ADDRESS?: string;
+  ALLOCATION_CHAIN_ID?: string;
+  ALLOCATION_GROUP_ID?: string;
+  ALLOCATION_RPC_URL?: string;
   [key: string]: string | undefined;
 };
 
@@ -156,5 +162,87 @@ export function readEnrollmentConfig(env: WorldEnv = process.env): EnrollmentSer
     environment,
     sessionEncryptionKey,
     databasePath,
+  };
+}
+
+const BYTES32_PATTERN = /^0x[0-9a-fA-F]{64}$/;
+const HTTP_URL_PATTERN = /^https?:\/\/\S+$/;
+
+export type AllocationAuthConfig = {
+  signingKeyHex: `0x${string}`;
+  signerAddress: `0x${string}`;
+  ledgerAddress: `0x${string}`;
+  chainId: number;
+  groupId: `0x${string}`;
+  rpcUrl?: string;
+};
+
+export function readAllocationConfig(env: WorldEnv = process.env): AllocationAuthConfig {
+  const world = readWorldConfig(env);
+  const signingKeyHex = normalizedSigningKey(
+    requireFormat(
+      requiredValue(env.ALLOCATION_AUTH_SIGNING_KEY, 'ALLOCATION_AUTH_SIGNING_KEY is not configured'),
+      SIGNING_KEY_PATTERN,
+      'ALLOCATION_AUTH_SIGNING_KEY is invalid',
+    ),
+  );
+  if (keyBytes(signingKeyHex).equals(keyBytes(world.signingKeyHex))) {
+    throw new WorldConfigError('ALLOCATION_AUTH_SIGNING_KEY must not reuse the World ID signing key');
+  }
+
+  const signerAddress = requireFormat(
+    requiredValue(env.ALLOCATION_AUTH_SIGNER_ADDRESS, 'ALLOCATION_AUTH_SIGNER_ADDRESS is not configured'),
+    ADDRESS_PATTERN,
+    'ALLOCATION_AUTH_SIGNER_ADDRESS is invalid',
+  );
+  let derived = '';
+  try {
+    derived = privateKeyToAccount(signingKeyHex).address;
+  } catch {
+    throw new WorldConfigError('ALLOCATION_AUTH_SIGNING_KEY is invalid');
+  }
+  if (derived.toLowerCase() !== signerAddress.toLowerCase()) {
+    throw new WorldConfigError('ALLOCATION_AUTH_SIGNING_KEY does not match ALLOCATION_AUTH_SIGNER_ADDRESS');
+  }
+
+  const ledgerAddress = requireFormat(
+    requiredValue(env.ALLOCATION_LEDGER_ADDRESS, 'ALLOCATION_LEDGER_ADDRESS is not configured'),
+    ADDRESS_PATTERN,
+    'ALLOCATION_LEDGER_ADDRESS is invalid',
+  );
+  if (BigInt(ledgerAddress) === BigInt(0)) {
+    throw new WorldConfigError('ALLOCATION_LEDGER_ADDRESS is invalid');
+  }
+
+  const chainText = requiredValue(env.ALLOCATION_CHAIN_ID, 'ALLOCATION_CHAIN_ID is not configured');
+  if (!/^[1-9][0-9]*$/.test(chainText)) {
+    throw new WorldConfigError('ALLOCATION_CHAIN_ID is invalid');
+  }
+  const chainId = Number(chainText);
+  if (!Number.isSafeInteger(chainId)) {
+    throw new WorldConfigError('ALLOCATION_CHAIN_ID is invalid');
+  }
+
+  const groupId = requireFormat(
+    requiredValue(env.ALLOCATION_GROUP_ID, 'ALLOCATION_GROUP_ID is not configured'),
+    BYTES32_PATTERN,
+    'ALLOCATION_GROUP_ID is invalid',
+  );
+  if (BigInt(groupId) === BigInt(0)) {
+    throw new WorldConfigError('ALLOCATION_GROUP_ID is invalid');
+  }
+
+  const rpcUrl = env.ALLOCATION_RPC_URL?.trim() ?? '';
+  if (rpcUrl && !HTTP_URL_PATTERN.test(rpcUrl)) {
+    throw new WorldConfigError('ALLOCATION_RPC_URL is invalid');
+  }
+
+  return {
+    signingKeyHex,
+    signerAddress: signerAddress.toLowerCase() as `0x${string}`,
+    ledgerAddress: ledgerAddress.toLowerCase() as `0x${string}`,
+    chainId,
+    groupId: groupId.toLowerCase() as `0x${string}`,
+    ...(rpcUrl ? { rpcUrl } : {}),
   };
 }

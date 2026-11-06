@@ -1,4 +1,11 @@
-import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
+
+export const SESSION_ID_HASH_DOMAIN = 'rwacomply.session-id.v1';
+export const CONTINUATION_GRANT_HASH_DOMAIN = 'rwacomply.continuation-grant.v1';
+
+export function domainHash(domain: string, value: string): string {
+  return createHash('sha256').update(domain).update('\0').update(value).digest('hex');
+}
 
 export type EncryptedSession = {
   ciphertext: string;

@@ -9,7 +9,7 @@ import {
   newAllocationId,
   type PortalCallResult,
 } from './enrollmentProof.ts';
-import { encryptSessionId } from './sessionCrypto.ts';
+import { domainHash, encryptSessionId, SESSION_ID_HASH_DOMAIN } from './sessionCrypto.ts';
 
 const VERIFY_TIMEOUT_MS = 15_000;
 const MAX_BODY_BYTES = 256 * 1024;
@@ -137,11 +137,12 @@ export async function handleEnroll(
         session: encrypted,
         allocationId,
         enrolledAt,
+        sessionIdHash: domainHash(SESSION_ID_HASH_DOMAIN, bound.sessionId),
       });
       if (inserted.ok) {
         return jsonResponse({ success: true, session_id: bound.sessionId }, 200);
       }
-      if (inserted.reason === 'duplicate_nullifier') {
+      if (inserted.reason === 'duplicate_nullifier' || inserted.reason === 'duplicate_session') {
         return jsonResponse({ error: 'This Proof of Human enrollment already exists' }, 409);
       }
     }

@@ -30,8 +30,9 @@ These commits are in the repository history. Their dates are the git author date
 | `b2b0b45` | 2026-11-06 | Hook budget checks, settled-USDC recording, deployment wiring, the frontend `swapExactInput` call, and CREATE2 permission mining. |
 | `2dadaf3` | 2026-11-06 | World ID server configuration and relying-party context signing. |
 | `92263ef` | 2026-11-06 | Proof of Human enrollment, encrypted session storage, and the IDKit request helper. |
+| `12fe9f5` | 2026-11-06 | World ID signer check, root `.env` loading, and enrollment API hardening. |
 
-`92263ef` is the current committed `HEAD` of branch `v2`. Later signer-key and root-env changes stay uncommitted until they are committed.
+`12fe9f5` is the current committed `HEAD` of branch `v2`. Session continuation and wallet-authorization work after that commit is in the working tree and is not part of the commit.
 
 ## What V2 adds
 
@@ -52,7 +53,7 @@ The recorded number is the USDC paid, not the RWA received. The same check is co
 
 ## Limits of this phase
 
-- Proof of Human enrollment can verify a session-bound `signup` proof, store the session encrypted, and create an allocation id. A second wallet cannot prove continuity yet, and the ledger is not asked to register a wallet from this step.
+- Proof of Human enrollment can verify a session-bound `signup` proof, store the session encrypted, and create an allocation id. A later session proof can prepare an AllocationLedger registration for another wallet. This phase does not submit that transaction.
 - The budget applies only to the `PoolExecutor.swapExactInput` route into this hook.
 - Direct transfers, other pools, and other protocols are outside this check.
 - A sale does not reduce the recorded spend.
