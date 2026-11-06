@@ -43,15 +43,17 @@ Known limits of this audit:
 |---|---|
 | IMPLEMENTED AND VERIFIED | 76 |
 | IMPLEMENTED, NOT FULLY VERIFIED | 21 |
-| PARTIALLY IMPLEMENTED | 50 |
-| NOT IMPLEMENTED | 7 |
+| PARTIALLY IMPLEMENTED | 54 |
+| NOT IMPLEMENTED | 3 |
 | CONTRADICTED OR INCONSISTENT | 2 |
 | NOT APPLICABLE / SUPERSEDED | 4 |
 | Total | 160 |
 
-76 + 21 + 50 + 7 + 2 + 4 = 160.
+76 + 21 + 54 + 3 + 2 + 4 = 160.
 
-The shared-budget hook path is real: local tests, the Anvil journey, and the deployed Sepolia policy agree. The product is not PRD-complete. A person has not finished World ID, no investor is registered on Sepolia, two pools do not share a group, and the issuer workflow in section 8.1 is not a product. The PRD's separate identity registry, policy registry, and per-swap signed trade intent were not built. The trusted executor is the control that was built instead.
+Marketplace addendum, 6 November 2026: local contracts now cover a second pool in one group, a second offering with its own cap, issuer authorization, policy version and end time on that path, revocation, and a signed trade intent. Those contracts are not deployed on Sepolia. The counts above move four rows from not implemented to partial. They do not mark the marketplace live.
+
+The shared-budget hook path is real: local tests, the Anvil journey, and the deployed Sepolia policy agree. The product is not PRD-complete. A person has not finished World ID, no investor is registered on Sepolia, and the issuer cannot yet submit a live offering. The deployed Sepolia executor still has no per-purchase signature. The local marketplace contracts add that signature, a second pool, and a second offering. They are not the Sepolia deployment.
 
 ## C. Requirement-by-requirement matrix
 
@@ -75,14 +77,14 @@ The shared-budget hook path is real: local tests, the Anvil journey, and the dep
 | 4.2.3 L232 | The limit is applied inside Uniswap v4 execution. | IMPLEMENTED AND VERIFIED | RWAComplyHook.beforeSwap and afterSwap. Untrusted router and direct callback tests pass. | The check runs only when the trusted executor calls PoolManager. |
 | 4.2.4 L233 | An issuer can configure and manage allocation policies. | PARTIALLY IMPLEMENTED | AllocationLedger.setPolicy is owner-only. DeploySepolia sets the demo policy. | There is no issuer "Create Offering" transaction flow. |
 | 4.2.5 L234 | Spending and remaining budget are visible. | IMPLEMENTED, NOT FULLY VERIFIED | GET /api/product/status and the investor page read policy and remaining from Ethereum. | Remaining is blank until a registered wallet is connected. No Sepolia investor is registered. |
-| 4.2.6 L235 | Multiple pools can share one allocation group. | NOT IMPLEMENTED | The ledger key is group and period, so the data model allows it. | Only one pool is deployed. No test buys through two pools and one group. |
+| 4.2.6 L235 | Multiple pools can share one allocation group. | PARTIALLY IMPLEMENTED | MarketplaceTest registers two solar pools to one group and rejects the shared over-cap purchase. | Not deployed on Sepolia. The existing hook still stores one group. |
 | 4.2.7 L236 | Arkiv publishes and retrieves public offering information. | IMPLEMENTED AND VERIFIED | Entity 0x6feefc2d7a889123485ccb454bba924db7057a8d18d5cb0b3e6a49c66a2a5578 read back on Rabdi during this audit. GET /api/offerings. | The stored fields are the roadmap schema, which is narrower than the PRD example. |
 | 4.2.8 L237 | Useful V1 behavior is preserved. | IMPLEMENTED AND VERIFIED | The V1 hook tests passed in this forge test run. | None. |
 | 4.3.1 L239 | Institutional allowlisting stays a separate access path. | PARTIALLY IMPLEMENTED | Hook setTier and AdminObservatory on the home page. | The allocation ledger still caps every registered wallet. An issuer cannot mark an institutional wallet unrestricted. |
 | 4.3.2 L240 | Volatility-aware dynamic fees stay if they are stable. | IMPLEMENTED AND VERIFIED | Dynamic fee tests in the hook suite passed. | The Sepolia pool uses the dynamic-fee flag. Fee behavior was not re-traded on Sepolia in this session. |
 | 4.3.3 L241 | A basic issuer dashboard exists. | PARTIALLY IMPLEMENTED | AdminObservatory can call setTier, setRetailCap, setOracle, and pausePool. | It does not create an offering, set an allocation policy, or show aggregate purchases. |
 | 4.3.4 L242 | The identity and enforcement model is explained. | IMPLEMENTED AND VERIFIED | README, /how, and docs/development.md. | None. |
-| 4.3.5 L243 | Other issuers can integrate the system later. | NOT IMPLEMENTED | Docs describe the contracts. | There is no second issuer, no published integration package, and policy admin is the single owner. |
+| 4.3.5 L243 | Other issuers can integrate the system later. | PARTIALLY IMPLEMENTED | OfferingRegistry.authorizeIssuer and MarketplaceTest use two issuers with separate offerings. | There is no published integration package, and the registry is not on Sepolia. |
 | 4.4 L244 | The first release excludes a security-token platform, KYC/AML, cross-chain identity, a universal passport, transfer compliance, identity recovery, a legal engine, AI investment advice, multi-currency allocation, and full institutional onboarding. | NOT APPLICABLE / SUPERSEDED | docs/PRD v1.txt section 4.4 lists these as non-goals. | Not in scope. They were not built, which matches the PRD. |
 | 5.1 L260 | A retail investor can connect, verify, understand the request, link another wallet, and see the limit, spend, remainder, and a rejection reason. | PARTIALLY IMPLEMENTED | InvestorExperience and SwapDemo error copy. | Live verification and a Sepolia purchase have not been done. Purchase history from other sessions is not listed. |
 | 5.2 L278 | An issuer can create an offering, set the cap, period, quote currency, and shared pools, pause, update policy, publish to Arkiv, and see aggregate activity. | PARTIALLY IMPLEMENTED | Owner setPolicy, hook pausePool, and the Arkiv publish script. | No issuer UI for those steps. No aggregate purchase view. One pool only. |
@@ -102,7 +104,7 @@ The shared-budget hook path is real: local tests, the Anvil journey, and the dep
 | 8.4 L538 | A successful purchase quotes, executes through the trusted executor, and the hook checks the registered wallet, group, period, and remaining budget before updating spend. | PARTIALLY IMPLEMENTED | PoolExecutor.swapExactInput and the hook callbacks. The Anvil journey bought 700 and 200. | The hook does not validate a per-purchase signature or a policy version. There is no separate quote API. |
 | 8.5 L577 | Wallet B's 500 purchase is rejected after Wallet A's 700, and the UI explains it. | IMPLEMENTED AND VERIFIED | Anvil journey and the investor copy for AllocationExceeded. | Demonstrated on Anvil. Not demonstrated on Sepolia. |
 | 8.6 L598 | Bob verifies separately and has his own budget. | PARTIALLY IMPLEMENTED | The Anvil journey gives the second person a separate cap. | Bob's World ID verification has not happened. The Anvil second person is a second allocation id created by the script. |
-| 8.7 L612 | Two pools in one group share one budget, so 600 plus 500 is rejected. | NOT IMPLEMENTED | No second pool and no test of this workflow. | The ledger could store it. The product does not demonstrate it. |
+| 8.7 L612 | Two pools in one group share one budget, so 600 plus 500 is rejected. | PARTIALLY IMPLEMENTED | MarketplaceTest buys 700 on one solar pool and rejects 500 on the other. | The numbers in the test are 700 and 500. The demonstration is local, not Sepolia. |
 | 8.8 L625 | The issuer pauses an offering and the hook rejects later purchases. | PARTIALLY IMPLEMENTED | Hook pausePool, owner-only. The demo UI says the pool is paused. | Pause is per pool, not per offering policy. There is no issuer pause button on an offering. |
 | 9.1 L641 | The purchase check is requested USDC against cap minus spend. | IMPLEMENTED AND VERIFIED | Hook afterSwap records the settled USDC input and the ledger reverts above the cap. | beforeSwap checks the estimated amount. The recorded amount is the settled USDC leg. |
 | 9.2 L649 | The first version accounts in one USDC address. | IMPLEMENTED AND VERIFIED | Policy.usdc is fixed. Sepolia policy USDC matches the deployed mock. | A second quote token is not supported. |
@@ -111,7 +113,7 @@ The shared-budget hook path is real: local tests, the Anvil journey, and the dep
 | 9.5 L671 | Only exact-input purchases count. | IMPLEMENTED AND VERIFIED | testExactOutputFromTheTrustedSenderRecordsNothing. The hook returns on non-negative amountSpecified. | None. |
 | 9.6 L677 | Pools that share a group must share chain, quote token, period, hook, and executor. | PARTIALLY IMPLEMENTED | The deploy script wires one pool to those values. | The multi-pool rule is not exercised. |
 | 9.7 L686 | Periods are independent. A new period does not inherit spend. | IMPLEMENTED AND VERIFIED | Ledger mappings include periodId. Tests cover a fresh period. | The product does not open a second period. |
-| 9.8 L694 | An issuer may raise or lower the cap, pause, resume, and change an end date, with the six safety rules. | PARTIALLY IMPLEMENTED | setPolicy refuses a cap below spend and does not clear spend. The USDC address cannot be changed after it is set. | No policy version, no end date, and no versioned trade authorization. Pause is on the hook. Updates emit the ledger event that setPolicy already has. |
+| 9.8 L694 | An issuer may raise or lower the cap, pause, resume, and change an end date, with the six safety rules. | PARTIALLY IMPLEMENTED | OfferingRegistry updateCap, updateEndTime, and setPaused. MarketplaceTest keeps spend after a version bump and rejects a cap below spend. | The deployed Sepolia policy still has no version or end time. |
 | 9.9 L709 | Retail uses World ID. Institutional wallets use an allowlist and a separate limit, and they do not skip every policy. | PARTIALLY IMPLEMENTED | setTier is the allowlist. The ledger cap still applies after the tier check. | The issuer cannot choose an unrestricted institutional allocation. |
 | 9.10 L719 | Direct transfers, other exchanges, other pools, other chains, and other protocols are outside the cap. | IMPLEMENTED AND VERIFIED | README Limits. The hook cannot see those transfers. | This is a documented limit, not an enforcement bug. |
 | 11.1 L800 | The credential is a World ID proof of human, not a document check. | IMPLEMENTED AND VERIFIED | Signup action and the README identity boundary. | None. |
@@ -124,12 +126,12 @@ The shared-budget hook path is real: local tests, the Anvil journey, and the dep
 | 11.8 L859 | Sessions and grants expire, and a lost session is not silently recovered. | PARTIALLY IMPLEMENTED | Continuation grants last about five minutes and are single use. | There is no recovery flow other than a new enrollment, which would be a new allocation id. |
 | 11.9 L869 | World failures, cancellation, and an unavailable verifier do not register a wallet. | IMPLEMENTED AND VERIFIED | enrollmentAction and enroll portal-failure tests. | The unavailable-verifier case is a fixture, not a live outage. |
 | 12.1 L886 | Onchain components are named HumanIdentityRegistry, RWAAllocationPolicyRegistry, an allocation ledger, the hook, and a trusted executor. | CONTRADICTED OR INCONSISTENT | The repository has AllocationLedger, RWAComplyHook, and PoolExecutor. | There is no HumanIdentityRegistry or RWAAllocationPolicyRegistry contract. Their jobs are folded into the ledger and the hook. |
-| 12.2 L893 | The identity registry registers, reads, and revokes wallet links. | PARTIALLY IMPLEMENTED | registerWallet and allocationIdByWallet. | No revoke function. |
+| 12.2 L893 | The identity registry registers, reads, and revokes wallet links. | PARTIALLY IMPLEMENTED | registerWallet remains on AllocationLedger. OfferingRegistry.revokeWallet and restoreWallet are covered by MarketplaceTest. | Revocation is not on the deployed Sepolia ledger. A revoked wallet can still be unregistered there. |
 | 12.3 L925 | The policy registry stores id, group, issuer, USDC, cap, period, start, version, and an active flag, and versions do not erase spend. | PARTIALLY IMPLEMENTED | Policy is cap, periodId, and USDC. | No policy id, issuer, start, version, or active flag on the ledger. Hook pause is separate. |
 | 12.4 L976 | The ledger stores cumulative spend and exposes it for the hook. | IMPLEMENTED AND VERIFIED | recordSpend, spentByAllocation, remaining. Only authorizedHook may record. | None. |
 | 12.5 L994 | The hook checks the executor, the registered wallet, the group, the period, exact input, and the cap, then updates spend atomically with the swap. | IMPLEMENTED AND VERIFIED | beforeSwap and afterSwap. A recordSpend revert rolls the swap back. | It does not check a trade signature or a policy version. |
 | 12.6 L1016 | Only the trusted executor may drive the protected swap. | IMPLEMENTED AND VERIFIED | testUntrustedRouterReverts and testDirectCallbackFromAnotherAddressIsRejected. | None. |
-| 12.7 L1030 | Each purchase carries a signed trade intent with wallet, recipient, pool, policy, group, amount, period, policy version, nonce, expiry, chain, and route. | NOT IMPLEMENTED | No trade-intent type or verifier exists. | The implemented control is the trusted executor. The purchaser is msg.sender on PoolExecutor. |
+| 12.7 L1030 | Each purchase carries a signed trade intent with wallet, recipient, pool, policy, group, amount, period, policy version, nonce, expiry, chain, and route. | PARTIALLY IMPLEMENTED | TradeIntent.sol and MarketplaceHook.checkTrade. MarketplaceTest rejects a stale version and a replayed nonce. | PoolExecutor.swapExactInput on the deployed market still has no per-purchase signature. |
 | 12.8 L1060 | Accounting uses the settled USDC delta, including either token order. | IMPLEMENTED AND VERIFIED | testSettlement records and testUsdcAsCurrencyOneRecordsTheUsdcLeg. | None. |
 | 12.9 L1070 | The spend update is atomic with the swap. | IMPLEMENTED AND VERIFIED | testLedgerRejectionRollsBackTheSwap. | None. |
 | 12.10 L1074 | Registration, spend, policy changes, and rejections emit events. | PARTIALLY IMPLEMENTED | WalletRegistered and the spend events exist. | There is no event for a rejected purchase beyond the revert. Policy version events do not exist. |
@@ -190,8 +192,8 @@ The shared-budget hook path is real: local tests, the Anvil journey, and the dep
 | 21.1 L1748 | Onchain data is the wallet, the allocation id, registration, policy, group, spend, and remaining. Proofs and session ids stay offchain. | IMPLEMENTED AND VERIFIED | Ledger mappings and the absence of session_id in src. | The identity registry named in the table is the ledger. |
 | 21.2 L1785 | Backend data is the encrypted session, the allocation mapping, and authorization state. | IMPLEMENTED AND VERIFIED | The SQLite enrollment store. | None. |
 | 21.3 L1798 | Arkiv data is public offering metadata and an expiry. | IMPLEMENTED AND VERIFIED | The live entity fields and expiresAt. | Policy id, asset category, and issuer wallet are not stored. See 15.2. |
-| 22.1 L1821 | Unit tests cover registration, policy, and the ledger. | PARTIALLY IMPLEMENTED | Foundry ledger and journey tests passed. | Revocation, policy version, and a second pool are not in the suite. |
-| 22.2 L1856 | Hook tests cover the unregistered wallet, the executor, exact output, the cap, a second wallet, a second pool, and spend rollback. | PARTIALLY IMPLEMENTED | The listed cases pass except revoked wallet, trade signature, trade nonce, inactive or expired policy, and a second pool. | Those missing cases have no implementation to test. |
+| 22.1 L1821 | Unit tests cover registration, policy, and the ledger. | PARTIALLY IMPLEMENTED | Foundry ledger, journey, and MarketplaceTest. | The new cases are local. They do not replace a Sepolia acceptance run. |
+| 22.2 L1856 | Hook tests cover the unregistered wallet, the executor, exact output, the cap, a second wallet, a second pool, and spend rollback. | PARTIALLY IMPLEMENTED | The original hook tests plus MarketplaceTest for revocation, trade nonce, expiry, and a second pool. | The deployed hook is not the contract those new tests call. |
 | 22.4 L1905 | Backend tests cover proof rejection, grants, and authorization. | IMPLEMENTED AND VERIFIED | npm run test:world, 83 passed. | They use fixtures, not World production. |
 | 22.5 L1917 | Arkiv tests cover the schema, the directory statuses, and the purchase boundary. | IMPLEMENTED AND VERIFIED | offering, client, and purchaseBoundary tests. | The live query is additional evidence, not a unit test. |
 | 22.6 L1929 | End-to-end tests cover the two-wallet purchase. | PARTIALLY IMPLEMENTED | The Anvil script and an earlier browser pass of /demo. | No automated browser suite was run in this session. No Sepolia end-to-end purchase exists. |
@@ -304,6 +306,6 @@ Inconsistent with the PRD, and intentional in the code that shipped:
 | Low | 30.2 | A measured time to first World ID success. | The note says the measurement does not exist. | `docs/world-integration.md` | Fill in the time only after a real success. | A live proof | The note contains a duration and the date |
 | Low | 24.2 | A 2–4 minute spoken recording at 720p, with no AI voiceover. | The script exists. The video does not. | `docs/demo-script.md` | A person records it. Do not synthesize the voice. | The live or Anvil path chosen in the script | The file is between 2 and 4 minutes and at least 720p |
 
-Mandatory before calling the PRD satisfied: a real World ID enrollment, Sepolia registration, and the shared-budget purchase on that market. The second pool, trade intents, revocation, and issuer dashboard are product decisions, not silent follow-up work.
+Mandatory before calling the PRD satisfied: a real World ID enrollment, Sepolia registration, and the shared-budget purchase on that market. The local marketplace is not a Sepolia issuer product until its contracts are deployed under a separate approval.
 
 Optional: schema fields the roadmap already replaced, performance numbers, and the spoken video.

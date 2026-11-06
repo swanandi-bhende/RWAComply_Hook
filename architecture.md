@@ -2,6 +2,8 @@
 
 RWAComply has two paths. The purchase path can reject a swap. The offering path cannot.
 
+The deployed Sepolia market is one pool and one allocation group. A local marketplace path, not deployed on Sepolia, gives each new offering its own group and cap. That design is [docs/MARKETPLACE_ARCHITECTURE.md](docs/MARKETPLACE_ARCHITECTURE.md).
+
 ```mermaid
 flowchart LR
   person[Person] --> idkit[World ID]

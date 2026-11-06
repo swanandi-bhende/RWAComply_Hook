@@ -1,6 +1,6 @@
 # Demo
 
-Investor setup is Part A of [first-time-setup.md](first-time-setup.md). The on-site page is `/getting-started`. Repository setup is Part B of that file and [setup.md](setup.md).
+Investor setup is Part A of [first-time-setup.md](first-time-setup.md). The marketplace design is [docs/MARKETPLACE_ARCHITECTURE.md](docs/MARKETPLACE_ARCHITECTURE.md). `/offerings` shows the live Sepolia offering. The solar and private-credit examples on that page are not deployed offerings. `/issuer` prepares an offering and does not send the creation transaction. The on-site page is `/getting-started`. Repository setup is Part B of that file and [setup.md](setup.md).
 
 The demonstration is one shared USDC purchase budget for one verified human, including a second wallet, with a separate budget for a second human. World ID is the proof of human. The trusted Uniswap v4 route and `AllocationLedger` enforce the budget. Offering metadata is published through Arkiv and cannot reject a swap.
 

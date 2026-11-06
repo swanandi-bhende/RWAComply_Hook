@@ -7,6 +7,8 @@ Two markets exist. They do not share addresses.
 | Local Anvil | `31337` | [`script/start_anvil_demo.sh`](script/start_anvil_demo.sh) broadcasts [`script/DeployFull.s.sol`](script/DeployFull.s.sol). Addresses stay in `broadcast/DeployFull.s.sol/31337/run-latest.json` |
 | Ethereum Sepolia | `11155111` | [`script/DeploySepolia.s.sol`](script/DeploySepolia.s.sol), already broadcast. Do not broadcast it again |
 
+`script/DeployMarketplace.s.sol` reverts unless the chain id is `31337`. It has not been broadcast. It does not replace the Sepolia market.
+
 The Sepolia PoolManager is the official Uniswap v4 manager. The script does not deploy another one. The first oracle creation, `0x2285cdd075944609f38007b652a0adcf4ce71b8ceed4e57f8c8272f06a393539`, reverted in block `12075637`. The successful deployment started at the deployer nonce after that failure. The transaction log is [docs/sepolia-deployment.md](docs/sepolia-deployment.md). A machine-readable copy of the public fields is [deployments/sepolia-deployment.json](deployments/sepolia-deployment.json). Runtime code does not read that file.
 
 ## Sepolia

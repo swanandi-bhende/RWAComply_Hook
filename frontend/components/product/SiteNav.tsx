@@ -7,10 +7,9 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 
 const LINKS = [
   { href: '/', label: 'Overview' },
-  { href: '/invest', label: 'Investor dashboard' },
-  { href: '/invest#verify', label: 'Verify identity' },
-  { href: '/invest#link', label: 'Link wallet' },
-  { href: '/invest#allocation', label: 'Allocation' },
+  { href: '/offerings', label: 'Offerings' },
+  { href: '/invest', label: 'Invest' },
+  { href: '/issuer', label: 'Issue' },
   { href: '/how', label: 'How it works' },
 ];
 
@@ -45,11 +44,7 @@ export function SiteNav() {
           {LINKS.map((link) => {
             const current = link.href === '/'
               ? pathname === '/'
-              : link.href === '/invest'
-                ? pathname === '/invest'
-                : link.href === '/how'
-                  ? pathname === '/how'
-                  : false;
+              : pathname === link.href || pathname.startsWith(`${link.href}/`);
             return (
               <Link
                 key={link.href}

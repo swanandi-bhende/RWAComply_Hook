@@ -6,6 +6,8 @@ export type PublicPurchase = {
   wallet: Address;
   amount: string;
   newSpent: string;
+  groupId?: Hex;
+  periodId?: string;
 };
 
 type SpendLog = {
@@ -15,16 +17,18 @@ type SpendLog = {
   args: {
     wallet?: Address;
     allocationId?: Hex;
+    groupId?: Hex;
+    periodId?: bigint;
     amount?: bigint;
     newSpent?: bigint;
   };
 };
 
-export function publicPurchasesFromLogs(logs: SpendLog[], limit = 20): PublicPurchase[] {
+export function publicPurchasesFromLogs(logs: SpendLog[], limit = 20, offset = 0): PublicPurchase[] {
   const purchases: PublicPurchase[] = [];
   for (const log of logs) {
     if (log.removed || log.transactionHash === null || log.blockNumber === null) continue;
-    const { wallet, amount, newSpent } = log.args;
+    const { wallet, amount, newSpent, groupId, periodId } = log.args;
     if (!wallet || amount === undefined || newSpent === undefined) continue;
     purchases.push({
       transactionHash: log.transactionHash,
@@ -32,6 +36,8 @@ export function publicPurchasesFromLogs(logs: SpendLog[], limit = 20): PublicPur
       wallet,
       amount: amount.toString(),
       newSpent: newSpent.toString(),
+      ...(groupId ? { groupId } : {}),
+      ...(periodId !== undefined ? { periodId: periodId.toString() } : {}),
     });
   }
   purchases.sort((left, right) => {
@@ -39,5 +45,5 @@ export function publicPurchasesFromLogs(logs: SpendLog[], limit = 20): PublicPur
     if (blockDelta !== BigInt(0)) return blockDelta > BigInt(0) ? 1 : -1;
     return right.transactionHash.localeCompare(left.transactionHash);
   });
-  return purchases.slice(0, limit);
+  return purchases.slice(offset, offset + limit);
 }

@@ -22,10 +22,12 @@ test('purchase history keeps the wallet amounts and drops the allocation id', ()
     {
       transactionHash: `0x${'33'.repeat(32)}`,
       blockNumber: BigInt(4),
-      args: { wallet, allocationId, amount: BigInt(700), newSpent: BigInt(700) },
+      args: { wallet, allocationId, groupId: `0x${'cd'.repeat(32)}` as Hex, periodId: BigInt(1), amount: BigInt(700), newSpent: BigInt(700) },
     },
   ]);
   assert.deepEqual(purchases.map((item) => item.amount), ['700', '200']);
   assert.equal(JSON.stringify(purchases).includes(allocationId), false);
+  assert.equal(purchases[0]?.groupId, `0x${'cd'.repeat(32)}`);
+  assert.equal(purchases[0]?.periodId, '1');
   assert.equal(purchases[0]?.newSpent, '700');
 });

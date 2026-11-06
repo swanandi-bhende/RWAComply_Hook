@@ -11,6 +11,8 @@ This is the map for people changing the repository. [README.md](../README.md) is
 | Investor demo and issuer operations | [demo.md](../demo.md) |
 | What the product does not do | [docs/product-scope.md](product-scope.md) |
 | On-site investor guide | `/getting-started` in the frontend. No environment-file instructions |
+| Marketplace contracts and migration | [docs/MARKETPLACE_ARCHITECTURE.md](MARKETPLACE_ARCHITECTURE.md) |
+| Investor use | [docs/INVESTOR_GUIDE.md](INVESTOR_GUIDE.md) |
 | Layers and sources of truth | [architecture.md](../architecture.md) |
 | Addresses and deployment proof | [deployment.md](../deployment.md) and [docs/sepolia-deployment.md](sepolia-deployment.md) |
 | Uniswap v4 | [integrations/uniswap-v4.md](../integrations/uniswap-v4.md) |

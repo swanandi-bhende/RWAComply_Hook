@@ -1,6 +1,8 @@
 # Issuer runbook
 
-This runbook describes the owner calls that already exist. None of them were sent while this note was written.
+The deployed Sepolia market is still owner-operated. The local marketplace in [MARKETPLACE_ARCHITECTURE.md](MARKETPLACE_ARCHITECTURE.md) is a separate path and is not deployed on Sepolia.
+
+This runbook describes the owner calls that already exist on the deployed hook and ledger. None of them were sent while this note was written.
 
 The mock USDC and mock RWA are not real-world assets. World ID proof of human is not KYC, AML, accreditation, residency, nationality, or legal eligibility. Registering a wallet does not set an access tier. The liquidity helper's tier 2 is pool seeding, not investor approval.
 

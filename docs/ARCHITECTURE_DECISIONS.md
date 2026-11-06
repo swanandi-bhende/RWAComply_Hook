@@ -1,6 +1,8 @@
 # Architecture decisions
 
-These decisions record what the code does. They do not add a new signature format, a second pool, or a revoke function.
+The sections below describe the deployed Sepolia contracts and the original single-pool path. [MARKETPLACE_ARCHITECTURE.md](MARKETPLACE_ARCHITECTURE.md) describes the separate local marketplace contracts. Those contracts add a per-offering policy, a signed trade for that path, and wallet revocation. They are not deployed on Sepolia, and they do not change the deployed hook, ledger, or executor.
+
+These decisions record what the deployed code does.
 
 ## Signed trade intent and the trusted executor
 
