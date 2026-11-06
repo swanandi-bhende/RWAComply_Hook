@@ -234,7 +234,9 @@ The published entity is `0x6feefc2d7a889123485ccb454bba924db7057a8d18d5cb0b3e6a4
 projectTag = str('rwacomply') AND offeringId = str('sepolia-demo-rwa')
 ```
 
-From `frontend/`, `npm run publish:offering` prints the entity key, the writer address, and that query. If that one current offering already exists, the script prints it and does not create another. If the match is stale, or more than one match exists, it stops without writing. It also stops when the publisher has no tGLM. The field list, owner, expiry, and query filters are in `arkiv/schema.md`. The setup problems are in `arkiv/friction.md`.
+From `frontend/`, `npm run publish:offering` prints the entity key, the writer address, and that query. If that one current offering already exists, the script prints it and does not create another. If the match is stale, or more than one match exists, it stops without writing. It also stops when the publisher has no tGLM. The field list, owner, expiry, and query filters are in `arkiv/schema.md`. The setup problems are in `arkiv/friction.md`. Who the directory is for, why the row is on Arkiv, and how the filters show up on `/invest` are in `arkiv/reach.md`, `arkiv/why-arkiv.md`, and `arkiv/how-you-use-arkiv.md`.
+
+From `frontend/`, `npm run query:offering` reads that query and prints the entity key, the writer, and the query. It does not create an entity.
 
 `/api/offerings` runs that query and, in the same response, reads the ledger cap and period. The remaining budget is read only when the request includes a valid wallet. An unregistered wallet leaves that field empty and does not clear the cap or period. `/invest` lists the result. A successful empty query is `missing`. A failed query or a stopped client is `unavailable`. An expired record is `expired`. A record whose USDC, RWA, or pool id differs from the deployment is `mismatch`. A current matching record is `ready`. In every case the cap and period come from Ethereum. The purchase button calls `PoolExecutor.swapExactInput` and does not query Arkiv.
 
@@ -252,3 +254,5 @@ forge test
 ```
 
 Foundry dependencies are installed under `/lib` and are gitignored. Frontend source under `frontend/lib/` is tracked.
+
+The submission README separates the pre-event hook from the allocation work, states the identity boundary, and lists the local run in order. Uniswap notes for `beforeSwap`, `afterSwap`, and the router are in `FEEDBACK.md`.
