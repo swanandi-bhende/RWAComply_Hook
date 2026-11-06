@@ -49,8 +49,18 @@ function shortAddress(value: string): string {
   return `${value.slice(0, 6)}…${value.slice(-4)}`;
 }
 
+function errorText(error: unknown): string {
+  const parts: string[] = [];
+  let current: unknown = error;
+  for (let depth = 0; current instanceof Error && depth < 5; depth += 1) {
+    parts.push(current.message);
+    current = current.cause;
+  }
+  return parts.join('\n');
+}
+
 function purchaseError(error: unknown): string {
-  const message = error instanceof Error ? error.message : '';
+  const message = errorText(error);
   const mapped = routerRejectionMessage(message);
   if (mapped) return mapped;
   const lowered = message.toLowerCase();

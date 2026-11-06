@@ -57,7 +57,7 @@ export const EXECUTOR_ABI = parseAbi([
 // Tier information
 export const TIER_NAMES = {
   0: "Unverified",
-  1: "Tier 1 (KYC)",
+  1: "Tier 1 (Retail)",
   2: "Tier 2 (Enhanced)",
 };
 

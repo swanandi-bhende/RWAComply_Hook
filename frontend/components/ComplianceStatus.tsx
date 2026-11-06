@@ -40,8 +40,8 @@ export function ComplianceStatus() {
       </div>
       <div className="border-t-2 border-black mt-4 pt-4">
         <p className="text-sm font-semibold text-black">
-          {safeTier === 0 && 'UNVERIFIED: Enhanced trading requires KYC verification.'}
-          {safeTier === 1 && 'TIER 1: Basic KYC verification active. Upgrade to Tier 2 for higher limits.'}
+          {safeTier === 0 && 'This wallet has no access tier. Proof of human does not grant a tier. The purchase cap is enforced on the supported purchase route.'}
+          {safeTier === 1 && 'Retail access is active. The shared purchase cap is enforced on the supported purchase route.'}
           {safeTier === 2 && 'TIER 2: Enhanced verification active. Full trading benefits available.'}
         </p>
       </div>

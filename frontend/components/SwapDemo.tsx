@@ -29,6 +29,11 @@ type SwapPhase = 'idle' | 'approving' | 'registering' | 'swapping' | 'success' |
 const ZERO_ALLOCATION = `0x${'0'.repeat(64)}` as Hex;
 const LEDGER_READ_ABI = parseAbi([
   'function allocationIdByWallet(address wallet) view returns (bytes32)',
+  'function remaining(address wallet, bytes32 groupId, uint256 periodId) view returns (uint256)',
+]);
+const HOOK_GROUP_ABI = parseAbi([
+  'function allocationGroupId() view returns (bytes32)',
+  'function allocationPeriodId() view returns (uint256)',
 ]);
 
 const LIVE_REFETCH_MS = 1000;
@@ -203,6 +208,36 @@ export function SwapDemo() {
   });
   const walletRegistered = typeof allocationId === 'string' && allocationId !== ZERO_ALLOCATION;
 
+  const { data: allocationGroupId } = useReadContract({
+    chainId: anvil.id,
+    address: addresses?.hook as `0x${string}`,
+    abi: HOOK_GROUP_ABI,
+    functionName: 'allocationGroupId',
+    query: { enabled: !!addresses?.hook },
+  });
+
+  const { data: allocationPeriodId } = useReadContract({
+    chainId: anvil.id,
+    address: addresses?.hook as `0x${string}`,
+    abi: HOOK_GROUP_ABI,
+    functionName: 'allocationPeriodId',
+    query: { enabled: !!addresses?.hook },
+  });
+
+  const { data: sharedRemaining, isError: remainingError, isLoading: remainingLoading } = useReadContract({
+    chainId: anvil.id,
+    address: addresses?.ledger as `0x${string}`,
+    abi: LEDGER_READ_ABI,
+    functionName: 'remaining',
+    args: address && allocationGroupId && allocationPeriodId !== undefined
+      ? [address, allocationGroupId, allocationPeriodId]
+      : undefined,
+    query: {
+      enabled: walletRegistered && !!addresses?.ledger && !!address && !!allocationGroupId && allocationPeriodId !== undefined,
+      refetchInterval: LIVE_REFETCH_MS,
+    },
+  });
+
   const { data: tokenADecimals } = useReadContract({
     chainId: anvil.id,
     address: addresses?.tokenA as `0x${string}`,
@@ -358,6 +393,23 @@ export function SwapDemo() {
     setErrorMessage('');
     setPhase('approving');
 
+    const requireSuccessfulReceipt = async (hash: Hex) => {
+      const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      if (receipt.status === 'success') return;
+      const tx = await publicClient.getTransaction({ hash });
+      try {
+        await publicClient.call({
+          account: tx.from,
+          to: tx.to,
+          data: tx.input,
+          value: tx.value,
+        });
+      } catch (error) {
+        throw new Error(error instanceof Error ? error.message : 'Transaction reverted');
+      }
+      throw new Error('Transaction reverted');
+    };
+
     try {
       const beforeA = await publicClient.readContract({
         address: quoteToken,
@@ -391,7 +443,7 @@ export function SwapDemo() {
         args: [purchase.plan.approval.spender as `0x${string}`, purchase.plan.approval.amount],
       });
       setApprovalTxHash(approveHash);
-      await publicClient.waitForTransactionReceipt({ hash: approveHash });
+      await requireSuccessfulReceipt(approveHash);
 
       setPhase('swapping');
 
@@ -411,7 +463,7 @@ export function SwapDemo() {
         ],
       });
       setSwapTxHash(swapHash);
-      await publicClient.waitForTransactionReceipt({ hash: swapHash });
+      await requireSuccessfulReceipt(swapHash);
 
       const [afterA, afterBResult] = await Promise.all([
         publicClient.readContract({
@@ -542,6 +594,16 @@ export function SwapDemo() {
               <div className="flex justify-between">
                 <span className="text-black">Retail cap</span>
                 <span className="font-mono text-black">{retailCapNum.toFixed(4)} tokens</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-black">Shared remaining</span>
+                <span className="font-mono text-black" data-testid="shared-remaining">
+                  {!address && 'Connect a wallet'}
+                  {address && !walletRegistered && UNREGISTERED_WALLET_MESSAGE}
+                  {address && walletRegistered && remainingLoading && 'Reading the ledger'}
+                  {address && walletRegistered && remainingError && 'The ledger could not be read'}
+                  {address && walletRegistered && typeof sharedRemaining === 'bigint' && `${formatUnits(sharedRemaining, 6)} USDC`}
+                </span>
               </div>
             </div>
 

@@ -14,6 +14,17 @@ test('retail and allocation rejections say the remaining budget is not enough', 
   assert.equal(routerRejectionMessage('CapExceeded(1, 2, 3)'), REMAINING_BUDGET_MESSAGE);
 });
 
+test('wrapped revert data uses the same messages', () => {
+  assert.equal(
+    routerRejectionMessage('custom error 0x90bfb865: cbfc2b28'),
+    REMAINING_BUDGET_MESSAGE,
+  );
+  assert.equal(routerRejectionMessage('custom error 0x2a1c7c8f'), REMAINING_BUDGET_MESSAGE);
+  assert.equal(routerRejectionMessage('custom error 0x0cf95ce5'), REMAINING_BUDGET_MESSAGE);
+  assert.equal(routerRejectionMessage('custom error 0x239a7cdf'), UNREGISTERED_WALLET_MESSAGE);
+  assert.equal(routerRejectionMessage('custom error 0x51bd770c'), PAUSED_POOL_MESSAGE);
+});
+
 test('an unregistered wallet and a paused pool keep their own messages', () => {
   assert.equal(routerRejectionMessage('WalletNotRegistered(0x1)'), UNREGISTERED_WALLET_MESSAGE);
   assert.equal(routerRejectionMessage('PoolPaused()'), PAUSED_POOL_MESSAGE);

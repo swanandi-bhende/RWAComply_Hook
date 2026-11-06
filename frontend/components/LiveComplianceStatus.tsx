@@ -140,12 +140,12 @@ export function LiveComplianceStatus() {
 
         {tier === 0 && (
           <p className="text-sm font-semibold text-red-700">
-            Unverified users cannot trade. Complete KYC to access Tier 1.
+            This wallet has no access tier. Proof of human does not grant a tier. The purchase cap is enforced on the supported purchase route.
           </p>
         )}
         {tier === 1 && (
           <p className="text-sm font-semibold text-blue-700">
-            You can trade at retail rates. Upgrades to Tier 2 available through enhanced verification.
+            Retail access is active. The shared purchase cap is enforced on the supported purchase route.
           </p>
         )}
         {tier === 2 && (

@@ -107,7 +107,7 @@ export function ProjectPresentation() {
             <div className="bg-green-50 border-3 border-black p-10">
               <h3 className="text-3xl font-black mb-6 text-black">Traditional Finance</h3>
               <ul className="space-y-5 text-black font-bold text-lg">
-                <li>KYC/AML verification</li>
+                <li>Identity checks outside the trade</li>
                 <li>Tier-based trading limits</li>
                 <li>Risk-adjusted fees</li>
                 <li>Risk parameter controls</li>
@@ -368,7 +368,8 @@ export function ProjectPresentation() {
                   Start with RWAComplyHook as template. Extend it with:
                 </p>
                 <ul className="text-lg text-black ml-6 space-y-2 font-bold">
-                  <li>Custom KYC/AML checks</li>
+                  <li>Proof of human on the supported purchase route</li>
+                  <li>The purchase cap is enforced on the supported purchase route</li>
                   <li>Geographic restrictions</li>
                   <li>Counterparty limits</li>
                 </ul>
