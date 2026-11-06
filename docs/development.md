@@ -222,7 +222,23 @@ The local Anvil loader reads the ledger, router, and USDC from the Anvil deploy 
 
 ## Arkiv
 
-Rabdi is chain id `7794095`. The server reads `ARKIV_ACCESS_KEY` from the root `.env` and connects with `rabdi({ accessKey })` from `@arkiv-network/sdk`. The key is not put in a frontend bundle. An empty key is rejected. The public Hub still has to issue that key and the Rabdi faucet still has to fund the publisher wallet. Those two steps need a wallet signature and the Hub captcha, so they are not done from this environment. No offering entity is written yet.
+Rabdi is chain id `7794095`. The server reads `ARKIV_ACCESS_KEY` from the repository-root `.env` and connects with `rabdi({ accessKey })` from `@arkiv-network/sdk@1.0.1`. The key is not put in a frontend bundle, an API response, or a log. An empty key is rejected, and the client refuses to construct in the browser. A key that is already loaded is left in place. The client does not reload the frontend directory over it.
+
+Create the access key at https://hub.arkiv.network/access-keys and fund the publisher with tGLM at https://hub.arkiv.network/faucet. Both steps need a wallet signature and the Hub captcha. Put `ARKIV_ACCESS_KEY` and `ARKIV_PUBLISHER_PRIVATE_KEY` only in the repository-root `.env`. The publisher key may be 32 bytes of hex with or without a `0x` prefix. The configured publisher is `0xbfBf7Ca4f33993fA8b918d38286dad927231FB72`. A read-only Rabdi call returned chain id `7794095`, and that wallet held 10 tGLM before the write.
+
+The public offering is one Arkiv entity, schema `rwacomply-offering`. Its indexed fields are `projectTag` (`rwacomply`), `offeringId` (`sepolia-demo-rwa`), `rwaSymbol` (`RWA`), `usdcAddress`, `rwaAddress`, `poolId`, and `expiresAt`. The owner is the publisher wallet. The entity lifetime is 90 days through `ExpirationTime.fromDays(90)`, and `expiresAt` stores that same lifetime as unix time `1801744500`. Rabdi also records `$expiresAt` as block `4179369`, which is 90 days at the 2 second block time. The record does not store the purchase cap or the amount spent. Those stay on the Ethereum Sepolia `AllocationLedger`. The tokens are the deployed mock USDC and mock RWA on the demo pool, not real-world assets.
+
+The published entity is `0x6feefc2d7a889123485ccb454bba924db7057a8d18d5cb0b3e6a49c66a2a5578`. The query that returns it is:
+
+```text
+projectTag = str('rwacomply') AND offeringId = str('sepolia-demo-rwa')
+```
+
+From `frontend/`, `npm run publish:offering` prints the entity key, the writer address, and that query. If that one current offering already exists, the script prints it and does not create another. If the match is stale, or more than one match exists, it stops without writing. It also stops when the publisher has no tGLM. The field list, owner, expiry, and query filters are in `arkiv/schema.md`. The setup problems are in `arkiv/friction.md`.
+
+`/api/offerings` runs that query and, in the same response, reads the ledger cap and period. The remaining budget is read only when the request includes a valid wallet. An unregistered wallet leaves that field empty and does not clear the cap or period. `/invest` lists the result. A successful empty query is `missing`. A failed query or a stopped client is `unavailable`. An expired record is `expired`. A record whose USDC, RWA, or pool id differs from the deployment is `mismatch`. A current matching record is `ready`. In every case the cap and period come from Ethereum. The purchase button calls `PoolExecutor.swapExactInput` and does not query Arkiv.
+
+To show that separation, start the server with `ARKIV_CLIENT_STOPPED=1`. Do not put that switch in the frontend. The directory then says the Arkiv client is stopped and still shows the chain policy. Leave the switch unset for the live directory. The offering unit tests use a fixture key and do not contact Rabdi. The live read-back above was made against Rabdi after the create.
 
 `ALLOCATION_RPC_URL` may be `http`, `https`, `ws`, or `wss`.
 

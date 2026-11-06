@@ -1,9 +1,14 @@
+import path from 'node:path';
 import { createPublicClient } from '@arkiv-network/sdk';
 import { rabdi } from '@arkiv-network/sdk/chains';
 import { http } from 'viem';
 import { loadRepositoryEnv } from '../world/loadRootEnv.ts';
 
 export const RABDI_CHAIN_ID = 7794095;
+
+export function arkivClientStopped(env: Record<string, string | undefined>): boolean {
+  return env.ARKIV_CLIENT_STOPPED === '1';
+}
 
 export function arkivAccessKey(env: Record<string, string | undefined>): string {
   const key = env.ARKIV_ACCESS_KEY?.trim() ?? '';
@@ -19,7 +24,8 @@ export function rabdiChain(accessKey: string) {
 
 export function arkivPublicClient(env: Record<string, string | undefined> = process.env) {
   if (typeof window !== 'undefined') throw new Error('The Arkiv client stays on the server');
-  loadRepositoryEnv();
+  // A later reload from the frontend directory drops keys already read from the repository root.
+  if (!env.ARKIV_ACCESS_KEY?.trim()) loadRepositoryEnv(path.resolve(process.cwd(), '..'));
   const accessKey = arkivAccessKey(env);
   return createPublicClient({
     chain: rabdiChain(accessKey),

@@ -97,6 +97,30 @@ export default function InvestorExperience() {
   const publicClient = usePublicClient({ chainId: sepolia.id });
   const { data: walletClient } = useWalletClient();
   const { signTypedDataAsync } = useSignTypedData();
+  const offeringsQuery = useQuery({
+    queryKey: ['offerings', address ?? 'none'],
+    queryFn: async () => {
+      const url = address ? `/api/offerings?wallet=${address}` : '/api/offerings';
+      const response = await fetch(url, { cache: 'no-store' });
+      if (!response.ok) throw new Error('The offering directory could not be loaded');
+      return response.json() as Promise<{
+        arkivStatus: 'ready' | 'missing' | 'expired' | 'mismatch' | 'unavailable';
+        warning: string | null;
+        offering: {
+          key: string;
+          owner: string;
+          projectTag: string;
+          offeringId: string;
+          rwaSymbol: string;
+          usdcAddress: string;
+          rwaAddress: string;
+          poolId: string;
+          expiresAt: string;
+        } | null;
+        chain: { cap: string | null; periodId: string | null; remaining: string | null; usdc: string | null; rwa: string | null };
+      }>;
+    },
+  });
   const statusQuery = useQuery({
     queryKey: ['product-status'],
     queryFn: async (): Promise<PublicProductStatus> => {
@@ -587,6 +611,49 @@ export default function InvestorExperience() {
               >
                 {switching ? 'Switching network…' : 'Switch to Ethereum Sepolia'}
               </button>
+            )}
+          </section>
+
+          <section className="panel" aria-labelledby="offering-title">
+            <h2 id="offering-title" className="section-title">Public offering</h2>
+            <p className="quiet">
+              This directory entry is public metadata for the mock USDC and RWA demo pool. It is not a real-world asset.
+              Arkiv does not store the purchase cap or the amount already spent.
+            </p>
+            {offeringsQuery.isLoading && <p className="quiet">Reading the offering directory.</p>}
+            {offeringsQuery.isError && (
+              <p className="notice" data-tone="error" role="alert">The offering directory could not be loaded. The purchase button still uses the Ethereum contract.</p>
+            )}
+            {offeringsQuery.data?.warning && (
+              <p className="notice" data-tone="pending" role="status">{offeringsQuery.data.warning}</p>
+            )}
+            {offeringsQuery.data && (
+              <dl className="metric-grid">
+                <div className="metric">
+                  <dt>Chain cap</dt>
+                  <dd>{offeringsQuery.data.chain.cap ? formatUsdc(BigInt(offeringsQuery.data.chain.cap)) : 'Unavailable'}</dd>
+                </div>
+                <div className="metric">
+                  <dt>Period</dt>
+                  <dd>{offeringsQuery.data.chain.periodId ?? 'Unavailable'}</dd>
+                </div>
+                <div className="metric">
+                  <dt>Remaining</dt>
+                  <dd>{offeringsQuery.data.chain.remaining ? formatUsdc(BigInt(offeringsQuery.data.chain.remaining)) : address ? 'Unavailable' : 'Connect a wallet'}</dd>
+                </div>
+                <div className="metric">
+                  <dt>Directory</dt>
+                  <dd>{offeringsQuery.data.arkivStatus}</dd>
+                </div>
+              </dl>
+            )}
+            {offeringsQuery.data?.offering && (
+              <p className="quiet">
+                {offeringsQuery.data.offering.rwaSymbol} · offering {offeringsQuery.data.offering.offeringId}
+                · owner {shortAddress(offeringsQuery.data.offering.owner)}
+                · entity {shortAddress(offeringsQuery.data.offering.key)}
+                · expires {new Date(Number(offeringsQuery.data.offering.expiresAt) * 1000).toISOString().slice(0, 10)}
+              </p>
             )}
           </section>
 
