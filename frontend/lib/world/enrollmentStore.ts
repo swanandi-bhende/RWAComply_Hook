@@ -136,6 +136,12 @@ CREATE TABLE IF NOT EXISTS wallet_association (
   enrollment_id INTEGER NOT NULL,
   created_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS browser_resume (
+  token_hash TEXT PRIMARY KEY,
+  enrollment_id INTEGER NOT NULL,
+  expires_at INTEGER NOT NULL,
+  created_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS registration_authorization (
   nonce TEXT PRIMARY KEY,
   wallet_address TEXT NOT NULL,
@@ -305,6 +311,48 @@ export class EnrollmentStore {
       )
       .all() as EnrollmentRow[];
     return rows.map(enrollmentFrom);
+  }
+
+  saveResume(input: { enrollmentId: number; tokenHash: string; expiresAt: number; createdAt: string }): void {
+    this.db.prepare('DELETE FROM browser_resume WHERE enrollment_id = ?').run(input.enrollmentId);
+    this.db
+      .prepare(
+        `INSERT INTO browser_resume (token_hash, enrollment_id, expires_at, created_at)
+         VALUES (?, ?, ?, ?)`,
+      )
+      .run(input.tokenHash, input.enrollmentId, input.expiresAt, input.createdAt);
+  }
+
+  findResume(tokenHash: string): { enrollmentId: number; expiresAt: number } | undefined {
+    const row = this.db
+      .prepare('SELECT enrollment_id, expires_at FROM browser_resume WHERE token_hash = ?')
+      .get(tokenHash) as { enrollment_id: number; expires_at: number } | undefined;
+    return row ? { enrollmentId: row.enrollment_id, expiresAt: row.expires_at } : undefined;
+  }
+
+  confirmedWallets(enrollmentId: number): string[] {
+    const rows = this.db
+      .prepare(
+        `SELECT r.wallet_address
+         FROM registration_authorization r
+         JOIN world_enrollment e ON e.allocation_id = r.allocation_id
+         WHERE e.id = ? AND r.chain_status = 'confirmed'
+         ORDER BY r.created_at`,
+      )
+      .all(enrollmentId) as { wallet_address: string }[];
+    return rows.map((row) => row.wallet_address);
+  }
+
+  findById(id: number): StoredEnrollment | undefined {
+    const row = this.db
+      .prepare(
+        `SELECT id, app_id, rp_id, environment, action, credential,
+                session_ciphertext, session_iv, session_tag, allocation_id, enrolled_at, session_id_hash
+         FROM world_enrollment
+         WHERE id = ?`,
+      )
+      .get(id) as EnrollmentRow | undefined;
+    return row ? enrollmentFrom(row) : undefined;
   }
 
   findBySessionHash(sessionIdHash: string): StoredEnrollment | undefined {

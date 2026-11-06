@@ -6,6 +6,7 @@ import {
   type RpContext,
 } from '@worldcoin/idkit-core';
 import type { WorldEnvironment } from './config.ts';
+import { safeReturnTo } from './handoff.ts';
 import type { SessionIdStore } from './sessionStore.ts';
 
 export type EnrollmentClientSuccess = {
@@ -45,6 +46,7 @@ export function enrollmentRequestConfig(input: {
   appId: `app_${string}`;
   rpContext: RpContext;
   environment: WorldEnvironment;
+  returnTo?: string;
 }): IDKitRequestConfig {
   return {
     app_id: input.appId,
@@ -53,6 +55,7 @@ export function enrollmentRequestConfig(input: {
     rp_context: input.rpContext,
     allow_legacy_proofs: false,
     environment: input.environment,
+    ...(input.returnTo ? { return_to: input.returnTo } : {}),
   };
 }
 
@@ -89,6 +92,9 @@ export async function enrollProofOfHuman(options: {
   sessionStore?: SessionIdStore;
   signal?: AbortSignal;
   timeoutMs?: number;
+  returnTo?: string;
+  onHandoff?: (handoff: { connectorURI: string; expiresAt: number }) => void;
+  onProofReceived?: () => void;
 } = {}): Promise<EnrollmentClientResult> {
   const fetchImpl = options.fetchImpl ?? fetch;
   const openRequest = options.openRequest ?? openProofOfHumanRequest;
@@ -101,10 +107,10 @@ export async function enrollProofOfHuman(options: {
       body: JSON.stringify({ intent: 'signup' }),
       signal: options.signal,
     });
-    if (!response.ok) return { ok: false, reason: 'unexpected' };
+    if (!response.ok) return { ok: false, reason: 'world_unavailable' };
     contextBody = (await response.json()) as RpContextResponse;
   } catch {
-    return { ok: false, reason: 'unexpected' };
+    return { ok: false, reason: 'world_unavailable' };
   }
 
   if (typeof contextBody.app_id !== 'string' || !contextBody.app_id.startsWith('app_')) {
@@ -119,6 +125,7 @@ export async function enrollProofOfHuman(options: {
     appId: contextBody.app_id as `app_${string}`,
     rpContext: contextBody.rp_context,
     environment: contextBody.environment,
+    returnTo: safeReturnTo(options.returnTo),
   });
 
   let request: ProofOfHumanRequest;
@@ -128,11 +135,16 @@ export async function enrollProofOfHuman(options: {
     return { ok: false, reason: 'world_app_unavailable' };
   }
 
+  options.onHandoff?.({
+    connectorURI: request.connectorURI,
+    expiresAt: contextBody.rp_context.expires_at,
+  });
   const completion = await request.pollUntilCompletion({
-    timeout: options.timeoutMs,
+    timeout: options.timeoutMs ?? Math.max(1000, contextBody.rp_context.expires_at * 1000 - Date.now()),
     signal: options.signal,
   });
   if (!completion.success) return completionFailure(String(completion.error));
+  options.onProofReceived?.();
 
   let enrollResponse: Response;
   try {
@@ -143,7 +155,7 @@ export async function enrollProofOfHuman(options: {
       signal: options.signal,
     });
   } catch {
-    return { ok: false, reason: 'unexpected' };
+    return { ok: false, reason: 'world_unavailable' };
   }
 
   if (enrollResponse.status === 409) return { ok: false, reason: 'already_enrolled' };

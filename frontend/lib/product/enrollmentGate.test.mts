@@ -38,6 +38,20 @@ test('an unavailable Arkiv directory does not block the identity action', () => 
   assert.equal(button.disabled, false);
 });
 
+test('a verified session stays available before the next wallet is connected', () => {
+  const button = enrollmentButton({ ...ready, connected: false, walletReady: false, identity: 'verified' });
+  assert.equal(button.disabled, true);
+  assert.equal(button.label, 'Continue and register this wallet');
+  assert.match(button.explanation, /does not link it/);
+});
+
+test('a verified session offers continuation instead of a new enrollment', () => {
+  const button = enrollmentButton({ ...ready, identity: 'verified' });
+  assert.equal(button.disabled, false);
+  assert.equal(button.label, 'Continue and register this wallet');
+  assert.match(button.explanation, /does not link it/);
+});
+
 test('an already registered wallet does not start another registration', () => {
   const button = enrollmentButton({ ...ready, alreadyRegistered: true });
   assert.equal(button.disabled, true);
@@ -49,6 +63,16 @@ test('a missing ledger stops registration without an identity error', () => {
   assert.equal(blocked.ok, false);
   if (!blocked.ok) assert.match(blocked.message, /allocation ledger/);
   assert.equal(registrationPreflight({ registrationReady: true, ledgerKnown: true }).ok, true);
+});
+
+test('World App states stay distinct from a verified person', () => {
+  const creating = enrollmentButton({ ...ready, phase: 'verifying', prompt: 'creating' });
+  assert.equal(creating.label, 'Creating verification request');
+  const readyCode = enrollmentButton({ ...ready, phase: 'verifying', prompt: 'qr_ready' });
+  assert.match(readyCode.explanation, /Scan the QR code/);
+  const checking = enrollmentButton({ ...ready, phase: 'verifying', prompt: 'checking' });
+  assert.equal(checking.label, 'Checking the proof');
+  assert.equal(enrollmentButton({ ...ready, phase: 'failed' }).label, 'Verify with World App');
 });
 
 test('wallet linked is reserved for a confirmed registration', () => {

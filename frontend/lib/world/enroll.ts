@@ -10,7 +10,8 @@ import {
   newAllocationId,
   type PortalCallResult,
 } from './enrollmentProof.ts';
-import { CONTINUATION_GRANT_HASH_DOMAIN, domainHash, encryptSessionId, SESSION_ID_HASH_DOMAIN } from './sessionCrypto.ts';
+import { newResumeToken, RESUME_TTL_SECONDS, resumeCookie } from './browserResume.ts';
+import { BROWSER_RESUME_HASH_DOMAIN, CONTINUATION_GRANT_HASH_DOMAIN, domainHash, encryptSessionId, SESSION_ID_HASH_DOMAIN } from './sessionCrypto.ts';
 
 const VERIFY_TIMEOUT_MS = 15_000;
 const ENROLLMENT_GRANT_TTL_SECONDS = 300;
@@ -56,10 +57,10 @@ export function portalVerifyClient(fetchImpl: typeof fetch = fetch): WorldVerify
   };
 }
 
-function jsonResponse(body: Record<string, unknown>, status: number): Response {
+function jsonResponse(body: Record<string, unknown>, status: number, extraHeaders: Record<string, string> = {}): Response {
   return Response.json(body, {
     status,
-    headers: { 'cache-control': 'no-store' },
+    headers: { 'cache-control': 'no-store', ...extraHeaders },
   });
 }
 
@@ -152,12 +153,20 @@ export async function handleEnroll(
           expiresAt: nowSeconds + ENROLLMENT_GRANT_TTL_SECONDS,
           createdAt: new Date(nowSeconds * 1000).toISOString(),
         });
+        const resume = newResumeToken();
+        const resumeExpires = nowSeconds + RESUME_TTL_SECONDS;
+        store.saveResume({
+          enrollmentId: enrollment.id,
+          tokenHash: domainHash(BROWSER_RESUME_HASH_DOMAIN, resume.token),
+          expiresAt: resumeExpires,
+          createdAt: new Date(nowSeconds * 1000).toISOString(),
+        });
         return jsonResponse({
           success: true,
           session_id: bound.sessionId,
           continuation_token: continuationToken,
           expires_at: nowSeconds + ENROLLMENT_GRANT_TTL_SECONDS,
-        }, 200);
+        }, 200, { 'set-cookie': resumeCookie(resume.token) });
       }
       if (inserted.reason === 'duplicate_nullifier' || inserted.reason === 'duplicate_session') {
         return jsonResponse({ error: 'This Proof of Human enrollment already exists' }, 409);

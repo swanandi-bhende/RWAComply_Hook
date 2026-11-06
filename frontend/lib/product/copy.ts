@@ -1,12 +1,15 @@
 export function verificationFailure(reason: string): string {
   if (reason === 'cancelled') return 'Verification was cancelled. No wallet was registered.';
-  if (reason === 'timeout') return 'Verification timed out. You can try again.';
-  if (reason === 'world_app_unavailable') return 'World App is not available on this device.';
+  if (reason === 'timeout') return 'This World App request expired. Start verification again.';
+  if (reason === 'world_app_unavailable') return 'The World App request could not be created. Check the connection and try again.';
   if (reason === 'proof_failed' || reason === 'verification_rejected') {
     return 'Verification could not be completed. Please try again.';
   }
   if (reason === 'already_enrolled') {
     return 'This identity is already verified. Continue the saved session to link a wallet.';
+  }
+  if (reason === 'expired') {
+    return 'This verified session has expired. Verify with World App again only if you intend to start a new proof. The previous allocation is not reset.';
   }
   if (reason === 'missing_session' || reason === 'invalid_session') {
     return 'Your RWAComply session could not be found.';

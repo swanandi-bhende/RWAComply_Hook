@@ -12,6 +12,10 @@ A proof World rejects does not create an enrollment. The database write is not c
 
 These are local tests against the server code. They are not a recording of the World widget on a device.
 
+IDKit 4.6 can request `proof_of_human`, `selfie`, `passport`, or `mnc`. Proof of human is the Orb credential. Passport and national-ID credentials need an NFC document. Selfie Check does not need an Orb, but it is not enabled for this staging application. No other installed credential is available without one of those. `RWA_DEMO_IDENTITY` is a separate localhost or hackathon demo identity. It is not sent to World and it is not labelled as proof of human.
+
+IDKit 4.6 returns a `connectorURI` on `https://staging.world.org/verify` for this app’s staging environment. The page encodes that exact URI as a QR code and offers the same URI as a link. It does not open a widget by itself. Polling stays on the page. “Proof of human verified” is shown only after `/api/world/enroll` accepts the proof and `/api/world/identity` reports the saved session. A second wallet still uses `IDKit.proveSession` and gets the same style of handoff.
+
 ## Documentation gap
 
 World's first pages make `IDKit.createSession()` look like the way to keep a person across wallets. This app does not call it. The second wallet uses `IDKit.proveSession` with no action. The result's `session_nullifier` only ties that interaction to the same session. It is not the uniqueness nullifier from the `signup` proof, and it is not the allocation id. The allocation id is a random `bytes32` created by this backend after World accepts the first proof.

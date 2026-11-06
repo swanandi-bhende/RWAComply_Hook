@@ -24,6 +24,8 @@ export function enrollmentButton(input: {
   walletReady: boolean;
   alreadyRegistered: boolean;
   phase: EnrollmentPhase;
+  prompt?: 'creating' | 'qr_ready' | 'checking';
+  identity?: 'unverified' | 'verified' | 'expired';
   marketLoading?: boolean;
   arkivUnavailable?: boolean;
 }): { disabled: boolean; label: string; explanation: string } {
@@ -31,6 +33,13 @@ export function enrollmentButton(input: {
     return { disabled: true, label: 'Wallet linked', explanation: 'This wallet is already registered.' };
   }
   if (!input.connected) {
+    if (input.identity === 'verified') {
+      return {
+        disabled: true,
+        label: 'Continue and register this wallet',
+        explanation: 'Proof of human is already verified. Connect the next wallet. Connecting it does not link it.',
+      };
+    }
     return { disabled: true, label: 'Verify with World App', explanation: 'Connect a wallet to continue.' };
   }
   if (!input.onSupportedNetwork) {
@@ -44,6 +53,19 @@ export function enrollmentButton(input: {
     };
   }
   if (input.phase === 'verifying') {
+    if (input.prompt === 'creating') {
+      return { disabled: true, label: 'Creating verification request', explanation: 'RWAComply is creating the World App request.' };
+    }
+    if (input.prompt === 'checking') {
+      return { disabled: true, label: 'Checking the proof', explanation: 'Proof received. RWAComply is verifying it with World.' };
+    }
+    if (input.prompt === 'qr_ready') {
+      return {
+        disabled: true,
+        label: 'Waiting for World App',
+        explanation: 'Scan the QR code with World App, or open the World App link. Approving it does not verify you until RWAComply checks the proof.',
+      };
+    }
     return { disabled: true, label: 'Waiting for World App', explanation: 'Complete the proof in World App.' };
   }
   if (input.phase === 'awaiting_signature') {
@@ -52,9 +74,23 @@ export function enrollmentButton(input: {
   if (input.phase === 'awaiting_transaction') {
     return { disabled: true, label: 'Confirm wallet registration', explanation: 'Confirm the registration transaction in the wallet.' };
   }
+  if (input.identity === 'verified') {
+    return {
+      disabled: false,
+      label: 'Continue and register this wallet',
+      explanation: 'Proof of human is already verified. This wallet still has to sign ownership and register on Ethereum. Connecting it does not link it.',
+    };
+  }
+  if (input.identity === 'expired') {
+    return {
+      disabled: false,
+      label: 'Verify with World App',
+      explanation: 'The saved session expired. Verifying again is a new proof. It does not reset an allocation that is already onchain.',
+    };
+  }
   return {
     disabled: false,
     label: 'Verify with World App',
-    explanation: '',
+    explanation: 'World App checks proof of human once for this person. It is not KYC or legal eligibility.',
   };
 }

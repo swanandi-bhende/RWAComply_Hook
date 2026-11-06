@@ -105,6 +105,10 @@ test('a verified Proof of Human enrollment stores an encrypted session and retur
     const text = await response.text();
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('cache-control'), 'no-store');
+    const cookie = response.headers.get('set-cookie') ?? '';
+    assert.match(cookie, /^rwacomply_resume=[0-9a-f]{64}; HttpOnly; SameSite=Lax; Path=\/; Max-Age=\d+$/);
+    const resumeToken = cookie.split('=')[1]?.split(';')[0] ?? '';
+    assert.equal(text.includes(resumeToken), false);
     const body = JSON.parse(text) as {
       success: boolean;
       session_id: string;
@@ -136,6 +140,7 @@ test('a verified Proof of Human enrollment stores an encrypted session and retur
     assert.equal(stored.includes(ENCRYPTION_KEY.slice(2)), false);
     assert.equal(stored.includes(body.continuation_token), false);
     assert.equal(stored.includes(SIGNING_KEY.slice(2)), false);
+    assert.equal(stored.includes(resumeToken), false);
   });
 });
 

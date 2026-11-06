@@ -12,7 +12,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:world": "node --experimental-strip-types --test lib/world/config.test.mts lib/world/rpContext.test.mts lib/world/sessionCrypto.test.mts lib/world/loadRootEnv.test.mts lib/world/enroll.test.mts lib/world/enrollClient.test.mts lib/world/enrollmentAction.test.mts lib/world/continue.test.mts lib/world/continueClient.test.mts lib/world/walletLink.test.mts lib/world/ledgerRegistration.test.mts lib/product/product.test.mts lib/product/enrollmentGate.test.mts lib/product/usdcPurchase.test.mts lib/product/purchaseFlow.test.mts lib/product/purchaseHistory.test.mts lib/marketplace/offeringDraft.test.mts lib/demo/anvilDeployment.test.mts lib/demo/allocationJourney.test.mts lib/world/secondWallet.test.mts lib/arkiv/client.test.mts lib/arkiv/offering.test.mts lib/arkiv/purchaseBoundary.test.mts lib/arkiv/prizeDocs.test.mts lib/arkiv/submissionDocs.test.mts",
+    "test:world": "node --experimental-strip-types --test lib/world/config.test.mts lib/world/rpContext.test.mts lib/world/sessionCrypto.test.mts lib/world/loadRootEnv.test.mts lib/world/enroll.test.mts lib/world/identity.test.mts lib/world/enrollClient.test.mts lib/world/handoff.test.mts lib/world/demoIdentity.test.mts lib/world/enrollmentAction.test.mts lib/world/continue.test.mts lib/world/continueClient.test.mts lib/world/walletLink.test.mts lib/world/ledgerRegistration.test.mts lib/product/product.test.mts lib/product/enrollmentGate.test.mts lib/product/usdcPurchase.test.mts lib/product/purchaseFlow.test.mts lib/product/purchaseHistory.test.mts lib/marketplace/offeringDraft.test.mts lib/demo/anvilDeployment.test.mts lib/demo/allocationJourney.test.mts lib/world/secondWallet.test.mts lib/arkiv/client.test.mts lib/arkiv/offering.test.mts lib/arkiv/purchaseBoundary.test.mts lib/arkiv/prizeDocs.test.mts lib/arkiv/submissionDocs.test.mts",
     "verify:world-signer": "node --experimental-strip-types scripts/verify-world-signer.mts",
     "publish:offering": "node --experimental-strip-types scripts/publish-offering.mts",
     "query:offering": "node --experimental-strip-types scripts/query-offering.mts"
@@ -25,6 +25,7 @@
     "axios": "^1.13.6",
     "luxon": "^3.7.2",
     "next": "16.4.5",
+    "qrcode": "^1.5.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "recharts": "^3.8.0",
@@ -32,8 +33,10 @@
     "wagmi": "2.19.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

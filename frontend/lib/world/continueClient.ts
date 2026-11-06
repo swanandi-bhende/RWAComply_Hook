@@ -6,6 +6,7 @@ import {
   type RpContext,
 } from '@worldcoin/idkit-core';
 import type { WorldEnvironment } from './config.ts';
+import { safeReturnTo } from './handoff.ts';
 import { SESSION_ID_PATTERN } from './sessionProof.ts';
 import type { SessionIdStore } from './sessionStore.ts';
 import type { ProofOfHumanRequest } from './enrollClient.ts';
@@ -17,6 +18,7 @@ export type ContinuationClientResult =
       reason:
         | 'missing_session'
         | 'invalid_session'
+        | 'expired'
         | 'cancelled'
         | 'timeout'
         | 'world_app_unavailable'
@@ -47,11 +49,13 @@ export function sessionProofConfig(input: {
   appId: `app_${string}`;
   rpContext: RpContext;
   environment: WorldEnvironment;
+  returnTo?: string;
 }): IDKitSessionConfig {
   return {
     app_id: input.appId,
     rp_context: input.rpContext,
     environment: input.environment,
+    ...(input.returnTo ? { return_to: input.returnTo } : {}),
   };
 }
 
@@ -82,12 +86,26 @@ export async function continueProofOfHuman(options: {
   openRequest?: (sessionId: `session_${string}`, config: IDKitSessionConfig) => Promise<ProofOfHumanRequest>;
   signal?: AbortSignal;
   timeoutMs?: number;
+  returnTo?: string;
+  onHandoff?: (handoff: { connectorURI: string; expiresAt: number }) => void;
+  onProofReceived?: () => void;
 } = {}): Promise<ContinuationClientResult> {
-  const sessionId = options.sessionId ?? options.sessionStore?.read() ?? '';
+  let sessionId = options.sessionId ?? options.sessionStore?.read() ?? '';
+  const fetchImpl = options.fetchImpl ?? fetch;
+  if (!sessionId) {
+    try {
+      const resume = await fetchImpl('/api/world/resume', { method: 'POST', signal: options.signal });
+      if (resume.status === 410) return { ok: false, reason: 'expired' };
+      if (!resume.ok) return { ok: false, reason: 'missing_session' };
+      const body = (await resume.json()) as { session_id?: unknown };
+      sessionId = typeof body.session_id === 'string' ? body.session_id : '';
+    } catch {
+      return { ok: false, reason: 'missing_session' };
+    }
+  }
   if (!sessionId) return { ok: false, reason: 'missing_session' };
   if (!SESSION_ID_PATTERN.test(sessionId)) return { ok: false, reason: 'invalid_session' };
 
-  const fetchImpl = options.fetchImpl ?? fetch;
   const openRequest = options.openRequest ?? openSessionProof;
   let contextBody: RpContextResponse;
   try {
@@ -97,10 +115,10 @@ export async function continueProofOfHuman(options: {
       body: JSON.stringify({ intent: 'continue' }),
       signal: options.signal,
     });
-    if (!response.ok) return { ok: false, reason: 'unexpected' };
+    if (!response.ok) return { ok: false, reason: 'world_unavailable' };
     contextBody = (await response.json()) as RpContextResponse;
   } catch {
-    return { ok: false, reason: 'unexpected' };
+    return { ok: false, reason: 'world_unavailable' };
   }
   if (typeof contextBody.app_id !== 'string' || !contextBody.app_id.startsWith('app_')) {
     return { ok: false, reason: 'unexpected' };
@@ -114,6 +132,7 @@ export async function continueProofOfHuman(options: {
     appId: contextBody.app_id as `app_${string}`,
     rpContext: contextBody.rp_context,
     environment: contextBody.environment,
+    returnTo: safeReturnTo(options.returnTo),
   });
   let request: ProofOfHumanRequest;
   try {
@@ -121,11 +140,16 @@ export async function continueProofOfHuman(options: {
   } catch {
     return { ok: false, reason: 'world_app_unavailable' };
   }
+  options.onHandoff?.({
+    connectorURI: request.connectorURI,
+    expiresAt: contextBody.rp_context.expires_at,
+  });
   const completion = await request.pollUntilCompletion({
-    timeout: options.timeoutMs,
+    timeout: options.timeoutMs ?? Math.max(1000, contextBody.rp_context.expires_at * 1000 - Date.now()),
     signal: options.signal,
   });
   if (!completion.success) return completionFailure(String(completion.error));
+  options.onProofReceived?.();
 
   let continueResponse: Response;
   try {
@@ -136,7 +160,7 @@ export async function continueProofOfHuman(options: {
       signal: options.signal,
     });
   } catch {
-    return { ok: false, reason: 'unexpected' };
+    return { ok: false, reason: 'world_unavailable' };
   }
   if (continueResponse.status === 503) return { ok: false, reason: 'world_unavailable' };
   if (continueResponse.status === 422 || continueResponse.status === 404) {

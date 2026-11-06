@@ -13,12 +13,12 @@ No demo video has been recorded. The purchase numbers below were produced on loc
 | Step | Where it stands |
 |---|---|
 | 1. Connect a wallet | Available on `/invest` |
-| 2. Complete proof of human in World App | The button is “Verify with World App”. A live World ID proof has not been completed |
+| 2. Complete proof of human in World App | The button is “Verify with World App”. The page shows the QR code and link from the IDKit request. Proof of human needs an Orb-verified World ID. A live World ID proof has not been completed. `RWA_DEMO_IDENTITY=local` can show a separate demo identity on localhost. That label says it is not World ID |
 | 3. Sign wallet ownership | The browser wallet signs after World accepts the proof |
 | 4. Register the wallet | `registerWallet` on Sepolia. The page reports success only after the receipt matches. No investor registration has been sent |
 | 5. View the allocation and the offering | The cap and the remainder come from Ethereum. The offering panel reads Arkiv. The allocation id is not shown |
 | 6. Connect a second wallet | Disconnect the first wallet, then connect the second |
-| 7. Continue the existing World ID session | “Continue and register this wallet”. A new enrollment is a different person |
+| 7. Continue the existing World ID session | “Continue and register this wallet”. The verified session stays in an HttpOnly cookie for this browser. A new enrollment is a different person |
 | 8. Register the second wallet | Same signature and `registerWallet` path. Not yet done on Sepolia |
 | 9. Show the shared budget | Both wallets read one remaining USDC budget |
 | 10. Purchase through the supported route | `PoolExecutor.swapExactInput`. The Anvil result is below. It has not been sent on Sepolia |

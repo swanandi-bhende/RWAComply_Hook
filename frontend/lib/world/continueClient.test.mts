@@ -125,3 +125,27 @@ test('continuation forwards the session proof and stores only the browser sessio
   });
   assert.deepEqual(rejected, { ok: false, reason: 'verification_rejected' });
 });
+
+test('a second wallet loads the saved session from the browser resume and does not store it', async () => {
+  const result = await continueProofOfHuman({
+    fetchImpl: async (input) => {
+      const url = String(input);
+      if (url.endsWith('/api/world/resume')) return Response.json({ session_id: sessionId });
+      if (url.endsWith('/api/world/rp-context')) {
+        return Response.json({ app_id: APP_ID, environment: 'staging', rp_context: rpContext() });
+      }
+      return Response.json({ continuation_token: 'abc', expires_at: 10 });
+    },
+    openRequest: async (id) => {
+      assert.equal(id, sessionId);
+      return {
+        connectorURI: 'https://staging.world.org/verify?t=wld&i=reqtest123&k=abc',
+        pollUntilCompletion: async () => ({ success: true, result: sessionResult }),
+      };
+    },
+    onHandoff: (handoff) => {
+      assert.equal(handoff.connectorURI, 'https://staging.world.org/verify?t=wld&i=reqtest123&k=abc');
+    },
+  });
+  assert.equal(result.ok, true);
+});

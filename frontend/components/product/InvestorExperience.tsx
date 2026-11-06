@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { sepolia } from 'wagmi/chains';
 import {
@@ -16,12 +16,13 @@ import {
 import { parseUnits, type Address, type Hex } from 'viem';
 import { SiteFooter } from './SiteFooter';
 import { SiteNav } from './SiteNav';
-import { browserSessionStore } from '@/lib/world/sessionStore';
+import { WorldAppHandoff } from './WorldAppHandoff';
 import { enrollProofOfHuman } from '@/lib/world/enrollClient';
 import { runEnrollmentAction } from '@/lib/world/enrollmentAction';
 import { runSecondWallet } from '@/lib/world/secondWallet';
 import { REMAINING_BUDGET_MESSAGE, routerPhaseLabel, routerRejectionMessage } from '@/lib/product/purchaseFlow';
 import { continueProofOfHuman } from '@/lib/world/continueClient';
+import { authorizeDemoWallet } from '@/lib/world/demoClient';
 import { authorizeWalletLink, type WalletLinkClientResult } from '@/lib/world/walletLinkClient';
 import {
   LEDGER_REGISTRATION_ABI,
@@ -214,6 +215,29 @@ export default function InvestorExperience() {
 
   const [verify, setVerify] = useState<Notice>({ tone: 'idle', text: '' });
   const [enrollmentPhase, setEnrollmentPhase] = useState<EnrollmentPhase>('idle');
+  const [prompt, setPrompt] = useState<'creating' | 'qr_ready' | 'checking' | undefined>(undefined);
+  const [handoff, setHandoff] = useState<{ connectorURI: string; expiresAt: number } | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const [showAddresses, setShowAddresses] = useState(false);
+  const identityQuery = useQuery({
+    queryKey: ['world-identity'],
+    queryFn: async () => {
+      const response = await fetch('/api/world/identity', { cache: 'no-store' });
+      if (!response.ok) throw new Error('Verification status could not be read.');
+      return response.json() as Promise<{ state: 'unverified' | 'verified' | 'expired'; linkedWallets: string[] }>;
+    },
+  });
+  const identityState = identityQuery.data?.state ?? 'unverified';
+  const demoQuery = useQuery({
+    queryKey: ['demo-identity'],
+    queryFn: async () => {
+      const response = await fetch('/api/demo/identity', { cache: 'no-store' });
+      if (!response.ok) return { enabled: false as const, state: 'none' as const, linkedWallets: [] as string[] };
+      return response.json() as Promise<{ enabled: boolean; state?: 'none' | 'active'; linkedWallets?: string[] }>;
+    },
+  });
+  const [demoNotice, setDemoNotice] = useState<Notice>({ tone: 'idle', text: '' });
+  const [demoBusy, setDemoBusy] = useState(false);
   const [link, setLink] = useState<Notice>({ tone: 'idle', text: 'Link this wallet after verification.' });
   const [purchaseNotice, setPurchaseNotice] = useState<Notice>({ tone: 'idle', text: '' });
   const [amount, setAmount] = useState('');
@@ -324,16 +348,46 @@ export default function InvestorExperience() {
     return { ok: submitted.ok, message: submitted.message, pending: submitted.state === 'pending' };
   }
 
+  function worldRequest() {
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    return {
+      signal: controller.signal,
+      returnTo: `${window.location.origin}/invest`,
+      onHandoff: (next: { connectorURI: string; expiresAt: number }) => {
+        setPrompt('qr_ready');
+        setHandoff(next);
+        setVerify({ tone: 'pending', text: 'Scan the QR code with World App, or open the World App link.' });
+      },
+      onProofReceived: () => {
+        setPrompt('checking');
+        setHandoff(null);
+        setVerify({ tone: 'pending', text: 'Proof received. RWAComply is verifying it with World.' });
+      },
+    };
+  }
+
   async function verifyIdentity() {
     if (!address || !walletClient || !isConnected || !onSepolia || linked) return;
     setVerifying(true);
     setEnrollmentPhase('verifying');
-    setVerify({ tone: 'pending', text: 'Complete the proof in World App.' });
+    setPrompt('creating');
+    setHandoff(null);
+    setVerify({ tone: 'pending', text: 'Creating the World App request.' });
     const result = await runEnrollmentAction({
-      enroll: () => enrollProofOfHuman({ sessionStore: browserSessionStore() }),
-      authorize: (continuationToken) => {
+      enroll: () => enrollProofOfHuman(worldRequest()),
+      authorize: async (continuationToken) => {
+        const identity = await identityQuery.refetch();
+        setHandoff(null);
+        setPrompt(undefined);
         setEnrollmentPhase('awaiting_signature');
-        setVerify({ tone: 'pending', text: 'Sign the wallet ownership message.' });
+        setVerify({
+          tone: identity.data?.state === 'verified' ? 'ok' : 'pending',
+          text: identity.data?.state === 'verified'
+            ? 'Proof of human verified. Sign the wallet ownership message. This signature is separate from World ID.'
+            : 'Sign the wallet ownership message. This signature is separate from World ID.',
+        });
         return authorizeWalletLink({
           continuationToken,
           wallet: address,
@@ -347,12 +401,15 @@ export default function InvestorExperience() {
       },
     });
     setVerifying(false);
+    setPrompt(undefined);
+    setHandoff(null);
     if (result.registered) {
       setEnrollmentPhase('idle');
       setVerify({
         tone: 'ok',
-        text: 'Wallet linked. Proof of human is not KYC, AML, accreditation, residency, or nationality.',
+        text: 'Wallet linked. It shares this offering’s purchase allocation with the other wallets of this verified person.',
       });
+      await identityQuery.refetch();
       return;
     }
     setEnrollmentPhase('failed');
@@ -370,13 +427,23 @@ export default function InvestorExperience() {
     setLinking(true);
     setLink({ tone: 'pending', text: routerPhaseLabel('registering') });
     const account = walletClient.account;
+    setEnrollmentPhase('verifying');
+    setPrompt('creating');
+    setHandoff(null);
+    setVerify({ tone: 'pending', text: 'Creating the World App request for this wallet.' });
     const result = await runSecondWallet({
-      continueSession: () => continueProofOfHuman({ sessionStore: browserSessionStore() }),
-      authorize: (continuationToken) => authorizeWalletLink({
-        continuationToken,
-        wallet: address,
-        signTypedData: (typedData) => signTypedDataAsync(typedData as never),
-      }),
+      continueSession: () => continueProofOfHuman(worldRequest()),
+      authorize: (continuationToken) => {
+        setHandoff(null);
+        setPrompt(undefined);
+        setEnrollmentPhase('awaiting_signature');
+        setVerify({ tone: 'ok', text: 'Proof of human verified. Sign the wallet ownership message for this wallet.' });
+        return authorizeWalletLink({
+          continuationToken,
+          wallet: address,
+          signTypedData: (typedData) => signTypedDataAsync(typedData as never),
+        });
+      },
       register: async (authorization) => {
     const fresh = (await statusQuery.refetch()).data;
     const ledgerAddress = fresh?.ledger?.address;
@@ -468,6 +535,9 @@ export default function InvestorExperience() {
       },
     });
     setLinking(false);
+    setPrompt(undefined);
+    setHandoff(null);
+    setEnrollmentPhase(result.registered ? 'idle' : 'failed');
     if (!result.registered) {
       const detail = result.stage === 'continuation'
         ? verificationFailure(result.reason ?? 'unexpected')
@@ -483,8 +553,9 @@ export default function InvestorExperience() {
       : `Remaining shared budget: ${formatUsdc(result.remaining)}.`;
     setLink({
       tone: 'ok',
-      text: `This wallet is registered to the same person. ${shown} This is the budget left by the previously linked wallet. Selling does not restore it.`,
+      text: `This wallet is registered to the same person. ${shown} This is the budget left for every wallet linked to this verified person. Selling does not restore it.`,
     });
+    await identityQuery.refetch();
   }
 
   async function approveUsdc(value: bigint) {
@@ -597,9 +668,60 @@ export default function InvestorExperience() {
     confirmed: purchaseSucceeded,
   });
 
+  async function startDemo() {
+    setDemoBusy(true);
+    setDemoNotice({ tone: 'pending', text: 'Starting a demo identity for this browser.' });
+    const response = await fetch('/api/demo/start', { method: 'POST' });
+    setDemoBusy(false);
+    if (!response.ok) {
+      setDemoNotice({ tone: 'error', text: 'Demo identity is not enabled.' });
+      return;
+    }
+    setDemoNotice({
+      tone: 'ok',
+      text: 'Demo identity active — not World ID. Register a wallet next. This does not prove that you are a unique human.',
+    });
+    await demoQuery.refetch();
+  }
+
+  async function registerDemo() {
+    if (!address || !walletClient) return;
+    setDemoBusy(true);
+    setDemoNotice({ tone: 'pending', text: 'Sign the wallet ownership message. This signature is not World ID.' });
+    const authorized = await authorizeDemoWallet({
+      wallet: address,
+      signTypedData: (typedData) => signTypedDataAsync(typedData as never),
+    });
+    if (!authorized.ok) {
+      setDemoBusy(false);
+      setDemoNotice({
+        tone: 'error',
+        text: authorized.reason === 'conflict'
+          ? 'This wallet is already associated with another allocation.'
+          : 'The demo wallet was not registered.',
+      });
+      return;
+    }
+    const fresh = (await statusQuery.refetch()).data;
+    const registered = await registerAuthorized(authorized, fresh);
+    setDemoBusy(false);
+    if (!registered.ok) {
+      setDemoNotice({
+        tone: 'error',
+        text: `${registered.message ?? 'Registration was not confirmed.'} The demo identity was not treated as World ID.`,
+      });
+      return;
+    }
+    setDemoNotice({
+      tone: 'ok',
+      text: 'This wallet is linked to the demo identity. It is not World ID verification. Wallets linked this way share one purchase limit.',
+    });
+    await demoQuery.refetch();
+  }
+
   const journey = [
     { label: 'Connect wallet', done: isConnected && onSepolia },
-    { label: 'Verify identity', done: verify.tone === 'ok' || linked },
+    { label: 'Verify identity', done: identityState === 'verified' },
     { label: 'Register wallet', done: linked },
     { label: 'Obtain issuer approval', done: typeof tier.data === 'number' && tier.data > 0 },
     { label: 'Review allocation', done: linked && remainingValue !== null },
@@ -612,6 +734,8 @@ export default function InvestorExperience() {
     walletReady: !!walletClient,
     alreadyRegistered: linked,
     phase: enrollmentPhase === 'failed' ? 'idle' : enrollmentPhase,
+    prompt,
+    identity: identityState,
   });
   const symbol = offeringsQuery.data?.offering?.rwaSymbol ?? 'Demo RWA';
   const chainCap = offeringsQuery.data?.chain.cap ? formatUsdc(BigInt(offeringsQuery.data.chain.cap)) : 'Unavailable';
@@ -655,29 +779,68 @@ export default function InvestorExperience() {
 
           <section id="verify" className="panel">
             <h2 className="section-title">Verify identity</h2>
-            <p>World App verifies proof of human. The wallet signs ownership separately. Registration is a separate Ethereum transaction. Issuer approval is separate from proof of human.</p>
-            <p className="quiet">Proof of human is not KYC, AML, accreditation, residency, or legal eligibility. <a className="link" href="/how">How it works</a></p>
+            <p>
+              {identityState === 'verified'
+                ? 'Proof of human verified. This verification belongs to the person, not to one wallet, and it can be reused while the saved session is valid.'
+                : 'World App proof of human requires an Orb-verified World ID. This staging app cannot use Selfie Check, and an NFC passport is a different credential. The wallet signature and the Ethereum registration are separate steps.'}
+            </p>
+            <ol>
+              <li>Open World App.</li>
+              <li>Complete proof of human.</li>
+              <li>Return to RWAComply.</li>
+              <li>Sign a message with this wallet.</li>
+              <li>Register the wallet on Ethereum Sepolia.</li>
+            </ol>
+            <p className="quiet">Proof of human is not KYC and does not grant issuer approval. <a className="link" href="/how">How it works</a></p>
             <button
               type="button"
               className="btn btn-primary"
               disabled={enrollment.disabled}
-              onClick={() => void verifyIdentity()}
+              onClick={() => void (identityState === 'verified' && !linked ? linkWallet() : verifyIdentity())}
             >
               {enrollment.label}
             </button>
+            {handoff && (
+              <WorldAppHandoff
+                connectorURI={handoff.connectorURI}
+                expiresAt={handoff.expiresAt}
+                onCancel={() => abortRef.current?.abort()}
+              />
+            )}
             {enrollment.explanation && <p className="notice" role="status">{enrollment.explanation}</p>}
             {verify.text && <p className="notice" data-tone={verify.tone} role="status">{verify.text}</p>}
           </section>
 
+          {demoQuery.data?.enabled && (
+            <section className="panel" id="demo-identity">
+              <h2 className="section-title">Demo identity verification — not World ID</h2>
+              <p>This hackathon mode creates a server-side demo identity for this browser. It does not establish a unique human, and it is not Orb, Selfie Check, or World ID verification.</p>
+              <p>Wallet ownership, onchain registration, and issuer approval stay separate. Linked demo wallets share one purchase limit. Selling does not restore it.</p>
+              {demoQuery.data.state === 'active' && <p className="notice" data-tone="pending" role="status">Demo identity active — not World ID. Connecting a wallet does not link it.</p>}
+              <div className="actions">
+                {demoQuery.data.state !== 'active'
+                  ? <button type="button" className="btn btn-secondary" disabled={demoBusy} onClick={() => void startDemo()}>Start demo identity</button>
+                  : <button type="button" className="btn btn-secondary" disabled={demoBusy || !isConnected || !onSepolia || !walletClient || linked} onClick={() => void registerDemo()}>{linked ? 'Wallet linked' : 'Sign and register this wallet'}</button>}
+              </div>
+              {demoQuery.data.linkedWallets && demoQuery.data.linkedWallets.length > 0 && (
+                <ul>
+                  {demoQuery.data.linkedWallets.map((wallet) => <li key={wallet}>{shortAddress(wallet)}</li>)}
+                </ul>
+              )}
+              {demoNotice.text && <p className="notice" data-tone={demoNotice.tone} role="status">{demoNotice.text}</p>}
+            </section>
+          )}
+
           <section id="link" className="panel">
             <h2 className="section-title">Register wallet</h2>
-            <p>Already registered another wallet? Connect your next wallet and continue the same identity session. Both wallets will share the allocation for this offering.</p>
+            <p>Verify once. Link multiple wallets. Share one purchase limit.</p>
+            <p>Already registered another wallet? Connect the next wallet and continue the same identity session. Both wallets share the allocation for this offering. Connecting a wallet does not register it.</p>
             <div className="actions">
               <button type="button" className="btn btn-secondary" disabled={!isConnected} onClick={() => disconnect()}>Disconnect current wallet</button>
               <button
                 type="button"
                 className="btn btn-primary"
-                disabled={!isConnected || !onSepolia || linking || !walletClient}
+                disabled={!isConnected || !onSepolia || linking || !walletClient || identityState !== 'verified'}
                 onClick={() => void linkWallet()}
               >
                 {linking ? 'Registering' : 'Continue and register this wallet'}
@@ -700,7 +863,20 @@ export default function InvestorExperience() {
             {canRead && !linked && <p>This wallet is not registered, so its remaining allocation is not shown as zero.</p>}
             {linked && (
               <>
-                <p>All linked wallets consume the same offering budget. Selling does not restore it.</p>
+                <p>Verify once. Link multiple wallets. Share one purchase limit. All linked wallets consume the same offering budget. Selling does not restore it. The remaining amount below is read from Ethereum.</p>
+                {identityQuery.data?.linkedWallets && identityQuery.data.linkedWallets.length > 0 && (
+                  <>
+                    <p>Linked wallets</p>
+                    <ul>
+                      {identityQuery.data.linkedWallets.map((wallet) => (
+                        <li key={wallet}>{showAddresses ? wallet : shortAddress(wallet)}</li>
+                      ))}
+                    </ul>
+                    <button type="button" className="btn btn-secondary" onClick={() => setShowAddresses((current) => !current)}>
+                      {showAddresses ? 'Hide full addresses' : 'Show full addresses'}
+                    </button>
+                  </>
+                )}
                 <dl className="metric-grid">
                   <div className="metric metric-emphasis"><dt>Remaining</dt><dd>{remainingValue === null ? 'Unavailable' : formatUsdc(remainingValue)}</dd></div>
                   <div className="metric"><dt>Offering cap</dt><dd>{cap === null ? 'Unavailable' : formatUsdc(cap)}</dd></div>

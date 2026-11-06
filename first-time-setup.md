@@ -23,7 +23,7 @@ Leave the contract owner `0x36Dc780DA078Ab4b8C5923bEd34eF4546DCb8ce6`, the alloc
 2. Connect the first wallet.
 3. Switch to Ethereum Sepolia, chain id `11155111`. The page has a switch button when the wallet is on another network.
 4. Open World App on the phone. The investor does not open the World Developer Portal.
-5. Choose “Verify with World App” and complete proof of human. RWAComply checks that proof with the operator’s configured World ID application. The proof is not KYC or AML, and it does not register the wallet by itself.
+5. Choose “Verify with World App”. On a computer, scan the QR code with World App. On a phone, open the World App link. Approve the proof there. RWAComply checks that proof with the operator’s configured World ID application before it says the person is verified. The proof is not KYC or AML, and it does not register the wallet by itself.
 6. Sign the wallet-ownership message in the browser wallet. That signature shows control of the address.
 7. Confirm the `registerWallet` transaction. The page reports the wallet as linked only after the chain receipt matches.
 8. Wait for issuer approval. The hook owner sets the access tier with `setTier`. Tier 0 cannot purchase. The investor sees “Issuer approval required” until that call exists. No investor tier has been set on Sepolia.

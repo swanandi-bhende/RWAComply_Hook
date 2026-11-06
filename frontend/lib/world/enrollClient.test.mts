@@ -73,6 +73,7 @@ test('IDKit builds a Proof of Human uniqueness request bound to a new session', 
     assert.equal(payload.proof_request?.proof_type, 'uniqueness');
     assert.equal(payload.proof_request?.session_id, 'create');
     assert.equal(payload.proof_request?.rp_id, 'rp_00000000000a11ce');
+    assert.match(request.connectorURI, /^https:\/\/staging\.world\.org\/verify\?t=wld&i=reqtest123&k=/);
     const serialized = JSON.stringify(payload.proof_request);
     assert.equal(serialized.includes('proof_of_human'), true);
     assert.equal(serialized.includes('orbLegacy'), false);
@@ -137,4 +138,68 @@ test('enrollment forwards the unchanged result and ignores cancellation or failu
     assert.equal(result.ok, false);
     assert.equal(enrollCalls, 0);
   }
+});
+
+test('the connector is presented before polling and a client flag cannot verify the person', async () => {
+  const connectorURI = 'https://staging.world.org/verify?t=wld&i=reqtest123&k=abc';
+  let handedOff = false;
+  let polling = false;
+  const events: string[] = [];
+  const success = await enrollProofOfHuman({
+    fetchImpl: async (input, init) => {
+      const url = String(input);
+      if (url.endsWith('/api/world/rp-context')) return Response.json(contextResponse());
+      events.push('enroll');
+      const body = JSON.parse(String(init?.body)) as { verified?: boolean; protocol_version?: string };
+      assert.equal(body.verified, undefined);
+      assert.equal(body.protocol_version, '4.0');
+      return Response.json({ success: true, session_id: verifiedSessionId, continuation_token: 'grant' });
+    },
+    onHandoff: (handoff) => {
+      handedOff = !polling;
+      events.push(handoff.connectorURI);
+    },
+    onProofReceived: () => events.push('proof'),
+    openRequest: async () => ({
+      connectorURI,
+      pollUntilCompletion: async () => {
+        polling = true;
+        return { success: true, result: verifiedResult };
+      },
+    }),
+  });
+  assert.equal(handedOff, true);
+  assert.equal(success.ok, true);
+  assert.deepEqual(events, [connectorURI, 'proof', 'enroll']);
+
+  const flagged = await enrollProofOfHuman({
+    fetchImpl: async (input) => {
+      if (String(input).endsWith('/api/world/enroll')) return Response.json({ verified: true });
+      return Response.json(contextResponse());
+    },
+    openRequest: async () => ({
+      connectorURI,
+      pollUntilCompletion: async () => ({ success: true, result: verifiedResult }),
+    }),
+  });
+  assert.equal(flagged.ok, false);
+
+  const expired = await enrollProofOfHuman({
+    fetchImpl: async (input) => {
+      if (String(input).endsWith('/api/world/enroll')) throw new Error('should not enroll');
+      return Response.json(contextResponse());
+    },
+    openRequest: async () => ({
+      connectorURI,
+      pollUntilCompletion: async () => ({ success: false, error: 'timeout' }) as IDKitCompletionResult,
+    }),
+  });
+  assert.deepEqual(expired, { ok: false, reason: 'timeout' });
+
+  const offline = await enrollProofOfHuman({
+    fetchImpl: async () => {
+      throw new Error('offline');
+    },
+  });
+  assert.deepEqual(offline, { ok: false, reason: 'world_unavailable' });
 });
