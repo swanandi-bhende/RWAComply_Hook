@@ -3,7 +3,7 @@ import test from 'node:test';
 import { publicWorldConfig, readWorldConfig, WorldConfigError } from './config.ts';
 
 const APP_ID = 'app_test_fixture';
-const RP_ID = 'rp_test_fixture';
+const RP_ID = 'rp_a11ce';
 const SIGNING_KEY = '0xabababababababababababababababababababababababababababababababab';
 
 function fixtureEnv(overrides: Record<string, string | undefined> = {}) {

@@ -1,4 +1,4 @@
-import { WorldConfigError, readWorldConfig, type WorldEnv } from './config.ts';
+import { WorldConfigError, readWorldConfig, readWorldEnvironment, type WorldEnv } from './config.ts';
 import { isRpIntent, signRpContext, type RpIntent } from './rpContext.ts';
 
 const FORBIDDEN_FIELDS = [
@@ -40,8 +40,10 @@ export async function handleRpContext(
   const intent: RpIntent = record.intent;
 
   let config: ReturnType<typeof readWorldConfig>;
+  let environment: ReturnType<typeof readWorldEnvironment>;
   try {
     config = readWorldConfig(env);
+    environment = readWorldEnvironment(env);
   } catch (error) {
     if (error instanceof WorldConfigError) {
       return clientError(error.message, 500);
@@ -57,6 +59,7 @@ export async function handleRpContext(
     });
     return Response.json({
       app_id: config.appId,
+      ...(environment ? { environment } : {}),
       rp_context: rpContext,
     });
   } catch {

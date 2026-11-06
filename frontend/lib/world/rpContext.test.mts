@@ -6,7 +6,7 @@ import { bytesToHex, hashMessage, hexToBytes, recoverAddress } from 'viem';
 import { handleRpContext } from './rpContextRoute.ts';
 
 const APP_ID = 'app_test_fixture';
-const RP_ID = 'rp_test_fixture';
+const RP_ID = 'rp_a11ce';
 const SIGNING_KEY =
   '0xabababababababababababababababababababababababababababababababab' as const;
 

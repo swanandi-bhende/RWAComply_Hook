@@ -2,7 +2,7 @@
 
 RWAComply V2 extends the existing Uniswap v4 hook. The earlier product checks who may trade, how large a retail purchase may be, and what fee applies. V2 adds a separate control: several wallets can share one USDC purchase budget, and that budget is enforced on the supported swap route.
 
-The allocation id comes from a backend signature. This phase does not connect it to World ID. It is not proof of humanity, KYC, AML, accreditation, or legal eligibility.
+The allocation id is an opaque server identifier. Proof of Human enrollment can create one after World verifies a session-bound uniqueness proof. That check is not KYC, AML, accreditation, or legal eligibility. The ledger registration of a wallet is separate and is not issued by this enrollment step.
 
 ## Earlier product
 
@@ -28,8 +28,9 @@ These commits are in the repository history. Their dates are the git author date
 | `bd78828` | 2026-11-06 | First `src/AllocationLedger.sol` and its tests: policy storage and wallet registration. |
 | `7bcc85a` | 2026-11-06 | Ledger spend accounting, the trusted `PoolExecutor.swapExactInput` router, router tests, and `docs/PRD v1.txt`. |
 | `b2b0b45` | 2026-11-06 | Hook budget checks, settled-USDC recording, deployment wiring, the frontend `swapExactInput` call, and CREATE2 permission mining. |
+| `2dadaf3` | 2026-11-06 | World ID server configuration and relying-party context signing. |
 
-`b2b0b45` is the current `HEAD` of branch `v2`.
+`2dadaf3` is the current `HEAD` of branch `v2`. Enrollment verification after that commit is in the working tree and is not part of the commit.
 
 ## What V2 adds
 
@@ -50,7 +51,7 @@ The recorded number is the USDC paid, not the RWA received. The same check is co
 
 ## Limits of this phase
 
-- An allocation id is not tied to a person through World ID. The Next.js server can sign a fresh World ID relying-party context for enrollment (`signup`) and for a later session proof (no action). It does not verify proofs, store sessions, or issue allocation ids.
+- Proof of Human enrollment can verify a session-bound `signup` proof, store the session encrypted, and create an allocation id. A second wallet cannot prove continuity yet, and the ledger is not asked to register a wallet from this step.
 - The budget applies only to the `PoolExecutor.swapExactInput` route into this hook.
 - Direct transfers, other pools, and other protocols are outside this check.
 - A sale does not reduce the recorded spend.

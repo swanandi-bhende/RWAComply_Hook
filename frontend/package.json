@@ -12,7 +12,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:world": "node --experimental-strip-types --test lib/world/config.test.mts lib/world/rpContext.test.mts"
+    "test:world": "node --experimental-strip-types --test lib/world/config.test.mts lib/world/rpContext.test.mts lib/world/enroll.test.mts lib/world/enrollClient.test.mts"
   },
   "dependencies": {
     "@rainbow-me/rainbowkit": "2.2.10",

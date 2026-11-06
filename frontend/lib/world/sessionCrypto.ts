@@ -1,0 +1,32 @@
+import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
+
+export type EncryptedSession = {
+  ciphertext: string;
+  iv: string;
+  tag: string;
+};
+
+export function encryptSessionId(sessionId: string, key: Buffer): EncryptedSession {
+  const iv = randomBytes(12);
+  const cipher = createCipheriv('aes-256-gcm', key, iv);
+  const ciphertext = Buffer.concat([cipher.update(sessionId, 'utf8'), cipher.final()]);
+  return {
+    ciphertext: ciphertext.toString('base64'),
+    iv: iv.toString('base64'),
+    tag: cipher.getAuthTag().toString('base64'),
+  };
+}
+
+export function decryptSessionId(encrypted: EncryptedSession, key: Buffer): string {
+  try {
+    const decipher = createDecipheriv('aes-256-gcm', key, Buffer.from(encrypted.iv, 'base64'));
+    decipher.setAuthTag(Buffer.from(encrypted.tag, 'base64'));
+    const plain = Buffer.concat([
+      decipher.update(Buffer.from(encrypted.ciphertext, 'base64')),
+      decipher.final(),
+    ]);
+    return plain.toString('utf8');
+  } catch {
+    throw new Error('Session decryption failed');
+  }
+}

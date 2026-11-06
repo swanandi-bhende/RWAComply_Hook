@@ -12,3 +12,9 @@ cache/
 !.env.example
 
 broadcast/
+
+# Local World ID enrollment database
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
