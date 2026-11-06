@@ -66,6 +66,31 @@ export type IssuedAuthorization = {
   signature: string;
 };
 
+export type RegistrationChainStatus =
+  | 'issued'
+  | 'submitted'
+  | 'confirmed'
+  | 'failed'
+  | 'verification_failed';
+
+export type StoredRegistration = IssuedAuthorization & {
+  chainStatus: RegistrationChainStatus;
+  txHash: string | null;
+};
+
+type RegistrationRow = {
+  nonce: string;
+  wallet_address: string;
+  allocation_id: string;
+  group_id: string;
+  expiry: number;
+  chain_id: number;
+  ledger_address: string;
+  signature: string;
+  chain_status: RegistrationChainStatus;
+  tx_hash: string | null;
+};
+
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS world_enrollment (
   id INTEGER PRIMARY KEY,
@@ -120,7 +145,9 @@ CREATE TABLE IF NOT EXISTS registration_authorization (
   chain_id INTEGER NOT NULL,
   ledger_address TEXT NOT NULL,
   signature TEXT NOT NULL,
-  created_at TEXT NOT NULL
+  created_at TEXT NOT NULL,
+  chain_status TEXT NOT NULL DEFAULT 'issued',
+  tx_hash TEXT
 );
 `;
 
@@ -207,6 +234,17 @@ export class EnrollmentStore {
     this.db.exec(
       'CREATE UNIQUE INDEX IF NOT EXISTS world_enrollment_session_hash ON world_enrollment(session_id_hash)',
     );
+    const registrationColumns = this.db.prepare('PRAGMA table_info(registration_authorization)').all() as {
+      name: string;
+    }[];
+    if (!registrationColumns.some((column) => column.name === 'chain_status')) {
+      this.db.exec(
+        "ALTER TABLE registration_authorization ADD COLUMN chain_status TEXT NOT NULL DEFAULT 'issued'",
+      );
+    }
+    if (!registrationColumns.some((column) => column.name === 'tx_hash')) {
+      this.db.exec('ALTER TABLE registration_authorization ADD COLUMN tx_hash TEXT');
+    }
   }
 
   insert(record: EnrollmentInsert): InsertResult {
@@ -439,6 +477,57 @@ export class EnrollmentStore {
         throw new Error('continuation state changed');
       }
       return { ok: true };
+    });
+  }
+
+  registrationByNonce(nonce: string): StoredRegistration | undefined {
+    const row = this.db
+      .prepare(
+        `SELECT nonce, wallet_address, allocation_id, group_id, expiry, chain_id,
+                ledger_address, signature, chain_status, tx_hash
+         FROM registration_authorization
+         WHERE nonce = ?`,
+      )
+      .get(nonce) as RegistrationRow | undefined;
+    if (!row) return undefined;
+    return {
+      nonce: row.nonce,
+      walletAddress: row.wallet_address,
+      allocationId: row.allocation_id,
+      groupId: row.group_id,
+      expiry: row.expiry,
+      chainId: row.chain_id,
+      ledgerAddress: row.ledger_address,
+      signature: row.signature,
+      chainStatus: row.chain_status,
+      txHash: row.tx_hash,
+    };
+  }
+
+  advanceRegistration(
+    nonce: string,
+    status: Exclude<RegistrationChainStatus, 'issued'>,
+    txHash: string,
+  ): { ok: true; status: RegistrationChainStatus } | { ok: false; reason: 'unknown' | 'conflict' } {
+    return this.transaction(() => {
+      const current = this.registrationByNonce(nonce);
+      if (!current) return { ok: false, reason: 'unknown' as const };
+      if (current.chainStatus === 'confirmed') {
+        if (current.txHash === txHash && status === 'confirmed') {
+          return { ok: true as const, status: 'confirmed' as const };
+        }
+        return { ok: false as const, reason: 'conflict' as const };
+      }
+      if (current.chainStatus === 'failed' || current.chainStatus === 'verification_failed') {
+        if (current.txHash === txHash && current.chainStatus === status) {
+          return { ok: true as const, status: current.chainStatus };
+        }
+        return { ok: false as const, reason: 'conflict' as const };
+      }
+      this.db
+        .prepare('UPDATE registration_authorization SET chain_status = ?, tx_hash = ? WHERE nonce = ?')
+        .run(status, txHash, nonce);
+      return { ok: true as const, status };
     });
   }
 

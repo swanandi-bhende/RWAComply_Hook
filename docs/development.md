@@ -58,7 +58,7 @@ npm run verify:world-signer
 
 ## Contracts the UI expects
 
-Wallet reads and writes use Anvil at `http://127.0.0.1:8545`, chain id `31337`. Start the chain, then deploy:
+The local technical demo at `/demo` reads and writes Anvil at `http://127.0.0.1:8545`, chain id `31337`. The investor pages target Ethereum Sepolia, chain id `11155111`. Start Anvil, then deploy, when using the local demo:
 
 ```bash
 anvil
@@ -147,11 +147,38 @@ The registration typed data is `Registration(address wallet,bytes32 allocationId
 
 `ALLOCATION_AUTH_SIGNING_KEY` signs that authorization. It must not be `WORLD_PRIVATE_KEY`. `ALLOCATION_AUTH_SIGNER_ADDRESS` must be the address derived from it, and that address must be `AllocationLedger.backendSigner`. Requests fail closed until those values, plus `ALLOCATION_LEDGER_ADDRESS`, `ALLOCATION_CHAIN_ID`, and `ALLOCATION_GROUP_ID`, are set in the root `.env`. Optional `ALLOCATION_RPC_URL` lets the server read `usedNonce` before it issues an authorization.
 
-The local deploy group is `keccak256("rwa-comply-demo")`, which is `0xa6d68dbbe026d4e383d3af4257793a771d58cc2c2388bde9d3273a210e581677`. The deploy script currently sets the ledger signer to the deployer. This phase does not change that signer or submit `registerWallet`.
+The local deploy group is `keccak256("rwa-comply-demo")`, which is `0xa6d68dbbe026d4e383d3af4257793a771d58cc2c2388bde9d3273a210e581677`. The deploy script currently sets the ledger signer to the deployer. This phase does not rotate that signer.
+
+### Onchain wallet registration
+
+After the backend returns a registration authorization, `submitRegistration` asks the connected wallet to call `AllocationLedger.registerWallet`. It checks the wallet, chain, ledger, group, expiry, and current `allocationIdByWallet` before sending. A matching allocation is already linked and is not submitted again. A different allocation is blocked.
+
+The helper shows "Registration pending" while the transaction is mined. "Wallet linked to your shared allocation" is shown only after the receipt succeeds, the `WalletRegistered` event matches, `allocationIdByWallet` matches, and `usedNonce` is true. A backend signature alone does not mean the wallet is registered.
+
+`POST /api/world/registration-receipt` records that result only after the server reads the same chain state. It ignores a client `success` flag. Without `ALLOCATION_RPC_URL`, the server leaves the row at `issued` and does not mark it confirmed. The onchain read remains the authority for the connected user.
+
+`WORLD_RP_SIGNING_KEY` is not read. The only World signing secret is `WORLD_PRIVATE_KEY`. The old name is rejected if a client sends it. It can be removed from the root `.env` by hand.
 
 A wallet already stored for the same allocation can receive another authorization. A wallet stored for a different allocation is rejected. Wallet B does not get a new allocation id.
 
-Still outside this phase: the signup and wallet-connection UI, submitting the registration transaction, and Phase 4.
+## Investor product
+
+The public pages are:
+
+- `/` explains the shared allocation, the Alice and Bob example, and the difference from CCA.
+- `/invest` connects a wallet, starts World ID proof of human, continues a saved session, asks the wallet to sign, and submits `registerWallet` through the existing registration helper.
+- `/how` explains identity, wallet ownership, onchain registration, and purchase enforcement as separate steps.
+- `/demo` is the earlier local Anvil technical demo. It is not the Sepolia investor flow.
+
+The investor page reads `GET /api/product/status` before it offers registration or a purchase. That route checks the allocation signer, chain id `11155111`, contract code, and the hook and executor when public market addresses are set. It does not return signing keys or the RPC URL. If the ledger has no code, the signer does not match, or the RPC is not Sepolia, the page says the data is unavailable. It does not show sample balances as if they were live.
+
+The dashboard reads `policyByGroupPeriod`, `spentByAllocation`, and `remaining` from Ethereum Sepolia. It does not display the allocation id. Purchase history from other sessions is not listed, because this app does not index it.
+
+A purchase button is enabled only when the executor, hook, USDC, and RWA addresses are set, have code on Sepolia, and the hook group matches the configured allocation group. The purchase is an exact-input USDC buy through `PoolExecutor.swapExactInput`. The page simulates it, waits for the receipt, and reads the allocation again. If those contracts are not deployed, the purchase section says the market is not available.
+
+`ALLOCATION_CHAIN_ID` must be `11155111` for this flow. The wallet connector includes Ethereum Sepolia and local Anvil. Anvil remains available for `/demo`.
+
+World ID, wallet ownership, onchain registration, and purchase enforcement are separate. A backend authorization or a database row does not mark a wallet as linked.
 
 ## Solidity
 

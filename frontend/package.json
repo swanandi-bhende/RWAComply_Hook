@@ -12,7 +12,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:world": "node --experimental-strip-types --test lib/world/config.test.mts lib/world/rpContext.test.mts lib/world/sessionCrypto.test.mts lib/world/loadRootEnv.test.mts lib/world/enroll.test.mts lib/world/enrollClient.test.mts lib/world/continue.test.mts lib/world/continueClient.test.mts lib/world/walletLink.test.mts",
+    "test:world": "node --experimental-strip-types --test lib/world/config.test.mts lib/world/rpContext.test.mts lib/world/sessionCrypto.test.mts lib/world/loadRootEnv.test.mts lib/world/enroll.test.mts lib/world/enrollClient.test.mts lib/world/continue.test.mts lib/world/continueClient.test.mts lib/world/walletLink.test.mts lib/world/ledgerRegistration.test.mts lib/product/product.test.mts",
     "verify:world-signer": "node --experimental-strip-types scripts/verify-world-signer.mts"
   },
   "dependencies": {

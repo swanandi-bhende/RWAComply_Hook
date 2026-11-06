@@ -31,8 +31,9 @@ These commits are in the repository history. Their dates are the git author date
 | `2dadaf3` | 2026-11-06 | World ID server configuration and relying-party context signing. |
 | `92263ef` | 2026-11-06 | Proof of Human enrollment, encrypted session storage, and the IDKit request helper. |
 | `12fe9f5` | 2026-11-06 | World ID signer check, root `.env` loading, and enrollment API hardening. |
+| `2f9dc28` | 2026-11-06 | World ID session continuation and wallet-association authorization. |
 
-`12fe9f5` is the current committed `HEAD` of branch `v2`. Session continuation and wallet-authorization work after that commit is in the working tree and is not part of the commit.
+`2f9dc28` is the current committed `HEAD` of branch `v2`. Onchain registration submission after that commit is in the working tree and is not part of the commit.
 
 ## What V2 adds
 
@@ -53,7 +54,7 @@ The recorded number is the USDC paid, not the RWA received. The same check is co
 
 ## Limits of this phase
 
-- Proof of Human enrollment can verify a session-bound `signup` proof, store the session encrypted, and create an allocation id. A later session proof can prepare an AllocationLedger registration for another wallet. This phase does not submit that transaction.
+- Proof of Human enrollment can verify a session-bound `signup` proof, store the session encrypted, and create an allocation id. The investor page can continue that session, ask the wallet to sign, and submit registration. The wallet is treated as linked only after the chain state matches. Live Sepolia balances and purchases stay unavailable until the configured contracts have code. No sample values are shown as live data.
 - The budget applies only to the `PoolExecutor.swapExactInput` route into this hook.
 - Direct transfers, other pools, and other protocols are outside this check.
 - A sale does not reduce the recorded spend.

@@ -1,7 +1,5 @@
-import NoSsrHome from './no-ssr-home';
-
-export const dynamic = 'force-dynamic';
+import NoSsrLanding from './no-ssr-landing';
 
 export default function Page() {
-  return <NoSsrHome />;
+  return <NoSsrLanding />;
 }

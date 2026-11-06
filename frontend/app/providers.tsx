@@ -2,7 +2,7 @@
 
 import React, { ReactNode } from 'react';
 import { WagmiProvider, createConfig, createStorage, http, injected, noopStorage } from 'wagmi';
-import { anvil } from 'wagmi/chains';
+import { anvil, sepolia } from 'wagmi/chains';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { TransactionProvider } from './TransactionContext';
@@ -10,8 +10,9 @@ import '@rainbow-me/rainbowkit/styles.css';
 
 const config = createConfig({
   connectors: [injected()],
-  chains: [anvil],
+  chains: [sepolia, anvil],
   transports: {
+    [sepolia.id]: http(),
     [anvil.id]: http('http://localhost:8545'),
   },
   ssr: true,
@@ -24,7 +25,7 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider>
+        <RainbowKitProvider initialChain={sepolia}>
           <TransactionProvider>
             {children}
           </TransactionProvider>

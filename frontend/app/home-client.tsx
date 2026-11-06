@@ -10,7 +10,6 @@ import { DynamicFeeVisualizer } from '@/components/DynamicFeeVisualizer';
 import { SwapDemo } from '@/components/SwapDemo';
 import { AdminObservatory } from '@/components/AdminObservatory';
 import { ProjectPresentation } from '@/components/ProjectPresentation';
-import { Providers } from './providers';
 
 type PageId = 'page1' | 'page2' | 'page3' | 'page4' | 'page5' | 'page6';
 
@@ -27,7 +26,7 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState<PageId>('page1');
 
   return (
-    <Providers>
+    <>
       <Header />
       
       <main className="flex-1 bg-white">
@@ -164,6 +163,6 @@ export default function Home() {
           </div>
         </footer>
       </main>
-    </Providers>
+    </>
   );
 }
