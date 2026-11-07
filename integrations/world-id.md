@@ -2,7 +2,7 @@
 
 World ID is the proof of human for this session. It is not KYC, AML, accreditation, residency, nationality, or legal eligibility. It does not set the issuer tier and it does not register the wallet by itself.
 
-A live proof has not been completed. The server path and its failure tests exist. There is no measured time from opening the widget to a successful World response. The note is [docs/world-integration.md](../docs/world-integration.md).
+A live proof has not been completed. The server path and its failure tests exist. There is no measured time from opening the widget to a successful World response. The guided Anvil demo does not count as this proof. The note is [docs/world-integration.md](../docs/world-integration.md).
 
 ## Flow
 

@@ -46,6 +46,16 @@ test('enrollment requests authorization and registration only after World ID suc
   assert.deepEqual(order, ['enroll', 'authorize:grant', 'register:0xabc']);
 });
 
+test('an authorization failure keeps its server message', async () => {
+  const result = await runEnrollmentAction({
+    enroll: async () => ({ ok: true as const, sessionId: 'session_test', continuationToken: 'grant' }),
+    authorize: async () => ({ ok: false as const, reason: 'unexpected', message: 'Allocation ledger is unavailable' }),
+    register: async () => ({ ok: true }),
+  });
+  assert.equal(result.registered, false);
+  assert.equal(result.message, 'Allocation ledger is unavailable');
+});
+
 test('a rejected wallet authorization does not call registerWallet', async () => {
   let registerCalls = 0;
   const result = await runEnrollmentAction({

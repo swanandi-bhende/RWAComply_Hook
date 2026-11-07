@@ -19,7 +19,7 @@ export function verificationFailure(reason: string): string {
 }
 
 export function walletLinkFailure(reason: string): string {
-  if (reason === 'signature_rejected') return 'The wallet signature was cancelled.';
+  if (reason === 'signature_rejected') return 'Your wallet signature was declined.';
   if (reason === 'conflict') return 'This wallet is already associated with another allocation.';
   if (reason === 'expired') return 'Your registration request expired. Please try again.';
   if (reason === 'challenge_rejected') return 'This wallet could not be linked to your existing allocation.';

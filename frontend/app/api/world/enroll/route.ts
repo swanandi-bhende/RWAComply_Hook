@@ -1,19 +1,17 @@
-import { readEnrollmentConfig } from '@/lib/world/config';
+import { publicConfigError, readEnrollmentConfig } from '@/lib/world/config';
 import { handleEnroll } from '@/lib/world/enroll';
 import { sharedEnrollmentStore } from '@/lib/world/enrollmentStore';
+import { limitedResponse, tooManyRequests } from '@/lib/world/requestLimit';
 
 export const runtime = 'nodejs';
 
 export function POST(request: Request): Promise<Response> {
+  if (tooManyRequests(request, 'enroll')) return Promise.resolve(limitedResponse());
   try {
     const config = readEnrollmentConfig();
     return handleEnroll(request, { store: sharedEnrollmentStore(config.databasePath) });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'World ID configuration is unavailable';
-    const safe =
-      message.startsWith('WORLD_') || message === 'World ID configuration is unavailable'
-        ? message
-        : 'World ID configuration is unavailable';
+    const safe = publicConfigError(error, 'World ID configuration is unavailable');
     return Promise.resolve(
       Response.json(
         { error: safe },

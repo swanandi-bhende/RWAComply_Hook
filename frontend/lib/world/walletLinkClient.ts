@@ -22,7 +22,20 @@ export type WalletLinkClientResult =
       chainId: number;
       verifyingContract: Address;
     }
-  | { ok: false; reason: 'challenge_rejected' | 'signature_rejected' | 'conflict' | 'unexpected' };
+  | { ok: false; reason: 'challenge_rejected' | 'signature_rejected' | 'conflict' | 'unexpected'; message?: string };
+
+export async function authorizationFailure(response: Response): Promise<Extract<WalletLinkClientResult, { ok: false }>> {
+  let message: string | undefined;
+  try {
+    const body = await response.json() as { error?: unknown };
+    if (typeof body.error === 'string' && body.error.trim()) message = body.error.trim();
+  } catch {
+    message = undefined;
+  }
+  if (response.status === 409) return { ok: false, reason: 'conflict', message };
+  if (message === 'The wallet signature is invalid') return { ok: false, reason: 'signature_rejected', message };
+  return { ok: false, reason: 'unexpected', message };
+}
 
 export async function authorizeWalletLink(options: {
   continuationToken: string;
@@ -70,8 +83,11 @@ export async function authorizeWalletLink(options: {
       primaryType: 'WalletLink',
       message: message as Record<string, unknown>,
     });
-  } catch {
-    return { ok: false, reason: 'signature_rejected' };
+  } catch (error) {
+    const rejected = error instanceof Error && (error.name === 'UserRejectedRequestError' || /user rejected/i.test(error.message));
+    return rejected
+      ? { ok: false, reason: 'signature_rejected', message: 'The wallet ownership signature was rejected. This wallet was not registered.' }
+      : { ok: false, reason: 'unexpected', message: 'The wallet signature could not be created.' };
   }
 
   let authorization: Response;
@@ -89,8 +105,7 @@ export async function authorizeWalletLink(options: {
   } catch {
     return { ok: false, reason: 'unexpected' };
   }
-  if (authorization.status === 409) return { ok: false, reason: 'conflict' };
-  if (!authorization.ok) return { ok: false, reason: 'signature_rejected' };
+  if (!authorization.ok) return authorizationFailure(authorization);
   const body = (await authorization.json()) as {
     wallet?: unknown;
     allocationId?: unknown;

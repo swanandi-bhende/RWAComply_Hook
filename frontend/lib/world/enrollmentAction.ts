@@ -9,7 +9,7 @@ export type EnrollmentActionResult = {
 
 export async function runEnrollmentAction<TAuth extends { ok: true }>(options: {
   enroll: () => Promise<EnrollmentClientResult>;
-  authorize: (continuationToken: string) => Promise<({ ok: false; reason: string }) | ({ ok: true } & TAuth)>;
+  authorize: (continuationToken: string) => Promise<({ ok: false; reason: string; message?: string }) | ({ ok: true } & TAuth)>;
   register: (authorization: { ok: true } & TAuth) => Promise<{ ok: boolean; message?: string }>;
 }): Promise<EnrollmentActionResult> {
   const enrolled = await options.enroll();
@@ -21,7 +21,7 @@ export async function runEnrollmentAction<TAuth extends { ok: true }>(options: {
   }
   const authorized = await options.authorize(enrolled.continuationToken);
   if (!authorized.ok) {
-    return { registered: false, stage: 'authorization', reason: authorized.reason };
+    return { registered: false, stage: 'authorization', reason: authorized.reason, message: authorized.message };
   }
   const registered = await options.register(authorized);
   return {

@@ -10,7 +10,7 @@ import {
   newAllocationId,
   type PortalCallResult,
 } from './enrollmentProof.ts';
-import { newResumeToken, RESUME_TTL_SECONDS, resumeCookie } from './browserResume.ts';
+import { cookieIsSecure, newResumeToken, RESUME_TTL_SECONDS, resumeCookie } from './browserResume.ts';
 import { BROWSER_RESUME_HASH_DOMAIN, CONTINUATION_GRANT_HASH_DOMAIN, domainHash, encryptSessionId, SESSION_ID_HASH_DOMAIN } from './sessionCrypto.ts';
 
 const VERIFY_TIMEOUT_MS = 15_000;
@@ -166,7 +166,7 @@ export async function handleEnroll(
           session_id: bound.sessionId,
           continuation_token: continuationToken,
           expires_at: nowSeconds + ENROLLMENT_GRANT_TTL_SECONDS,
-        }, 200, { 'set-cookie': resumeCookie(resume.token) });
+        }, 200, { 'set-cookie': resumeCookie(resume.token, RESUME_TTL_SECONDS, cookieIsSecure(request)) });
       }
       if (inserted.reason === 'duplicate_nullifier' || inserted.reason === 'duplicate_session') {
         return jsonResponse({ error: 'This Proof of Human enrollment already exists' }, 409);

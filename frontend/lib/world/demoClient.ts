@@ -1,6 +1,6 @@
 import { getAddress, type Address, type Hex } from 'viem';
 import { WALLET_LINK_PURPOSE } from './allocationAuth.ts';
-import type { WalletLinkClientResult } from './walletLinkClient.ts';
+import { authorizationFailure, type WalletLinkClientResult } from './walletLinkClient.ts';
 
 export async function authorizeDemoWallet(options: {
   wallet: Address;
@@ -56,8 +56,11 @@ export async function authorizeDemoWallet(options: {
       primaryType: 'WalletLink',
       message,
     });
-  } catch {
-    return { ok: false, reason: 'signature_rejected' };
+  } catch (error) {
+    const rejected = error instanceof Error && (error.name === 'UserRejectedRequestError' || /user rejected/i.test(error.message));
+    return rejected
+      ? { ok: false, reason: 'signature_rejected', message: 'The wallet ownership signature was rejected. This wallet was not registered.' }
+      : { ok: false, reason: 'unexpected', message: 'The wallet signature could not be created.' };
   }
   let authorization: Response;
   try {
@@ -70,8 +73,7 @@ export async function authorizeDemoWallet(options: {
   } catch {
     return { ok: false, reason: 'unexpected' };
   }
-  if (authorization.status === 409) return { ok: false, reason: 'conflict' };
-  if (!authorization.ok) return { ok: false, reason: 'signature_rejected' };
+  if (!authorization.ok) return authorizationFailure(authorization);
   const body = await authorization.json() as Record<string, unknown>;
   if (
     body.kind !== 'demo' ||

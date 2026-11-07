@@ -1,5 +1,6 @@
 import { createPublicClient, http, type Address, type Hex } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
+import { rpcHttpUrl } from '../product/rpc.ts';
 
 export const WALLET_LINK_PURPOSE = 'Associate this wallet with an RWAComply allocation identity';
 export const CHALLENGE_TTL_SECONDS = 300;
@@ -102,7 +103,7 @@ export async function registrationNonceUsed(input: {
   nonce: bigint;
 }): Promise<boolean> {
   const client = createPublicClient({
-    transport: http(input.rpcUrl),
+    transport: http(rpcHttpUrl(input.rpcUrl)),
   });
   return client.readContract({
     address: input.ledgerAddress,

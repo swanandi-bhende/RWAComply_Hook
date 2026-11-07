@@ -15,6 +15,7 @@ This is the map for people changing the repository. [README.md](../README.md) is
 | Investor use | [docs/INVESTOR_GUIDE.md](INVESTOR_GUIDE.md) |
 | Layers and sources of truth | [architecture.md](../architecture.md) |
 | Addresses and deployment proof | [deployment.md](../deployment.md) and [docs/sepolia-deployment.md](sepolia-deployment.md) |
+| Vercel hosting | [docs/vercel-deployment.md](vercel-deployment.md) and [docs/vercel-environment-variables.md](vercel-environment-variables.md) |
 | Uniswap v4 | [integrations/uniswap-v4.md](../integrations/uniswap-v4.md) |
 | World ID | [integrations/world-id.md](../integrations/world-id.md) |
 | Arkiv | [integrations/arkiv.md](../integrations/arkiv.md) |
@@ -24,6 +25,7 @@ This is the map for people changing the repository. [README.md](../README.md) is
 | Decisions that were not built | [docs/ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md) |
 | Owner calls | [docs/issuer-runbook.md](issuer-runbook.md) |
 | Spoken recording beats | [docs/demo-script.md](demo-script.md) |
+| Presentation runbook | [docs/PRESENTATION_CHECKLIST.md](PRESENTATION_CHECKLIST.md) |
 | Internal notes | [docs/development.md](development.md) |
 | History of the pre-event tree | [docs/continuity/README.md](continuity/README.md) |
 | Prize essays | `arkiv/*.md` |

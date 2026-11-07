@@ -1,12 +1,12 @@
 export type RouterPhase = 'idle' | 'approving' | 'registering' | 'swapping' | 'success' | 'rejected';
 
-export const REMAINING_BUDGET_MESSAGE = 'This purchase exceeds your remaining allocation.';
+export const REMAINING_BUDGET_MESSAGE = 'The purchase exceeds your remaining allocation.';
 export const UNREGISTERED_WALLET_MESSAGE = 'Verify with World ID before purchasing.';
-export const PAUSED_POOL_MESSAGE = 'This offering is currently paused.';
+export const PAUSED_POOL_MESSAGE = 'The pool is paused.';
 export const EXACT_INPUT_MESSAGE = 'This offering supports exact-input purchases only.';
 export const QUOTE_TOKEN_MESSAGE = 'This pool does not use the supported quote token.';
 export const ROUTE_MESSAGE = 'This trading route is not supported.';
-export const REVERTED_PURCHASE_MESSAGE = 'The transaction failed. Your allocation was not used.';
+export const REVERTED_PURCHASE_MESSAGE = 'The transaction reverted. Your allocation was not consumed.';
 
 const REMAINING_BUDGET_SELECTORS = ['2a1c7c8f', 'cbfc2b28', '0cf95ce5'];
 const UNREGISTERED_SELECTOR = '239a7cdf';

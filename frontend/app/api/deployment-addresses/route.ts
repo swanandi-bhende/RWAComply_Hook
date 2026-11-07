@@ -1,3 +1,5 @@
+export const runtime = 'nodejs';
+
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { NextResponse } from 'next/server';
@@ -30,7 +32,14 @@ async function readDemoLog(repoRoot: string): Promise<AnvilMarket | null> {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const host = request.headers.get('host')?.replace(/:\d+$/, '') ?? '';
+  if (host !== 'localhost' && host !== '127.0.0.1' && host !== '::1') {
+    return NextResponse.json(
+      { available: false, error: 'Local deployment addresses are only read during a local demonstration.' },
+      { status: 200 },
+    );
+  }
   const repoRoot = path.resolve(process.cwd(), '..');
   const [broadcast, demoLog] = await Promise.all([readBroadcast(repoRoot), readDemoLog(repoRoot)]);
   const market = selectAnvilMarket(broadcast, demoLog);

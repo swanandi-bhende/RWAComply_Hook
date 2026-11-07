@@ -81,13 +81,13 @@ export type RegistrationProgress = {
 
 const MESSAGES = {
   ready: 'Confirm wallet registration',
-  linked: 'Wallet linked to your shared allocation',
+  linked: 'Wallet registration confirmed.',
   conflict: 'This wallet is already associated with another allocation.',
-  pending: 'Registration pending',
-  rejected: 'Wallet registration was cancelled',
-  wrongNetwork: 'Switch to the network for this allocation before linking this wallet',
+  pending: 'Waiting for transaction confirmation.',
+  rejected: 'The registration transaction was declined.',
+  wrongNetwork: 'Switch to Ethereum Sepolia.',
   expired: 'Your registration request expired. Please try again.',
-  failed: 'The transaction failed. Your allocation was not used.',
+  failed: 'The transaction reverted. Your allocation was not consumed.',
   verification: 'Wallet registration could not be verified',
   unavailable: 'Wallet registration is not available yet',
   invalid: 'This wallet link is incomplete',

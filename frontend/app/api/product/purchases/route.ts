@@ -1,3 +1,5 @@
+export const runtime = 'nodejs';
+
 import path from 'node:path';
 import { createPublicClient, getAddress, isAddress, parseAbi, type Address } from 'viem';
 import { sepolia } from 'viem/chains';

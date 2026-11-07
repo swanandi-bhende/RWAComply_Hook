@@ -12,9 +12,9 @@ No demo video has been recorded. The purchase numbers below were produced on loc
 
 | Step | Where it stands |
 |---|---|
-| 1. Connect a wallet | Available on `/invest` |
-| 2. Complete proof of human in World App | The button is “Verify with World App”. The page shows the QR code and link from the IDKit request. Proof of human needs an Orb-verified World ID. A live World ID proof has not been completed. `RWA_DEMO_IDENTITY=local` can show a separate demo identity on localhost. That label says it is not World ID |
-| 3. Sign wallet ownership | The browser wallet signs after World accepts the proof |
+| 1. Connect a wallet | The header Connect button opens RainbowKit. Connecting does not start a demo identity, register the wallet, or change the wallet’s network. A wallet on another network stays connected and must be switched to Ethereum Sepolia before registration |
+| 2. Complete proof of human in World App | The button is “Verify with World App”. The page shows the QR code and link from the IDKit request. Proof of human needs an Orb-verified World ID. A live World ID proof has not been completed. `/invest` does not substitute a demo identity |
+| 3. Sign wallet ownership | The browser wallet signs after World accepts the proof. The Register wallet section stays on that World ID session |
 | 4. Register the wallet | `registerWallet` on Sepolia. The page reports success only after the receipt matches. No investor registration has been sent |
 | 5. View the allocation and the offering | The cap and the remainder come from Ethereum. The offering panel reads Arkiv. The allocation id is not shown |
 | 6. Connect a second wallet | Disconnect the first wallet, then connect the second |
@@ -29,16 +29,18 @@ The investor needs Sepolia ETH for gas and demo USDC in the wallet. The quote to
 
 Use two wallets the investor controls. Do not use the owner `0x36Dc780DA078Ab4b8C5923bEd34eF4546DCb8ce6`, the allocation signer `0x28FB61Dc27a37091f53C0c37b5026AdBbF5E1F46`, or the liquidity helper `0x58F03D8e2B11014d24773eB32E467c9297634008`.
 
-### Local Anvil proof
+### Guided local demo
 
-Label this LOCAL ANVIL. It is not the investor session above.
+Label this LOCAL ANVIL. It is not the investor session above and it is not evidence of World ID verification. Open `/demo` after the startup command. The page is “Local demonstration — Anvil test network”. Alice and Bob are simulated personas on unlocked Anvil accounts. No browser extension, wallet signature popup, or World App is required.
 
 ```bash
 bash script/start_anvil_demo.sh
 bash script/demo_allocation_journey.sh
 ```
 
-The journey script takes no arguments and refuses every chain except `31337`. It registers two wallets for one person and one wallet for a second person:
+`RWA_DEMO_IDENTITY=local` must be set in the frontend process, and the browser host must be localhost or 127.0.0.1. The startup command deploys a fresh local market and seeds the personas. The journey command resets to that snapshot, then runs the purchases. Both refuse every chain except `31337`. The local market is the single-offering `DeployFull` path. The marketplace contracts are not what this demo executes.
+
+The journey registers Alice’s two wallets on one allocation and Bob’s wallet on another:
 
 | Action | Result |
 |---|---|
@@ -47,7 +49,9 @@ The journey script takes no arguments and refuses every chain except `31337`. It
 | Wallet B buys 200 | Spend becomes 900. Remaining 100 |
 | Second person | A separate cap, unchanged by the first person |
 
-A later run skips the buys when the shared spend is already 900. USDC approval is to the PoolExecutor, not the PoolManager. `/demo` shows the same local market after `npm run dev` in `frontend/`. The script is the automated proof. The page is the interactive view.
+Reset on `/demo` loads the Anvil snapshot taken after seeding and before the purchases. It does not edit the displayed numbers by themselves. USDC approval is to the PoolExecutor, not the PoolManager. Serve the frontend with `RWA_DEMO_IDENTITY=local npx next start --port 3463` from `frontend/` after `npm run build`, or `npm run dev` with the same variable.
+
+The presentation order is [docs/PRESENTATION_CHECKLIST.md](docs/PRESENTATION_CHECKLIST.md). A public host does not run this chain. When the request host is not localhost, `/demo` says the hosted demo chain is not configured. It does not call `127.0.0.1:8545`, and it does not invent balances or transaction hashes. Hosting steps are in [docs/vercel-deployment.md](docs/vercel-deployment.md).
 
 `GET /api/product/purchases?wallet=` lists `SpendRecorded` for that one wallet. A reverted purchase is absent. The Sepolia log range from block `12075637` had no registrations and no spend when it was last read.
 
@@ -115,12 +119,12 @@ Sepolia contract pages use `https://sepolia.etherscan.io/address/` plus the addr
 | This wallet could not be linked to your existing allocation. | The session proof or the link was rejected |
 | Your registration request expired. Please try again. | The authorization timed out |
 | This wallet is already associated with another allocation. | The wallet belongs to a different allocation id |
-| This offering is currently paused. | The hook owner paused the pool |
-| This purchase exceeds your remaining allocation. | The shared budget is too small. Spend does not increase |
+| The pool is paused. | The hook owner paused the pool |
+| The purchase exceeds your remaining allocation. | The shared budget is too small. Spend does not increase |
 | This offering supports exact-input purchases only. | The swap is not exact-input |
 | This pool does not use the supported quote token. | The input token is not the configured USDC |
 | This trading route is not supported. | The caller is not the trusted executor |
-| The transaction failed. Your allocation was not used. | The receipt reverted |
+| The transaction reverted. Your allocation was not consumed. | The receipt reverted |
 | Offering information could not be refreshed. Trading rules are still checked onchain. | Arkiv did not answer. The purchase button still uses Ethereum |
 | Verification services are temporarily unavailable. | The World verifier could not be reached |
 | Issuer approval required | The wallet has no access tier. Registration did not grant one |

@@ -16,6 +16,13 @@ test('a connected wallet with no identity can start enrollment', () => {
   assert.equal(button.label, 'Verify with World App');
 });
 
+test('an infrastructure wallet cannot start investor registration', () => {
+  const button = enrollmentButton({ ...ready, infrastructure: 'allocation signer' });
+  assert.equal(button.disabled, true);
+  assert.equal(button.label, 'Use an investor wallet');
+  assert.match(button.explanation, /does not reject/);
+});
+
 test('a disconnected wallet asks for a connection', () => {
   const button = enrollmentButton({ ...ready, connected: false, walletReady: false });
   assert.equal(button.disabled, true);

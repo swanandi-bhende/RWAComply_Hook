@@ -129,7 +129,20 @@ export type EnrollmentServerConfig = {
   databasePath: string;
 };
 
+export function publicConfigError(error: unknown, fallback: string): string {
+  const message = error instanceof Error ? error.message : fallback;
+  if (
+    message.startsWith('WORLD_') ||
+    message.startsWith('ALLOCATION_') ||
+    message.startsWith('Identity storage')
+  ) return message;
+  return fallback;
+}
+
 export function readEnrollmentConfig(env: WorldEnv = process.env): EnrollmentServerConfig {
+  if (env.VERCEL === '1') {
+    throw new WorldConfigError('Identity storage is not configured. This deployment does not persist verification sessions.');
+  }
   const world = readWorldConfig(env);
   const environment = readWorldEnvironment(env);
   if (!environment) {

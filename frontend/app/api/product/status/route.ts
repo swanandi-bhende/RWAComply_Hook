@@ -1,3 +1,5 @@
+export const runtime = 'nodejs';
+
 import path from 'node:path';
 import { createPublicClient, getAddress, parseAbi, type Hex } from 'viem';
 import { rpcTransport } from '@/lib/product/rpc';
@@ -9,6 +11,7 @@ import { assembleProductStatus, type ProductProbe } from '@/lib/product/status';
 
 const LEDGER_ABI = parseAbi([
   'function backendSigner() view returns (address)',
+  'function owner() view returns (address)',
   'function policyByGroupPeriod(bytes32 groupId, uint256 periodId) view returns (uint256 cap, uint256 periodId, address usdc)',
 ]);
 
@@ -38,6 +41,11 @@ function probeFor(rpcUrl: string | undefined): ProductProbe {
       abi: LEDGER_ABI,
       functionName: 'backendSigner',
     }),
+    owner: (ledger) => client.readContract({
+      address: ledger,
+      abi: LEDGER_ABI,
+      functionName: 'owner',
+    }),
     policy: async (ledger, groupId, periodId) => {
       const policy = await client.readContract({
         address: ledger,
@@ -64,7 +72,24 @@ function probeFor(rpcUrl: string | undefined): ProductProbe {
   };
 }
 
-export async function GET() {
+async function anvilState(host: string | null): Promise<'running' | 'stopped' | 'not-local'> {
+  const name = host?.replace(/:\d+$/, '') ?? '';
+  if (name !== 'localhost' && name !== '127.0.0.1' && name !== '::1') return 'not-local';
+  try {
+    const response = await fetch('http://127.0.0.1:8545', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_chainId', params: [] }),
+      signal: AbortSignal.timeout(1500),
+    });
+    const body = await response.json() as { result?: string };
+    return body.result === '0x7a69' ? 'running' : 'stopped';
+  } catch {
+    return 'stopped';
+  }
+}
+
+export async function GET(request: Request) {
   loadRepositoryEnv(path.resolve(process.cwd(), '..'));
   const status = await assembleProductStatus({
     env: process.env,
@@ -79,7 +104,7 @@ export async function GET() {
     },
     probe: probeFor(process.env.ALLOCATION_RPC_URL),
   });
-  return NextResponse.json(status, {
+  return NextResponse.json({ ...status, anvil: await anvilState(request.headers.get('host')) }, {
     headers: { 'cache-control': 'no-store' },
   });
 }

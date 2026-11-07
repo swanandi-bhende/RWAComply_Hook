@@ -78,6 +78,33 @@ async function signChallenge(key: `0x${string}`, response: Response): Promise<He
   });
 }
 
+test('an expired demo cookie is not a new identity and does not expose the allocation', async () => {
+  const directory = mkdtempSync(path.join(tmpdir(), 'rwacomply-demo-'));
+  const file = path.join(directory, 'enroll.sqlite');
+  new EnrollmentStore(file);
+  const store = new DemoStore(file);
+  const startedAt = 1_800_000_000_000;
+  try {
+    const started = handleDemoStart(request('/api/demo/start', { method: 'POST' }), {
+      env: env('local'),
+      store,
+      now: () => startedAt,
+    });
+    const cookie = cookieFrom(started);
+    const expired = await handleDemoIdentity(request('/api/demo/identity', { cookie }), {
+      env: env('local'),
+      store,
+      now: () => startedAt + (8 * 24 * 60 * 60 * 1000),
+    }).json() as { state: string; allocationId?: string; linkedWallets: string[] };
+    assert.equal(expired.state, 'expired');
+    assert.equal(expired.allocationId, undefined);
+    assert.deepEqual(expired.linkedWallets, []);
+    assert.equal(store.countIdentities(), 1);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 test('demo mode is off unless an explicit local or hackathon setting allows it', () => {
   assert.equal(demoMode({}, 'localhost'), 'off');
   assert.equal(demoMode({ RWA_DEMO_IDENTITY: 'yes' }, 'localhost'), 'off');

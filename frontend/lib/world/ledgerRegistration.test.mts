@@ -106,7 +106,7 @@ test('registration submits the authorized arguments and confirms chain state', a
   });
   assert.equal(result.ok, true);
   assert.equal(result.state, 'confirmed');
-  assert.equal(result.message, 'Wallet linked to your shared allocation');
+  assert.equal(result.message, 'Wallet registration confirmed.');
   assert.deepEqual(chain.calls[1], {
     wallet: WALLET,
     allocationId: ALLOCATION,

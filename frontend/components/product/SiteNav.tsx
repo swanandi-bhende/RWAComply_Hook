@@ -9,6 +9,7 @@ const LINKS = [
   { href: '/', label: 'Overview' },
   { href: '/offerings', label: 'Offerings' },
   { href: '/invest', label: 'Invest' },
+  { href: '/demo', label: 'Demo' },
   { href: '/issuer', label: 'Issue' },
   { href: '/how', label: 'How it works' },
 ];
@@ -59,7 +60,7 @@ export function SiteNav() {
           })}
         </nav>
         <div className="wallet-slot">
-          <ConnectButton accountStatus="address" chainStatus="icon" showBalance={false} />
+          <ConnectButton accountStatus="address" chainStatus="none" showBalance={false} />
         </div>
       </div>
     </header>

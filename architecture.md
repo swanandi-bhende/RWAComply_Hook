@@ -2,7 +2,7 @@
 
 RWAComply has two paths. The purchase path can reject a swap. The offering path cannot.
 
-The deployed Sepolia market is one pool and one allocation group. A local marketplace path, not deployed on Sepolia, gives each new offering its own group and cap. That design is [docs/MARKETPLACE_ARCHITECTURE.md](docs/MARKETPLACE_ARCHITECTURE.md).
+The deployed Sepolia market is one pool and one allocation group. A local marketplace path, not deployed on Sepolia, gives each new offering its own group and cap. That design is [docs/MARKETPLACE_ARCHITECTURE.md](docs/MARKETPLACE_ARCHITECTURE.md). `/invest` reads the ledger owner and backend signer and refuses to enroll either address as an investor. The contract itself would accept the registration. The guided demo at `/demo` does not use that marketplace path yet. It uses the local single-offering `DeployFull` market on Anvil chain `31337`, with simulated Alice and Bob personas. It is not the World ID flow below. A hosted site without its own demo chain shows that the local demonstration is unavailable. It does not reuse the local contract addresses.
 
 ```mermaid
 flowchart LR

@@ -2,8 +2,10 @@
 
 import dynamic from 'next/dynamic';
 
-const HomeClient = dynamic(() => import('../home-client'), { ssr: false });
+const GuidedDemo = dynamic(() => import('@/components/demo/GuidedDemo').then((mod) => mod.GuidedDemo), {
+  ssr: false,
+});
 
 export default function DemoPage() {
-  return <HomeClient />;
+  return <GuidedDemo />;
 }

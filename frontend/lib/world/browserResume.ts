@@ -9,8 +9,14 @@ export function newResumeToken(): { token: string; tokenHash: string } {
   return { token, tokenHash: domainHash(BROWSER_RESUME_HASH_DOMAIN, token) };
 }
 
-export function resumeCookie(token: string, maxAge = RESUME_TTL_SECONDS): string {
-  return `${RESUME_COOKIE}=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${maxAge}`;
+export function cookieIsSecure(request: Request): boolean {
+  const forwarded = request.headers.get('x-forwarded-proto')?.split(',')[0]?.trim();
+  if (forwarded) return forwarded === 'https';
+  return new URL(request.url).protocol === 'https:';
+}
+
+export function resumeCookie(token: string, maxAge = RESUME_TTL_SECONDS, secure = false): string {
+  return `${RESUME_COOKIE}=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${maxAge}${secure ? '; Secure' : ''}`;
 }
 
 export function readResumeToken(cookieHeader: string | null): string | null {

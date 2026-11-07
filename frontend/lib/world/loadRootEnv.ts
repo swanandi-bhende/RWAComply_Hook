@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
@@ -43,8 +43,14 @@ function applyBlankEnvFile(directory: string): void {
 }
 
 export function loadRepositoryEnv(directory = repositoryRoot()): void {
-  const { loadEnvConfig } = require('@next/env') as { loadEnvConfig: LoadEnvConfig };
-  const dev = process.env.NODE_ENV !== 'production';
-  loadEnvConfig(directory, dev, silentLog, true);
+  if (existsSync(/*turbopackIgnore: true*/ directory)) {
+    try {
+      const { loadEnvConfig } = require('@next/env') as { loadEnvConfig: LoadEnvConfig };
+      const dev = process.env.NODE_ENV !== 'production';
+      loadEnvConfig(directory, dev, silentLog, true);
+    } catch {
+      // A host that injects variables, such as Vercel, has no repository .env file.
+    }
+  }
   applyBlankEnvFile(directory);
 }

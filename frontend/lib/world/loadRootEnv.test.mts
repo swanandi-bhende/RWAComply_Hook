@@ -27,6 +27,17 @@ test('repository env loading reads the given directory and does not print values
   }
 });
 
+test('a missing env directory does not throw and does not clear injected variables', () => {
+  const probe = 'RWA_ENV_LOAD_PROBE_MISSING';
+  process.env[probe] = 'injected';
+  try {
+    loadRepositoryEnv(path.join(tmpdir(), 'rwacomply-env-missing-directory'));
+    assert.equal(process.env[probe], 'injected');
+  } finally {
+    delete process.env[probe];
+  }
+});
+
 test('a blank value is filled from the repository env file', () => {
   const directory = mkdtempSync(path.join(tmpdir(), 'rwacomply-env-'));
   const probe = 'RWA_ENV_LOAD_PROBE_BLANK';

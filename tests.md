@@ -35,12 +35,12 @@ That one command runs the Node test files named in `frontend/package.json`. Ther
 
 | Area | Files |
 |---|---|
-| World ID configuration, relying-party context, session encryption | `lib/world/config.test.mts`, `rpContext.test.mts`, `sessionCrypto.test.mts`, `loadRootEnv.test.mts` |
+| World ID configuration, relying-party context, session encryption, hosted cookies and identity storage | `lib/world/config.test.mts`, `rpContext.test.mts`, `sessionCrypto.test.mts`, `loadRootEnv.test.mts`, `hosting.test.mts` |
 | Enrollment and continuation, including a cancelled widget and a rejected proof | `lib/world/enroll.test.mts`, `enrollClient.test.mts`, `enrollmentAction.test.mts`, `continue.test.mts`, `continueClient.test.mts` |
 | EIP-712 wallet link and registration receipt | `lib/world/walletLink.test.mts`, `ledgerRegistration.test.mts` |
-| Product status, purchase planner, purchase errors, second wallet | `lib/product/product.test.mts`, `usdcPurchase.test.mts`, `purchaseFlow.test.mts`, `lib/world/secondWallet.test.mts` |
+| Product status, purchase planner, purchase errors, wallet roles, second wallet | `lib/product/product.test.mts`, `usdcPurchase.test.mts`, `purchaseFlow.test.mts`, `walletRole.test.mts`, `lib/world/secondWallet.test.mts` |
 | Purchase history decoding | `lib/product/purchaseHistory.test.mts` |
-| Anvil deployment parsing and the allocation journey script | `lib/demo/anvilDeployment.test.mts`, `allocationJourney.test.mts` |
+| Anvil deployment parsing, guided-demo action checks, and the local ledger journey | `lib/demo/anvilDeployment.test.mts`, `allocationJourney.test.mts`, `sandbox.test.mts`, `sandboxChain.test.mts` |
 | Arkiv client, schema, purchase boundary, prize notes, submission docs | `lib/arkiv/client.test.mts`, `offering.test.mts`, `purchaseBoundary.test.mts`, `prizeDocs.test.mts`, `submissionDocs.test.mts` |
 
 These tests use fixtures. A passing World ID test is not a live World App proof. A passing Arkiv test is not a Rabdi write.
@@ -52,7 +52,7 @@ bash script/start_anvil_demo.sh
 bash script/demo_allocation_journey.sh
 ```
 
-The journey script registers two wallets for one person and one wallet for another on chain `31337`, then buys 700 USDC, rejects 500, and buys 200. It refuses every other chain. The approval spender is the PoolExecutor. Details are in [demo.md](demo.md).
+The journey script resets the local snapshot, then buys 700 USDC, rejects 500, and buys 200 on chain `31337`. It refuses every other chain. `sandboxChain.test.mts` runs that same ledger check when Anvil is up. The approval spender is the PoolExecutor. Details are in [demo.md](demo.md).
 
 ## Type, lint, and production
 

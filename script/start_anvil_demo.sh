@@ -43,10 +43,19 @@ if [[ -z "${PRIVATE_KEY:-}" ]]; then
   exit 1
 fi
 
+# Anvil publishes this development key. It is used only for chain 31337 on 127.0.0.1
+# and is not a personal, allocation, or World ID key. Do not copy it into docs or the browser bundle.
+ANVIL_DEPLOYER_KEY="0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+export PRIVATE_KEY="$ANVIL_DEPLOYER_KEY"
 DEPLOYER="$(cast wallet address --private-key "$PRIVATE_KEY")"
 # 1000 ETH on the local node only. This does not touch Sepolia.
 cast rpc anvil_setBalance "$DEPLOYER" 0x3635C9ADC5DEA00000 --rpc-url "$RPC_URL" >/dev/null
 
 forge script script/DeployFull.s.sol --rpc-url "$RPC_URL" --broadcast
-echo "Local Anvil demo deployed for ${DEPLOYER} on chain ${ACTUAL_CHAIN}."
+unset PRIVATE_KEY
+(
+  cd frontend
+  node --experimental-strip-types --input-type=module -e "import { seedSandbox } from './lib/demo/sandboxChain.ts'; await seedSandbox();"
+)
+echo "Local Anvil demo deployed for the Anvil development account on chain ${ACTUAL_CHAIN}."
 echo "Addresses: broadcast/DeployFull.s.sol/${CHAIN_ID}/run-latest.json"

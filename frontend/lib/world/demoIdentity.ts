@@ -8,6 +8,7 @@ import {
   walletLinkTypedData,
 } from './allocationAuth.ts';
 import { readAllocationConfig, readEnrollmentConfig, WorldConfigError, type WorldEnv } from './config.ts';
+import { cookieIsSecure } from './browserResume.ts';
 import { demoMode } from './demoMode.ts';
 import { DemoStore } from './demoStore.ts';
 import { newAllocationId } from './enrollmentProof.ts';
@@ -32,8 +33,8 @@ function cookieValue(header: string | null): string | null {
   return null;
 }
 
-function demoCookie(token: string): string {
-  return `${DEMO_COOKIE}=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${DEMO_TTL_SECONDS}`;
+function demoCookie(token: string, secure: boolean): string {
+  return `${DEMO_COOKIE}=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${DEMO_TTL_SECONDS}${secure ? '; Secure' : ''}`;
 }
 
 function walletAddress(value: unknown): Address | undefined {
@@ -77,12 +78,14 @@ export function handleDemoIdentity(request: Request, options: Options = {}): Res
   if (demoMode(env, request.headers.get('host')) === 'off') return json({ enabled: false }, 200);
   if (!options.store) return json({ error: 'Demo storage is unavailable' }, 500);
   const now = Math.floor((options.now ?? Date.now)() / 1000);
-  const identity = activeIdentity(request, options.store, now);
-  if (!identity) return json({ enabled: true, state: 'none', linkedWallets: [] }, 200);
+  const token = cookieValue(request.headers.get('cookie'));
+  const found = token ? options.store.find(domainHash(DEMO_BROWSER_HASH_DOMAIN, token)) : undefined;
+  if (!found) return json({ enabled: true, state: 'none', linkedWallets: [] }, 200);
+  if (found.expiresAt <= now) return json({ enabled: true, state: 'expired', linkedWallets: [] }, 200);
   return json({
     enabled: true,
     state: 'active',
-    linkedWallets: options.store.confirmedWallets(identity.id),
+    linkedWallets: options.store.confirmedWallets(found.id),
   }, 200);
 }
 
@@ -101,7 +104,7 @@ export function handleDemoStart(request: Request, options: Options = {}): Respon
     expiresAt: now + DEMO_TTL_SECONDS,
     createdAt: new Date(now * 1000).toISOString(),
   });
-  return json({ enabled: true, state: 'active', kind: 'demo' }, 200, demoCookie(token));
+  return json({ enabled: true, state: 'active', kind: 'demo' }, 200, demoCookie(token, cookieIsSecure(request)));
 }
 
 export async function handleDemoChallenge(request: Request, options: Options = {}): Promise<Response> {

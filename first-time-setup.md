@@ -17,7 +17,7 @@ What the investor needs:
 - Demo USDC in the wallet before a purchase. The token is mock USDC at `0x2BC48314C0B0B51E67E607FbC160304E9fD755Fe`, not real USDC. Its `mint` function is public, and the investor page does not call it. The received token is mock RWA, not a real-world asset.
 - Issuer approval before a purchase. Registration does not grant it. The investor cannot set it.
 
-Leave the contract owner `0x36Dc780DA078Ab4b8C5923bEd34eF4546DCb8ce6`, the allocation signer `0x28FB61Dc27a37091f53C0c37b5026AdBbF5E1F46`, and the liquidity helper `0x58F03D8e2B11014d24773eB32E467c9297634008` out of the investor wallets.
+Leave the contract owner `0x36Dc780DA078Ab4b8C5923bEd34eF4546DCb8ce6`, the allocation signer `0x28FB61Dc27a37091f53C0c37b5026AdBbF5E1F46`, and the liquidity helper `0x58F03D8e2B11014d24773eB32E467c9297634008` out of the investor wallets. The ledger does not reject the owner or the signer, but `/invest` reads those roles from the contract and blocks registration for them. The liquidity helper is a contract, not a browser wallet.
 
 1. Open `/invest`.
 2. Connect the first wallet.
@@ -60,4 +60,4 @@ Create the allocation signer with `cast wallet new` on the developer machine. Pu
 
 Create an Arkiv access key at [Arkiv Hub](https://hub.arkiv.network/access-keys). Fund a separate publisher wallet with tGLM at [the Rabdi faucet](https://hub.arkiv.network/faucet). The existing writer is `0xbfBf7Ca4f33993fA8b918d38286dad927231FB72`. Reading the published offering does not require a new publisher. `npm run query:offering` only reads. `npm run publish:offering` must not create a second entity.
 
-Local Anvil is chain id `31337`. `bash script/start_anvil_demo.sh` starts it when port 8545 is quiet, deploys the local market, and does not send a Sepolia transaction. `bash script/demo_allocation_journey.sh` then runs the two-wallet purchase and refuses every other chain. `npm run dev` in `frontend/` serves the preview. `forge test` and `npm run test:world` are the test commands. Details and the required order are in [setup.md](setup.md), [tests.md](tests.md), and [demo.md](demo.md).
+Local Anvil is chain id `31337`. `bash script/start_anvil_demo.sh` starts it when port 8545 is quiet, deploys the local market with Anvil’s development account, seeds Alice and Bob, and does not send a Sepolia transaction. `bash script/demo_allocation_journey.sh` then runs the two-wallet purchase and refuses every other chain. `/demo` is that guided local demonstration. `/invest` is the separate World ID and Sepolia path. A successful local demo is not a World ID verification. From `frontend/`, `RWA_DEMO_IDENTITY=local npm run dev` serves the preview. `forge test` and `npm run test:world` are the test commands. Details and the required order are in [setup.md](setup.md), [tests.md](tests.md), and [demo.md](demo.md).

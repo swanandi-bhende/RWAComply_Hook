@@ -1,11 +1,10 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useSyncExternalStore } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { sepolia } from 'wagmi/chains';
 import {
   useAccount,
-  useChainId,
   useDisconnect,
   usePublicClient,
   useReadContract,
@@ -22,7 +21,12 @@ import { runEnrollmentAction } from '@/lib/world/enrollmentAction';
 import { runSecondWallet } from '@/lib/world/secondWallet';
 import { REMAINING_BUDGET_MESSAGE, routerPhaseLabel, routerRejectionMessage } from '@/lib/product/purchaseFlow';
 import { continueProofOfHuman } from '@/lib/world/continueClient';
-import { authorizeDemoWallet } from '@/lib/world/demoClient';
+import {
+  getWalletConnectResult,
+  isUserRejection,
+  subscribeWalletConnect,
+  walletStatusCopy,
+} from '@/lib/product/walletConnection';
 import { authorizeWalletLink, type WalletLinkClientResult } from '@/lib/world/walletLinkClient';
 import {
   LEDGER_REGISTRATION_ABI,
@@ -32,6 +36,7 @@ import {
 } from '@/lib/world/ledgerRegistration';
 import { formatUsdc, purchaseDecision } from '@/lib/product/money';
 import { enrollmentButton, registrationPreflight, type EnrollmentPhase } from '@/lib/product/enrollmentGate';
+import { infrastructureExplanation, infrastructureRole } from '@/lib/product/walletRole';
 import { accessTierMessage, deploymentMessages } from '@/lib/product/readiness';
 import { verificationFailure, walletLinkFailure } from '@/lib/product/copy';
 import type { PublicProductStatus } from '@/lib/product/status';
@@ -93,10 +98,11 @@ function purchaseError(error: unknown): string {
 }
 
 export default function InvestorExperience() {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chainId, status: accountStatus } = useAccount();
   const { disconnect } = useDisconnect();
-  const chainId = useChainId();
-  const { switchChain, isPending: switching } = useSwitchChain();
+  const { switchChainAsync, isPending: switching } = useSwitchChain();
+  const connectResult = useSyncExternalStore(subscribeWalletConnect, getWalletConnectResult, () => 'idle' as const);
+  const [switchRejected, setSwitchRejected] = useState(false);
   const publicClient = usePublicClient({ chainId: sepolia.id });
   const { data: walletClient } = useWalletClient();
   const { signTypedDataAsync } = useSignTypedData();
@@ -139,10 +145,10 @@ export default function InvestorExperience() {
   });
   const statusQuery = useQuery({
     queryKey: ['product-status'],
-    queryFn: async (): Promise<PublicProductStatus> => {
+    queryFn: async (): Promise<PublicProductStatus & { anvil?: 'running' | 'stopped' | 'not-local' }> => {
       const response = await fetch('/api/product/status', { cache: 'no-store' });
       if (!response.ok) throw new Error('Allocation status is unavailable');
-      return response.json() as Promise<PublicProductStatus>;
+      return response.json() as Promise<PublicProductStatus & { anvil?: 'running' | 'stopped' | 'not-local' }>;
     },
   });
 
@@ -223,21 +229,14 @@ export default function InvestorExperience() {
     queryKey: ['world-identity'],
     queryFn: async () => {
       const response = await fetch('/api/world/identity', { cache: 'no-store' });
-      if (!response.ok) throw new Error('Verification status could not be read.');
+      if (!response.ok) {
+        const body = await response.json().catch(() => null) as { error?: string } | null;
+        throw new Error(body?.error ?? 'Verification status could not be read.');
+      }
       return response.json() as Promise<{ state: 'unverified' | 'verified' | 'expired'; linkedWallets: string[] }>;
     },
   });
   const identityState = identityQuery.data?.state ?? 'unverified';
-  const demoQuery = useQuery({
-    queryKey: ['demo-identity'],
-    queryFn: async () => {
-      const response = await fetch('/api/demo/identity', { cache: 'no-store' });
-      if (!response.ok) return { enabled: false as const, state: 'none' as const, linkedWallets: [] as string[] };
-      return response.json() as Promise<{ enabled: boolean; state?: 'none' | 'active'; linkedWallets?: string[] }>;
-    },
-  });
-  const [demoNotice, setDemoNotice] = useState<Notice>({ tone: 'idle', text: '' });
-  const [demoBusy, setDemoBusy] = useState(false);
   const [link, setLink] = useState<Notice>({ tone: 'idle', text: 'Link this wallet after verification.' });
   const [purchaseNotice, setPurchaseNotice] = useState<Notice>({ tone: 'idle', text: '' });
   const [amount, setAmount] = useState('');
@@ -320,14 +319,15 @@ export default function InvestorExperience() {
       registrationReady: snapshot?.registrationReady === true,
       ledgerKnown: Boolean(ledgerAddress && snapshotGroup),
     });
-    if (!gate.ok || !address || !ledgerAddress || !snapshotGroup) {
-      return { ok: false, message: gate.ok ? 'Wallet registration could not be started.' : gate.message };
+    const wallet = address;
+    if (!gate.ok || !wallet || !ledgerAddress || !snapshotGroup) {
+      return { ok: false, state: 'unavailable', message: gate.ok ? 'Wallet registration could not be started.' : gate.message };
     }
     const client = registrationClient(ledgerAddress);
-    if (!client) return { ok: false, message: 'Wallet registration could not be started.' };
+    if (!client) return { ok: false, state: 'unavailable', message: 'Wallet registration could not be started.' };
     const submitted = await submitRegistration({
       authorization,
-      connectedWallet: address,
+      connectedWallet: wallet,
       chainId,
       ledgerAddress,
       groupId: snapshotGroup,
@@ -345,7 +345,7 @@ export default function InvestorExperience() {
       });
       await allocation.refetch();
     }
-    return { ok: submitted.ok, message: submitted.message, pending: submitted.state === 'pending' };
+    return { ok: submitted.ok, state: submitted.state, message: submitted.message, pending: submitted.state === 'pending' };
   }
 
   function worldRequest() {
@@ -620,7 +620,7 @@ export default function InvestorExperience() {
       });
       const receipt = await publicClient.waitForTransactionReceipt({ hash });
       if (receipt.status !== 'success') {
-        setPurchaseNotice({ tone: 'error', text: 'The transaction failed. Your allocation was not used.' });
+        setPurchaseNotice({ tone: 'error', text: 'The transaction reverted. Your allocation was not consumed.' });
         return;
       }
       await Promise.all([spent.refetch(), remaining.refetch()]);
@@ -668,66 +668,51 @@ export default function InvestorExperience() {
     confirmed: purchaseSucceeded,
   });
 
-  async function startDemo() {
-    setDemoBusy(true);
-    setDemoNotice({ tone: 'pending', text: 'Starting a demo identity for this browser.' });
-    const response = await fetch('/api/demo/start', { method: 'POST' });
-    setDemoBusy(false);
-    if (!response.ok) {
-      setDemoNotice({ tone: 'error', text: 'Demo identity is not enabled.' });
-      return;
+  async function switchToSepolia() {
+    setSwitchRejected(false);
+    try {
+      await switchChainAsync({ chainId: sepolia.id });
+    } catch (error) {
+      if (isUserRejection(error)) setSwitchRejected(true);
     }
-    setDemoNotice({
-      tone: 'ok',
-      text: 'Demo identity active — not World ID. Register a wallet next. This does not prove that you are a unique human.',
-    });
-    await demoQuery.refetch();
   }
 
-  async function registerDemo() {
-    if (!address || !walletClient) return;
-    setDemoBusy(true);
-    setDemoNotice({ tone: 'pending', text: 'Sign the wallet ownership message. This signature is not World ID.' });
-    const authorized = await authorizeDemoWallet({
-      wallet: address,
-      signTypedData: (typedData) => signTypedDataAsync(typedData as never),
-    });
-    if (!authorized.ok) {
-      setDemoBusy(false);
-      setDemoNotice({
-        tone: 'error',
-        text: authorized.reason === 'conflict'
-          ? 'This wallet is already associated with another allocation.'
-          : 'The demo wallet was not registered.',
-      });
-      return;
-    }
-    const fresh = (await statusQuery.refetch()).data;
-    const registered = await registerAuthorized(authorized, fresh);
-    setDemoBusy(false);
-    if (!registered.ok) {
-      setDemoNotice({
-        tone: 'error',
-        text: `${registered.message ?? 'Registration was not confirmed.'} The demo identity was not treated as World ID.`,
-      });
-      return;
-    }
-    setDemoNotice({
-      tone: 'ok',
-      text: 'This wallet is linked to the demo identity. It is not World ID verification. Wallets linked this way share one purchase limit.',
-    });
-    await demoQuery.refetch();
-  }
-
+  const symbol = offeringsQuery.data?.offering?.rwaSymbol ?? 'Demo RWA';
+  const chainCap = offeringsQuery.data?.chain.cap ? formatUsdc(BigInt(offeringsQuery.data.chain.cap)) : 'Unavailable';
+  const shownLinked = linked;
+  const walletView = accountStatus === 'connecting' || accountStatus === 'reconnecting'
+    ? 'connecting'
+    : isConnected
+      ? 'connected'
+      : connectResult === 'idle'
+        ? 'disconnected'
+        : connectResult;
+  const networkView = !isConnected
+    ? 'unknown'
+    : switching
+      ? 'switching'
+      : switchRejected
+        ? 'switch_rejected'
+        : onSepolia
+          ? 'sepolia'
+          : 'wrong';
+  const walletCopy = walletStatusCopy({
+    wallet: walletView,
+    network: networkView,
+    demo: 'off',
+    address,
+    linked: shownLinked,
+  });
   const journey = [
     { label: 'Connect wallet', done: isConnected && onSepolia },
     { label: 'Verify identity', done: identityState === 'verified' },
-    { label: 'Register wallet', done: linked },
+    { label: 'Register wallet', done: shownLinked },
     { label: 'Obtain issuer approval', done: typeof tier.data === 'number' && tier.data > 0 },
-    { label: 'Review allocation', done: linked && remainingValue !== null },
+    { label: 'Review allocation', done: shownLinked && remainingValue !== null },
     { label: 'Purchase', done: purchaseSucceeded },
   ];
   const currentStep = journey.findIndex((item) => !item.done);
+  const role = infrastructureRole(address, status?.roles);
   const enrollment = enrollmentButton({
     connected: isConnected,
     onSupportedNetwork: onSepolia,
@@ -736,9 +721,8 @@ export default function InvestorExperience() {
     phase: enrollmentPhase === 'failed' ? 'idle' : enrollmentPhase,
     prompt,
     identity: identityState,
+    infrastructure: role,
   });
-  const symbol = offeringsQuery.data?.offering?.rwaSymbol ?? 'Demo RWA';
-  const chainCap = offeringsQuery.data?.chain.cap ? formatUsdc(BigInt(offeringsQuery.data.chain.cap)) : 'Unavailable';
 
   return (
     <>
@@ -753,7 +737,7 @@ export default function InvestorExperience() {
           <div className="metric"><dt>Quote asset</dt><dd>Mock USDC</dd></div>
           <div className="metric"><dt>Issuer-defined cap</dt><dd>{offeringsQuery.isLoading ? 'Reading the ledger' : chainCap}</dd></div>
           <div className="metric"><dt>Offering status</dt><dd>{statusQuery.isLoading ? 'Checking market' : status?.marketReady ? 'Market readable' : 'Market unavailable'}</dd></div>
-          <div className="metric"><dt>This wallet</dt><dd>{address ? (onSepolia ? shortAddress(address) : 'Wrong network') : 'Not connected'}</dd></div>
+          <div className="metric"><dt>This wallet</dt><dd>{address ? shortAddress(address) : 'Not connected'}</dd></div>
         </dl>
 
         <ol className="wizard" aria-label="Investor progress">
@@ -765,24 +749,31 @@ export default function InvestorExperience() {
         </ol>
 
         <div className="stack-lg">
-          {(currentStep === 0 || !isConnected || !onSepolia) && (
-            <section className="panel" id="connect">
-              <h2 className="section-title">Connect wallet</h2>
-              <p>Use the wallet button in the header. The purchase, registration, and allocation reads use that address on Ethereum Sepolia.</p>
-              {isConnected && !onSepolia && (
-                <button type="button" className="btn btn-primary" disabled={switching} onClick={() => switchChain({ chainId: sepolia.id })}>
-                  {switching ? 'Switching network…' : 'Switch to Ethereum Sepolia'}
-                </button>
-              )}
-            </section>
-          )}
+          <section className="panel" id="connect">
+            <h2 className="section-title">Connect wallet</h2>
+            <p>Use the wallet button in the header. Connecting a wallet does not register it. Registration uses Ethereum Sepolia and a World ID session.</p>
+            {role && <p className="notice" data-tone="error" role="alert">{infrastructureExplanation(role)}</p>}
+            {walletCopy.wallet && <p className="notice" role="status">{walletCopy.wallet}</p>}
+            {walletCopy.network && <p className="notice" role="status">{walletCopy.network}</p>}
+            {switchRejected && <p className="notice" role="status">The network switch was cancelled.</p>}
+            {isConnected && !onSepolia && (
+              <button type="button" className="btn btn-primary" disabled={switching} onClick={() => void switchToSepolia()}>
+                {switching ? 'Switching network…' : 'Switch to Ethereum Sepolia'}
+              </button>
+            )}
+          </section>
 
           <section id="verify" className="panel">
             <h2 className="section-title">Verify identity</h2>
+            {identityQuery.isError && (
+              <p className="notice" data-tone="error" role="alert">
+                {identityQuery.error instanceof Error ? identityQuery.error.message : 'Verification status could not be read.'}
+              </p>
+            )}
             <p>
               {identityState === 'verified'
                 ? 'Proof of human verified. This verification belongs to the person, not to one wallet, and it can be reused while the saved session is valid.'
-                : 'World App proof of human requires an Orb-verified World ID. This staging app cannot use Selfie Check, and an NFC passport is a different credential. The wallet signature and the Ethereum registration are separate steps.'}
+                : 'World App proof of human requires an Orb-verified World ID. This staging app cannot use Selfie Check, and an NFC passport is a different credential. Without an eligible credential, this page cannot complete verification. The guided local demonstration is on the Demo page. The wallet signature and the Ethereum registration are separate steps.'}
             </p>
             <ol>
               <li>Open World App.</li>
@@ -791,7 +782,7 @@ export default function InvestorExperience() {
               <li>Sign a message with this wallet.</li>
               <li>Register the wallet on Ethereum Sepolia.</li>
             </ol>
-            <p className="quiet">Proof of human is not KYC and does not grant issuer approval. <a className="link" href="/how">How it works</a></p>
+            <p className="quiet">Proof of human is not KYC and does not grant issuer approval. <a className="link" href="/how">How it works</a>. <a className="link" href="/demo">Guided local demo</a></p>
             <button
               type="button"
               className="btn btn-primary"
@@ -811,26 +802,6 @@ export default function InvestorExperience() {
             {verify.text && <p className="notice" data-tone={verify.tone} role="status">{verify.text}</p>}
           </section>
 
-          {demoQuery.data?.enabled && (
-            <section className="panel" id="demo-identity">
-              <h2 className="section-title">Demo identity verification — not World ID</h2>
-              <p>This hackathon mode creates a server-side demo identity for this browser. It does not establish a unique human, and it is not Orb, Selfie Check, or World ID verification.</p>
-              <p>Wallet ownership, onchain registration, and issuer approval stay separate. Linked demo wallets share one purchase limit. Selling does not restore it.</p>
-              {demoQuery.data.state === 'active' && <p className="notice" data-tone="pending" role="status">Demo identity active — not World ID. Connecting a wallet does not link it.</p>}
-              <div className="actions">
-                {demoQuery.data.state !== 'active'
-                  ? <button type="button" className="btn btn-secondary" disabled={demoBusy} onClick={() => void startDemo()}>Start demo identity</button>
-                  : <button type="button" className="btn btn-secondary" disabled={demoBusy || !isConnected || !onSepolia || !walletClient || linked} onClick={() => void registerDemo()}>{linked ? 'Wallet linked' : 'Sign and register this wallet'}</button>}
-              </div>
-              {demoQuery.data.linkedWallets && demoQuery.data.linkedWallets.length > 0 && (
-                <ul>
-                  {demoQuery.data.linkedWallets.map((wallet) => <li key={wallet}>{shortAddress(wallet)}</li>)}
-                </ul>
-              )}
-              {demoNotice.text && <p className="notice" data-tone={demoNotice.tone} role="status">{demoNotice.text}</p>}
-            </section>
-          )}
-
           <section id="link" className="panel">
             <h2 className="section-title">Register wallet</h2>
             <p>Verify once. Link multiple wallets. Share one purchase limit.</p>
@@ -840,7 +811,7 @@ export default function InvestorExperience() {
               <button
                 type="button"
                 className="btn btn-primary"
-                disabled={!isConnected || !onSepolia || linking || !walletClient || identityState !== 'verified'}
+                disabled={!isConnected || !onSepolia || linking || !walletClient || identityState !== 'verified' || Boolean(role)}
                 onClick={() => void linkWallet()}
               >
                 {linking ? 'Registering' : 'Continue and register this wallet'}
@@ -860,15 +831,15 @@ export default function InvestorExperience() {
           <section id="allocation" className="panel">
             <h2 className="section-title">Allocation</h2>
             {!canRead && <p>Allocation amounts stay hidden until the ledger can be read.</p>}
-            {canRead && !linked && <p>This wallet is not registered, so its remaining allocation is not shown as zero.</p>}
-            {linked && (
+            {canRead && !shownLinked && <p>This wallet is not registered, so its remaining allocation is not shown as zero.</p>}
+            {shownLinked && (
               <>
                 <p>Verify once. Link multiple wallets. Share one purchase limit. All linked wallets consume the same offering budget. Selling does not restore it. The remaining amount below is read from Ethereum.</p>
-                {identityQuery.data?.linkedWallets && identityQuery.data.linkedWallets.length > 0 && (
+                {(identityQuery.data?.linkedWallets ?? []).length > 0 && (
                   <>
                     <p>Linked wallets</p>
                     <ul>
-                      {identityQuery.data.linkedWallets.map((wallet) => (
+                      {identityQuery.data?.linkedWallets.map((wallet) => (
                         <li key={wallet}>{showAddresses ? wallet : shortAddress(wallet)}</li>
                       ))}
                     </ul>
@@ -886,7 +857,7 @@ export default function InvestorExperience() {
                 </dl>
               </>
             )}
-            {linked && (remaining.isError || spent.isError || policy.isError) && (
+            {shownLinked && (remaining.isError || spent.isError || policy.isError) && (
               <p className="notice" data-tone="error" role="alert">Part of the allocation could not be read from Ethereum Sepolia.</p>
             )}
             {address && purchasesQuery.data && purchasesQuery.data.length > 0 && (
@@ -900,7 +871,9 @@ export default function InvestorExperience() {
 
           <section id="purchase" className="panel">
             <h2 className="section-title">Purchase</h2>
-            {!linked || marketClosed ? (
+            {role ? (
+              <p>{infrastructureExplanation(role)}</p>
+            ) : !shownLinked || marketClosed ? (
               <p>{marketClosed ? accessTierMessage(0) : 'Register this wallet and obtain issuer approval before purchasing. The purchase action stays disabled until the contract can accept it.'}</p>
             ) : status?.marketReady && execution ? (
               <>
@@ -918,12 +891,12 @@ export default function InvestorExperience() {
                 )}
                 <p className="quiet">{needsApproval ? 'USDC allowance is below this amount.' : 'Allowance covers this amount, or no amount is entered yet.'}</p>
                 {needsApproval && requested !== null && (
-                  <button type="button" className="btn btn-primary" disabled={approving || buying || !onSepolia || !linked || marketClosed} onClick={() => void approveUsdc(requested)}>
+                  <button type="button" className="btn btn-primary" disabled={approving || buying || !onSepolia || !shownLinked || marketClosed} onClick={() => void approveUsdc(requested)}>
                     {approving ? 'Approving' : 'Approve USDC'}
                   </button>
                 )}
                 {!needsApproval && (
-                  <button type="button" className="btn btn-primary" disabled={!decision.allowed || buying || approving || !onSepolia || !linked || marketClosed || !execution.available} onClick={() => requested && void buy(requested)}>
+                  <button type="button" className="btn btn-primary" disabled={!decision.allowed || buying || approving || !onSepolia || !shownLinked || marketClosed || !execution.available} onClick={() => requested && void buy(requested)}>
                     {buying ? 'Purchasing' : 'Purchase'}
                   </button>
                 )}
@@ -938,6 +911,11 @@ export default function InvestorExperience() {
             <summary>Technical details</summary>
             {statusQuery.isError && <p role="alert">The allocation status could not be loaded.</p>}
             {status && deploymentMessages(status).map((item) => <p key={item.code}>{item.text}</p>)}
+            <p>Configuration: {status?.missing.length ? `missing ${status.missing.join(', ')}` : status ? 'present' : 'not loaded'}.</p>
+            <p>RPC: {status?.rpcReady ? 'reachable' : 'unreachable'}. Chain id: {status?.rpcChainId ?? 'unread'}.</p>
+            <p>Ledger code: {status?.ledger?.hasCode ? 'present' : 'missing'}. Signer: {status?.ledger?.signerMatches ? 'matches' : 'unavailable'}.</p>
+            <p>Policy: {status?.policyReady ? 'readable' : 'unavailable'}. Purchase route: {status?.execution.available ? 'matches' : 'unavailable'}.</p>
+            <p>Local Anvil: {status?.anvil ?? 'unread'}.</p>
             {status?.missing && status.missing.length > 0 && <p>Missing configuration: {status.missing.join(', ')}.</p>}
             {offeringsQuery.data?.offering && (
               <p>
@@ -945,7 +923,7 @@ export default function InvestorExperience() {
               </p>
             )}
             {offeringsQuery.data?.warning && <p>{offeringsQuery.data.warning}</p>}
-            <p>Identity: {identity.text}. Registration: {registration.text}. Approval: {approval.text}. Purchase: {purchase.text}.</p>
+            <p>{`Identity: ${identity.text}. Registration: ${registration.text}. Approval: ${approval.text}. Purchase: ${purchase.text}.`}</p>
           </details>
         </div>
         <SiteFooter />

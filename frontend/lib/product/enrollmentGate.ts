@@ -1,5 +1,5 @@
 export const REGISTRATION_LEDGER_UNAVAILABLE =
-  'Wallet registration is unavailable because the allocation ledger could not be read.';
+  'The allocation ledger could not be reached.';
 
 export type EnrollmentPhase =
   | 'idle'
@@ -28,7 +28,15 @@ export function enrollmentButton(input: {
   identity?: 'unverified' | 'verified' | 'expired';
   marketLoading?: boolean;
   arkivUnavailable?: boolean;
+  infrastructure?: 'allocation signer' | 'contract owner' | null;
 }): { disabled: boolean; label: string; explanation: string } {
+  if (input.infrastructure) {
+    return {
+      disabled: true,
+      label: 'Use an investor wallet',
+      explanation: `This wallet is the ${input.infrastructure}. Use a separate funded investor wallet. The ledger does not reject this address; registration stays disabled so an infrastructure account is not enrolled as an investor.`,
+    };
+  }
   if (input.alreadyRegistered) {
     return { disabled: true, label: 'Wallet linked', explanation: 'This wallet is already registered.' };
   }

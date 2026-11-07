@@ -162,7 +162,7 @@ test('verification and wallet-link failures do not claim success', () => {
   assert.doesNotMatch(verificationFailure('cancelled'), /verified/i);
   assert.match(walletLinkFailure('conflict'), /another allocation/);
   assert.match(walletLinkFailure('expired'), /expired/);
-  assert.match(walletLinkFailure('signature_rejected'), /cancelled/);
+  assert.match(walletLinkFailure('signature_rejected'), /declined/);
 });
 
 test('registration, policy, market, and access tier stay separate', async () => {

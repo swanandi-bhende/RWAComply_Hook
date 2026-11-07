@@ -1,3 +1,5 @@
+export const runtime = 'nodejs';
+
 import path from 'node:path';
 import { NextResponse } from 'next/server';
 import { createPublicClient as createViemClient, getAddress, isAddress, parseAbi, type Address, type Hex } from 'viem';

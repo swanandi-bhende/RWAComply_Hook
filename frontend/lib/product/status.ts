@@ -40,6 +40,7 @@ export type ProductProbe = {
   chainId: () => Promise<number>;
   hasCode: (address: Address) => Promise<boolean>;
   backendSigner: (ledger: Address) => Promise<Address>;
+  owner?: (ledger: Address) => Promise<Address>;
   policy: (ledger: Address, groupId: Hex, periodId: bigint) => Promise<PolicyRead>;
   hookAllocation: (hook: Address) => Promise<{ groupId: Hex; periodId: bigint }>;
   executorTokens: (executor: Address) => Promise<{ usdc: Address; rwa: Address }>;
@@ -52,6 +53,8 @@ export type PublicProductStatus = {
   missing: AllocationEnvName[];
   configurationError: string | null;
   rpcReady: boolean;
+  rpcChainId: number | null;
+  roles: { backendSigner: Address; owner: Address | null } | null;
   ledger: { address: Address; hasCode: boolean; signerMatches: boolean } | null;
   groupId: Hex | null;
   periodId: string | null;
@@ -99,6 +102,8 @@ function emptyStatus(partial: Partial<PublicProductStatus> = {}): PublicProductS
     missing: [],
     configurationError: null,
     rpcReady: false,
+    rpcChainId: null,
+    roles: null,
     ledger: null,
     groupId: null,
     periodId: null,
@@ -161,19 +166,29 @@ export async function assembleProductStatus(input: {
     return base;
   }
   if (rpcChainId !== SEPOLIA_CHAIN_ID) {
-    return { ...base, configurationError: 'The allocation RPC is not Ethereum Sepolia' };
+    return { ...base, rpcReady: true, rpcChainId, configurationError: 'The allocation RPC is not Ethereum Sepolia' };
   }
 
   let hasCode = false;
   let signerMatches = false;
+  let roles: PublicProductStatus['roles'] = null;
   try {
     hasCode = await input.probe.hasCode(config.ledgerAddress);
     if (hasCode) {
-      const signer = await input.probe.backendSigner(config.ledgerAddress);
+      const signer = getAddress(await input.probe.backendSigner(config.ledgerAddress));
       signerMatches = sameAddress(signer, config.signerAddress);
+      let owner: Address | null = null;
+      if (input.probe.owner) {
+        try {
+          owner = getAddress(await input.probe.owner(config.ledgerAddress));
+        } catch {
+          owner = null;
+        }
+      }
+      roles = { backendSigner: signer, owner };
     }
   } catch {
-    return { ...base, rpcReady: true };
+    return { ...base, rpcReady: true, rpcChainId };
   }
 
   const ledger = { address: config.ledgerAddress, hasCode, signerMatches };
@@ -199,6 +214,8 @@ export async function assembleProductStatus(input: {
   return {
     ...base,
     rpcReady: true,
+    rpcChainId,
+    roles,
     ledger,
     periodId: periodId.toString(),
     policy,
