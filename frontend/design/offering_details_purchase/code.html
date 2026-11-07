@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={"darkMode":"class","theme":{"extend":{"colors":{"secondary-fixed-dim":"#16845B","error-container":"#FCEAF2","on-tertiary-container":"#FFF7FA","on-background":"#211A1F","secondary":"#16845B","on-primary":"#ffffff","surface-dim":"#EEE4E9","tertiary":"#9D285F","primary":"#D9468D","on-secondary-container":"#16845B","surface-container-high":"#FCEAF2","surface-container-highest":"#FCEAF2","error":"#B83270","on-secondary":"#ffffff","tertiary-fixed-dim":"#FCEAF2","secondary-container":"#E7F6EF","on-tertiary":"#ffffff","on-primary-container":"#FFFFFF","on-tertiary-fixed":"#211A1F","on-error-container":"#9D285F","on-error":"#ffffff","secondary-fixed":"#E7F6EF","on-tertiary-fixed-variant":"#9D285F","on-surface":"#211A1F","on-surface-variant":"#766B72","surface-tint":"#D9468D","primary-fixed-dim":"#FCEAF2","surface":"#FCFAFB","on-primary-fixed":"#211A1F","inverse-primary":"#FCEAF2","inverse-surface":"#211A1F","tertiary-fixed":"#FCEAF2","surface-container-low":"#FFF7FA","on-primary-fixed-variant":"#9D285F","outline-variant":"#EEE4E9","primary-fixed":"#FCEAF2","surface-container-lowest":"#ffffff","outline":"#766B72","inverse-on-surface":"#FCFAFB","tertiary-container":"#BE3477","primary-container":"#BE3477","on-secondary-fixed":"#211A1F","background":"#FCFAFB","on-secondary-fixed-variant":"#16845B","surface-bright":"#FCFAFB","surface-variant":"#FCEAF2","surface-container":"#FCEAF2"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-sm":"0.5rem","gutter-sm":"1rem","space-md":"1rem","margin":"2rem","gutter":"1.5rem","margin-sm":"1rem","space-xl":"2rem","space-lg":"1.5rem","space-xs":"0.25rem"},"fontFamily":{"body-lg":["Inter"],"body-md":["Inter"],"display-mobile":["Inter"],"label-md":["Inter"],"label-sm":["Inter"],"numeric-metric":["Inter"],"headline-md":["Inter"],"body-sm":["Inter"],"display":["Inter"],"headline-lg-mobile":["Inter"],"headline-sm":["Inter"],"headline-lg":["Inter"]},"fontSize":{"body-lg":["1rem",{"lineHeight":"1.5rem","letterSpacing":"-0.005em","fontWeight":"400"}],"body-md":["0.875rem",{"lineHeight":"1.25rem","letterSpacing":"0","fontWeight":"400"}],"display-mobile":["2.25rem",{"lineHeight":"2.75rem","letterSpacing":"-0.02em","fontWeight":"600"}],"label-md":["0.875rem",{"lineHeight":"1.25rem","letterSpacing":"0.01em","fontWeight":"500"}],"label-sm":["0.75rem",{"lineHeight":"1rem","letterSpacing":"0.025em","fontWeight":"600"}],"numeric-metric":["1.75rem",{"lineHeight":"2rem","letterSpacing":"-0.02em","fontWeight":"600"}],"headline-md":["1.25rem",{"lineHeight":"1.75rem","letterSpacing":"-0.015em","fontWeight":"600"}],"body-sm":["0.75rem",{"lineHeight":"1rem","letterSpacing":"0","fontWeight":"400"}],"display":["3rem",{"lineHeight":"3.5rem","letterSpacing":"-0.025em","fontWeight":"600"}],"headline-lg-mobile":["1.5rem",{"lineHeight":"2rem","letterSpacing":"-0.015em","fontWeight":"600"}],"headline-sm":["1.125rem",{"lineHeight":"1.5rem","letterSpacing":"-0.01em","fontWeight":"500"}],"headline-lg":["2rem",{"lineHeight":"2.5rem","letterSpacing":"-0.02em","fontWeight":"600"}]}}}};</script></head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-72 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between"><div class="flex flex-col"><div class="px-space-lg pt-space-lg pb-space-md"><div class="flex items-center gap-space-sm"><img alt="RWAComply Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1U-3oCIjP5i3z-kGjWIIkRaKuDu3cDku9yx5nTnSnp5N-dGh-ZE0f0TvKeATc7h3REniLuJSP0-aHWrM8eM-2p-WwdsFetSTn4zuwy6PFePu95iE_9HR5i5z_U_ZWRuxm-SuJnEILOqvgp1Dj4KZUX3idv_3Oj8-140AbxqfFk_Uhv32IgLyFUJNLkGywmLt0iQLQ1wQwKssKwiJHNxr1MmvXbPyucfGYaykIjaLjbC1w"/><div class="flex flex-col"><div class="flex items-center gap-space-xs"><span class="font-headline-sm text-headline-sm text-on-surface font-semibold tracking-tight">RWAComply</span><span class="px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface font-label-sm text-label-sm text-[10px] uppercase font-bold tracking-wider">v1.0 Sepolia</span></div><span class="font-body-sm text-body-sm text-on-surface-variant text-[11px] leading-tight">Shared Allocation Protocol</span></div></div><div class="mt-space-sm pt-space-xs"><p class="font-body-sm text-body-sm text-on-surface-variant text-[11px] italic leading-tight">One human. Multiple wallets. One shared purchase limit.</p></div></div><nav class="flex flex-col gap-1 px-space-md mt-space-sm" data-active-classes="bg-primary-container text-on-primary font-label-md font-semibold rounded-lg"><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="overview" href="#"><span class="material-symbols-outlined text-[20px]">grid_view</span><span>Overview</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="offerings" href="#"><span class="material-symbols-outlined text-[20px]">account_balance</span><span>Offerings</span></a><a aria-current="page" class="flex items-center gap-space-sm px-space-md py-2.5 transition-all bg-primary-container text-on-primary font-label-md font-semibold rounded-lg" data-path="offering-details-&-buy" href="#"><span class="material-symbols-outlined text-[20px]">credit_card</span><span>Offering Details & Buy</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="linked-wallets" href="#"><span class="material-symbols-outlined text-[20px]">verified_user</span><span>Linked Wallets</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="activity" href="#"><span class="material-symbols-outlined text-[20px]">history</span><span>Activity</span></a></nav></div><div class="p-space-md flex flex-col gap-space-sm"><div class="bg-surface-container-low rounded-lg p-space-sm flex flex-col gap-1"><div class="flex items-center justify-between"><span class="font-label-sm text-label-sm text-on-surface-variant text-[11px] font-semibold uppercase tracking-wider">World ID Verification</span><span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span></span></div><div class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px] text-secondary">fingerprint</span><span class="font-label-sm text-label-sm text-on-surface font-mono text-[11px]">0x8f...4c19</span><span class="ml-auto px-1.5 py-0.5 rounded bg-secondary-container text-on-secondary-container font-label-sm text-label-sm text-[10px] font-bold">Verified</span></div></div><div class="flex items-center justify-between px-space-xs font-label-sm text-label-sm text-on-surface-variant text-[11px]"><a class="hover:text-on-surface transition-colors flex items-center gap-1" href="#"><span class="material-symbols-outlined text-[14px]">description</span>Protocol Docs</a><a class="hover:text-on-surface transition-colors flex items-center gap-1" href="#"><span class="material-symbols-outlined text-[14px]">gavel</span>Legal Terms</a></div></div></aside><div class="pl-72"><header class="fixed top-0 left-72 right-0 h-16 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40"><div class="h-16 w-full px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-sm font-label-md text-label-md text-on-surface-variant"><span class="hover:text-on-surface cursor-pointer">RWAComply</span><span class="material-symbols-outlined text-[16px]">chevron_right</span><span class="text-on-surface font-semibold">Institutional Console</span></div><div class="flex items-center gap-space-md"><div class="hidden sm:flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-surface-container font-label-sm text-label-sm text-on-surface-variant"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span><span>Sepolia Testnet</span></div><div class="hidden md:flex items-center gap-1 px-space-sm py-1 rounded bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold"><span class="material-symbols-outlined text-[14px]">shield_with_heart</span><span>World ID: Verified</span></div><div class="flex items-center gap-space-xs px-space-sm py-1 rounded-lg bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><span class="material-symbols-outlined text-[16px] text-on-surface-variant">account_balance_wallet</span><span class="font-label-sm text-label-sm font-mono text-on-surface">0x71C...3a91</span><span class="font-label-sm text-label-sm text-on-surface-variant text-[11px]">(Wallet A)</span><button class="p-1 text-on-surface-variant hover:text-on-surface" title="Copy Address" type="button"><span class="material-symbols-outlined text-[14px]">content_copy</span></button><button class="p-1 text-on-surface-variant hover:text-error" title="Disconnect" type="button"><span class="material-symbols-outlined text-[14px]">power_settings_new</span></button></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-16 bg-surface min-h-screen"><div class="max-w-7xl mx-auto px-space-lg py-space-xl"><div class="flex flex-col w-full">
+<!-- Interactive Cap Calculation State Engine -->
+<script>
+    function updateCapValidation(amount) {
+      const parsed = parseFloat(amount) || 0;
+      const totalCap = 1000.00;
+      const spent = 700.00;
+      const remaining = 300.00;
+      const inputEl = document.getElementById('purchase-input');
+      const warningBox = document.getElementById('warning-alert-box');
+      const validBox = document.getElementById('valid-alert-box');
+      const actionBtn = document.getElementById('primary-action-btn');
+      const excessRow = document.getElementById('summary-excess-row');
+      const summaryReq = document.getElementById('summary-requested');
+      const summaryExcess = document.getElementById('summary-excess');
+      const dynamicPreviewBar = document.getElementById('dynamic-preview-bar');
+
+      if (inputEl) inputEl.value = parsed.toFixed(2);
+      if (summaryReq) summaryReq.textContent = '$' + parsed.toFixed(2) + ' USDC';
+
+      const attemptedTotal = spent + parsed;
+      const previewPct = Math.min(100, (attemptedTotal / totalCap) * 100);
+      if (dynamicPreviewBar) {
+        dynamicPreviewBar.style.width = previewPct + '%';
+        if (parsed > remaining) {
+          dynamicPreviewBar.className = 'h-full bg-error transition-all duration-300';
+        } else {
+          dynamicPreviewBar.className = 'h-full bg-secondary transition-all duration-300';
+        }
+      }
+
+      if (parsed > remaining) {
+        // Limit Exceeded State
+        if (warningBox) warningBox.classList.remove('hidden');
+        if (validBox) validBox.classList.add('hidden');
+        if (excessRow) excessRow.classList.remove('hidden');
+        const diff = (parsed - remaining).toFixed(2);
+        if (summaryExcess) summaryExcess.textContent = '+$' + diff + ' USDC (Rule #104)';
+        
+        if (actionBtn) {
+          actionBtn.disabled = true;
+          actionBtn.className = 'w-full py-3 px-space-md rounded-lg bg-surface-container-high text-outline cursor-not-allowed font-label-md text-label-md flex items-center justify-center gap-space-xs transition-colors shadow-none';
+          actionBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">block</span><span>Exceeds Allocation Limit</span>';
+        }
+      } else if (parsed <= 0) {
+        // Zero / Empty state
+        if (warningBox) warningBox.classList.add('hidden');
+        if (validBox) validBox.classList.add('hidden');
+        if (excessRow) excessRow.classList.add('hidden');
+        if (actionBtn) {
+          actionBtn.disabled = true;
+          actionBtn.className = 'w-full py-3 px-space-md rounded-lg bg-surface-container-high text-outline cursor-not-allowed font-label-md text-label-md flex items-center justify-center gap-space-xs transition-colors shadow-none';
+          actionBtn.innerHTML = '<span>Enter Amount to Continue</span>';
+        }
+      } else {
+        // Valid State
+        if (warningBox) warningBox.classList.add('hidden');
+        if (validBox) validBox.classList.remove('hidden');
+        if (excessRow) excessRow.classList.add('hidden');
+        
+        if (actionBtn) {
+          actionBtn.disabled = false;
+          actionBtn.className = 'w-full py-3 px-space-md rounded-lg bg-primary-container text-on-primary hover:bg-primary font-label-md text-label-md flex items-center justify-center gap-space-xs transition-colors shadow-sm cursor-pointer';
+          actionBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">verified</span><span>Confirm & Mint Allocation ($' + parsed.toFixed(2) + ')</span>';
+        }
+      }
+    }
+
+    function switchTab(tabId) {
+      const tabs = ['overview', 'rules', 'custody', 'audit'];
+      tabs.forEach(t => {
+        const btn = document.getElementById('tab-btn-' + t);
+        const pane = document.getElementById('pane-' + t);
+        if (t === tabId) {
+          if (btn) {
+            btn.className = 'px-space-md py-space-sm font-label-md text-label-md text-primary border-b-2 border-primary font-semibold transition-colors flex items-center gap-1.5';
+          }
+          if (pane) pane.classList.remove('hidden');
+        } else {
+          if (btn) {
+            btn.className = 'px-space-md py-space-sm font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-1.5';
+          }
+          if (pane) pane.classList.add('hidden');
+        }
+      });
+    }
+
+    function copyContract(text, btnId) {
+      navigator.clipboard.writeText(text);
+      const icon = document.getElementById(btnId);
+      if (icon) {
+        icon.textContent = 'done';
+        setTimeout(() => { icon.textContent = 'content_copy'; }, 2000);
+      }
+    }
+  </script>
+<!-- Breadcrumbs & Context Pill -->
+<div class="flex flex-wrap items-center justify-between gap-space-md mb-space-lg">
+<div class="flex items-center gap-space-xs font-label-sm text-label-sm text-on-surface-variant">
+<span class="hover:text-on-surface cursor-pointer">Offerings</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-on-surface font-semibold">Demo RWA Offering — Treasury Yield Series Alpha</span>
+</div>
+<div class="flex items-center gap-space-xs px-2.5 py-1 rounded bg-surface-container font-label-sm text-label-sm text-on-surface-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-mono text-[11px]">Rule Set: FINRA / SEC Reg S Aggregated Cap</span>
+</div>
+</div>
+<!-- Primary Institutional Two-Column Layout (60% / 40%) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-xl items-start">
+<!-- LEFT COLUMN: Offering Information (7 cols ~ 58-60%) -->
+<div class="lg:col-span-7 flex flex-col gap-space-xl">
+<!-- Header Module -->
+<div class="bg-surface-container-lowest rounded-xl p-space-xl shadow-sm flex flex-col gap-space-md">
+<div class="flex flex-wrap items-start justify-between gap-space-md">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold tracking-wide uppercase text-[10px]">Tier 1 Institutional</span>
+<span class="px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold flex items-center gap-1 text-[11px]">
+<span class="material-symbols-outlined text-[13px]">verified_user</span>
+                RWAComply Certified
+              </span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight mt-1">
+              US Short-Duration Treasury Fund (UST-01)
+            </h1>
+<div class="flex items-center gap-space-sm mt-0.5">
+<span class="font-label-md text-label-md text-on-surface-variant">Issuer:</span>
+<span class="font-label-md text-label-md font-semibold text-on-surface">Apex Capital Tokenization SPV</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container text-secondary font-label-sm text-label-sm font-bold text-[10px] flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[12px]">check_circle</span> Verified
+              </span>
+</div>
+</div>
+<div class="text-right">
+<span class="font-label-sm text-label-sm text-on-surface-variant block uppercase tracking-wider text-[11px]">Historical Net APY</span>
+<span class="font-numeric-metric text-numeric-metric text-secondary font-semibold">5.24%</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant block">Accrued Daily</span>
+</div>
+</div>
+<!-- Contract Details Ledger Bar -->
+<div class="bg-surface-container-low rounded-lg p-space-md flex flex-wrap items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">token</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Contract Address:</span>
+<span class="font-label-sm text-label-sm font-mono text-on-surface font-semibold">0x4B99...81Aa</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant font-label-sm text-label-sm text-[10px]">Sepolia</span>
+</div>
+<button class="flex items-center gap-1 px-2.5 py-1 rounded bg-surface-container-lowest hover:bg-surface-container text-on-surface font-label-sm text-label-sm transition-colors shadow-sm" onclick="copyContract('0x4B9918E4d6cA029583B8e53E24294bB3C5881Aa', 'copy-icon-addr')" type="button">
+<span class="material-symbols-outlined text-[14px]" id="copy-icon-addr">content_copy</span>
+<span>Copy Address</span>
+</button>
+</div>
+</div>
+<!-- Institutional Tabs Bar -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden flex flex-col">
+<div class="flex items-center gap-space-xs px-space-lg pt-space-xs bg-surface-container-low overflow-x-auto">
+<button class="px-space-md py-space-sm font-label-md text-label-md text-primary font-semibold transition-colors flex items-center gap-1.5" id="tab-btn-overview" onclick="switchTab('overview')" type="button">
+<span class="material-symbols-outlined text-[16px]">info</span>
+<span>Overview & Compliance</span>
+</button>
+<button class="px-space-md py-space-sm font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-1.5" id="tab-btn-rules" onclick="switchTab('rules')" type="button">
+<span class="material-symbols-outlined text-[16px]">gavel</span>
+<span>Cap Rules</span>
+</button>
+<button class="px-space-md py-space-sm font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-1.5" id="tab-btn-custody" onclick="switchTab('custody')" type="button">
+<span class="material-symbols-outlined text-[16px]">account_balance</span>
+<span>Custody & Reserves</span>
+</button>
+<button class="px-space-md py-space-sm font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-1.5" id="tab-btn-audit" onclick="switchTab('audit')" type="button">
+<span class="material-symbols-outlined text-[16px]">rule</span>
+<span>Audit & Verification</span>
+</button>
+</div>
+<!-- TAB CONTENT: Overview & Compliance -->
+<div class="p-space-xl flex flex-col gap-space-lg" id="pane-overview">
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-space-xs">Asset Description</h3>
+<p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
+              This tokenized vehicle holds short-dated US Treasury Bills, providing digital native access to institutional yield while strictly enforcing regulatory retail subscription caps across fragmented user wallets.
+            </p>
+</div>
+<!-- Highlight Card: How RWAComply Enforces Compliance -->
+<div class="rounded-xl p-space-lg bg-surface-container-low flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-lg bg-primary-container text-on-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">security</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface text-[15px] font-semibold">
+                    How RWAComply Works on this Offering
+                  </h4>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Synchronous Pre-Mint Nullifier Verification</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded bg-surface-container-lowest font-label-sm text-label-sm text-on-surface font-mono text-[11px]">Rule Engine v1.4</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">
+              The issuer smart contract queries <code class="font-mono text-primary font-semibold bg-surface-container-lowest px-1.5 py-0.5 rounded text-[12px]">RWAComply.canPurchase(userNullifier, amount)</code> before minting. All wallets associated with World ID <span class="font-mono font-bold text-on-surface">#9182...4c</span> share an aggregate <span class="font-semibold text-on-surface">$1,000 USDC cap</span> across the entire lifecycle.
+            </p>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-space-sm pt-space-xs">
+<div class="bg-surface-container-lowest p-space-sm rounded-lg flex flex-col gap-0.5">
+<span class="font-label-sm text-label-sm text-on-surface-variant text-[11px]">1. Identity Layer</span>
+<span class="font-label-md text-label-md font-semibold text-on-surface">World ID Nullifier</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant text-[11px]">Privacy-preserving ZK proof</span>
+</div>
+<div class="bg-surface-container-lowest p-space-sm rounded-lg flex flex-col gap-0.5">
+<span class="font-label-sm text-label-sm text-on-surface-variant text-[11px]">2. State Aggregation</span>
+<span class="font-label-md text-label-md font-semibold text-on-surface">Cross-Wallet Sync</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant text-[11px]">No multi-wallet bypass</span>
+</div>
+<div class="bg-surface-container-lowest p-space-sm rounded-lg flex flex-col gap-0.5">
+<span class="font-label-sm text-label-sm text-on-surface-variant text-[11px]">3. Settlement Guard</span>
+<span class="font-label-md text-label-md font-semibold text-on-surface">Atomic Revert</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant text-[11px]">Zero onchain breach risk</span>
+</div>
+</div>
+</div>
+<!-- Structured Metadata Table -->
+<div class="flex flex-col gap-space-xs">
+<h4 class="font-headline-sm text-headline-sm text-on-surface text-[15px] font-semibold mb-space-xs">Offering Specifications</h4>
+<div class="bg-surface-container-low rounded-lg overflow-hidden">
+<div class="flex items-center justify-between p-space-md bg-surface-container-lowest">
+<span class="font-body-md text-body-md text-on-surface-variant">Asset Structure</span>
+<span class="font-label-md text-label-md font-semibold text-on-surface">Reg S Tokenized Note</span>
+</div>
+<div class="flex items-center justify-between p-space-md bg-surface-container-low">
+<span class="font-body-md text-body-md text-on-surface-variant">Custodian</span>
+<span class="font-label-md text-label-md font-semibold text-on-surface">First Commercial Trust (Delaware)</span>
+</div>
+<div class="flex items-center justify-between p-space-md bg-surface-container-lowest">
+<span class="font-body-md text-body-md text-on-surface-variant">Minimum Purchase</span>
+<span class="font-label-md text-label-md font-mono font-semibold text-on-surface">$50.00 USDC</span>
+</div>
+<div class="flex items-center justify-between p-space-md bg-surface-container-low">
+<span class="font-body-md text-body-md text-on-surface-variant">Purchase Asset</span>
+<span class="font-label-md text-label-md font-semibold text-on-surface flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-secondary"></span> USDC (ERC-20 on Sepolia)
+                </span>
+</div>
+<div class="flex items-center justify-between p-space-md bg-surface-container-lowest">
+<span class="font-body-md text-body-md text-on-surface-variant">Settlement</span>
+<span class="font-label-md text-label-md font-semibold text-secondary">Instant onchain minting</span>
+</div>
+</div>
+</div>
+<!-- Underlying Assets & Visual Chart Representation -->
+<div class="bg-surface-container-low rounded-xl p-space-lg flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<h4 class="font-headline-sm text-headline-sm text-on-surface text-[15px] font-semibold">Reserve Composition</h4>
+<span class="font-label-sm text-label-sm text-secondary font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">sync</span> Live Attestation: 100.8% Backed
+              </span>
+</div>
+<!-- Inline SVG Allocation Donut / Bar Graphic -->
+<div class="flex flex-col sm:flex-row items-center gap-space-lg">
+<div class="relative w-28 h-28 flex items-center justify-center shrink-0">
+<svg class="w-full h-full transform -rotate-90" viewbox="0 0 36 36">
+<!-- T-Bills 85% -->
+<circle cx="18" cy="18" fill="transparent" r="15.915" stroke="#FCEAF2" stroke-width="3.8"></circle>
+<circle cx="18" cy="18" fill="transparent" r="15.915" stroke="#16845B" stroke-dasharray="85 15" stroke-dashoffset="0" stroke-width="3.8"></circle>
+<!-- Overnight Repo 15% -->
+<circle cx="18" cy="18" fill="transparent" r="15.915" stroke="#BE3477" stroke-dasharray="15 85" stroke-dashoffset="-85" stroke-width="3.8"></circle>
+</svg>
+<div class="absolute flex flex-col items-center justify-center text-center">
+<span class="font-label-sm text-label-sm text-[10px] text-on-surface-variant leading-none">TOTAL</span>
+<span class="font-label-md text-label-md font-bold text-on-surface mt-0.5">$24.5M</span>
+</div>
+</div>
+<div class="flex flex-col gap-2 w-full">
+<div class="flex items-center justify-between font-body-sm text-body-sm">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-sm bg-secondary shrink-0"></span>
+<span class="text-on-surface font-medium">US Treasury Bills (0-3M Duration)</span>
+</div>
+<span class="font-mono font-semibold text-on-surface">85.0% ($20.8M)</span>
+</div>
+<div class="flex items-center justify-between font-body-sm text-body-sm">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-sm bg-primary-container shrink-0"></span>
+<span class="text-on-surface font-medium">Overnight Reverse Repo & Cash</span>
+</div>
+<span class="font-mono font-semibold text-on-surface">15.0% ($3.7M)</span>
+</div>
+<div class="pt-2">
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden flex">
+<div class="bg-secondary h-full" style="width: 85%"></div>
+<div class="bg-primary-container h-full" style="width: 15%"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Other Tab Panes (Placeholder Content for institutional depth) -->
+<div class="hidden p-space-xl flex flex-col gap-space-md" id="pane-rules">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Cap Enforcement Rules (Rule Engine #104)</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Under Regulation S non-accredited retail participation rules, each distinct human entity is strictly capped at $1,000.00 USDC in active issuance. Multi-wallet sybil splitting is rendered cryptographically impossible through zero-knowledge nullifier binding.</p>
+<div class="bg-surface-container-low rounded-lg p-space-md font-mono text-[12px] text-on-surface">
+            function enforceLimit(bytes32 humanId, uint256 amt) external returns (bool) {<br/>
+              require(spentMap[humanId] + amt <= 1000e6, "RWAComply: Cap Exceeded");<br/>
+              spentMap[humanId] += amt;<br/>
+              return true;<br/>
+            }
+          </div>
+</div>
+<div class="hidden p-space-xl flex flex-col gap-space-md" id="pane-custody">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Qualified Custody Architecture</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">All underlying physical bills are deposited with First Commercial Trust under segregated trust agreements for the benefit of token holders.</p>
+</div>
+<div class="hidden p-space-xl flex flex-col gap-space-md" id="pane-audit">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Smart Contract Audits & Formal Verification</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Formal verification conducted by CertiK and OpenZeppelin. No reentrancy or allocation bypass vectors detected in zero-knowledge verifier circuits.</p>
+</div>
+</div>
+</div>
+<!-- RIGHT COLUMN: Purchase & Cap Enforcement Panel (5 cols ~ 40-42%) -->
+<div class="lg:col-span-5 flex flex-col gap-space-lg">
+<!-- Main Purchase Card -->
+<div class="bg-surface-container-lowest rounded-xl p-space-xl shadow-md flex flex-col gap-space-lg">
+<!-- Panel Title & Status -->
+<div class="flex items-center justify-between pb-space-sm border-b border-surface-container-high">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[20px] text-primary">shopping_cart_checkout</span>
+<h2 class="font-headline-md text-headline-md text-on-surface font-semibold">Execute Purchase</h2>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold flex items-center gap-1 text-[11px]">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+            Mint Active
+          </span>
+</div>
+<!-- Connected Wallet & Linked World ID Banner -->
+<div class="bg-surface-container-low rounded-xl p-space-md flex flex-col gap-2.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="font-label-md text-label-md font-semibold text-on-surface">0x71C8...3a91</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-mono text-[11px]">(Wallet A)</span>
+</div>
+<span class="px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container font-label-sm text-label-sm text-[10px] font-bold uppercase tracking-wider">
+              Connected
+            </span>
+</div>
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-1.5 text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px] text-primary">fingerprint</span>
+<span>Linked Identity:</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="font-mono font-semibold text-on-surface text-[12px]">World ID #9182...4c</span>
+<span class="material-symbols-outlined text-[14px] text-secondary">check_circle</span>
+</div>
+</div>
+</div>
+<!-- Shared Allocation Meter Box (Institutional Core) -->
+<div class="bg-surface-container-low rounded-xl p-space-md flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold text-[11px]">
+              Cumulative Human Allocation Cap
+            </span>
+<span class="font-label-sm text-label-sm font-mono text-on-surface font-semibold">$1,000.00 Max</span>
+</div>
+<!-- Visual Bar: Already spent vs Available -->
+<div class="flex flex-col gap-1.5">
+<div class="h-2.5 w-full bg-surface-container-high rounded-full overflow-hidden flex relative">
+<!-- Spent track (70% = $700) -->
+<div class="bg-outline-variant h-full" style="width: 70%;"></div>
+<!-- Dynamic attempt preview bar -->
+<div class="h-full bg-error transition-all duration-300" id="dynamic-preview-bar" style="width: 100%;"></div>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm text-[11px] text-on-surface-variant font-mono">
+<div class="flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-outline-variant inline-block"></span>
+<span>Spent: $700.00 (Wallet A: $700, B: $0)</span>
+</div>
+<span>70% Utlized</span>
+</div>
+</div>
+<!-- Highlight Available Headroom Metric -->
+<div class="bg-surface-container-lowest rounded-lg p-space-md flex items-center justify-between shadow-sm">
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Remaining Available Cap</span>
+<span class="font-body-sm text-body-sm text-[11px] text-on-surface-variant">Shared across linked wallets</span>
+</div>
+<div class="text-right">
+<span class="font-numeric-metric text-numeric-metric font-bold text-secondary tracking-tight">$300.00</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant block font-mono text-[11px]">USDC Remaining</span>
+</div>
+</div>
+</div>
+<!-- Amount Input Area -->
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<label class="font-label-md text-label-md font-semibold text-on-surface" for="purchase-input">
+              Purchase Amount
+            </label>
+<span class="font-body-sm text-body-sm text-on-surface-variant font-mono">
+              Wallet A Balance: 4,820.00 USDC
+            </span>
+</div>
+<div class="relative flex items-center">
+<span class="absolute left-3.5 font-numeric-metric text-on-surface-variant font-semibold text-[1.25rem]">$</span>
+<input class="w-full bg-surface-container-lowest text-on-surface font-numeric-metric text-[1.25rem] font-semibold pl-8 pr-20 py-3 rounded-lg border border-outline-variant focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-mono" id="purchase-input" oninput="updateCapValidation(this.value)" placeholder="0.00" step="10" type="number" value="500.00"/>
+<div class="absolute right-3 px-2 py-1 rounded bg-surface-container font-label-sm text-label-sm font-semibold text-on-surface">
+              USDC
+            </div>
+</div>
+<!-- Demo Quick Fill Buttons -->
+<div class="flex items-center gap-space-xs pt-1">
+<button class="px-2.5 py-1 rounded bg-surface-container-low hover:bg-surface-container font-label-sm text-label-sm text-on-surface transition-colors font-mono" onclick="updateCapValidation(50)" type="button">
+              Min ($50)
+            </button>
+<button class="px-2.5 py-1 rounded bg-secondary-container hover:bg-secondary-fixed text-on-secondary-container font-label-sm text-label-sm font-semibold transition-colors font-mono" onclick="updateCapValidation(300)" type="button">
+              Max Cap ($300)
+            </button>
+<button class="px-2.5 py-1 rounded bg-error-container hover:bg-error-container/80 text-on-error-container font-label-sm text-label-sm font-semibold transition-colors font-mono" onclick="updateCapValidation(500)" type="button">
+              $500 (Overflow Demo)
+            </button>
+</div>
+</div>
+<!-- Compliance Warning Alert Box (Highlighted in #FEF2F2 with #DC2626 border) -->
+<div class="rounded-xl p-space-md bg-[#FEF2F2] border border-[#DC2626] flex flex-col gap-2" id="warning-alert-box">
+<div class="flex items-start gap-2.5">
+<span class="material-symbols-outlined text-[#DC2626] text-[20px] shrink-0 mt-0.5">report_problem</span>
+<div class="flex flex-col gap-0.5">
+<h4 class="font-label-md text-label-md font-bold text-[#DC2626]">
+                Purchase Exceeds Shared Allocation Limit
+              </h4>
+<p class="font-body-sm text-body-sm text-on-surface leading-snug">
+                You entered <span class="font-mono font-bold">$500.00 USDC</span>. Your remaining cumulative allocation across all linked wallets is <span class="font-mono font-bold">$300.00 USDC</span>. Onchain compliance will reject this transaction.
+              </p>
+</div>
+</div>
+<div class="mt-1 pt-2 border-t border-error/20 flex items-center justify-between">
+<span class="font-body-sm text-body-sm font-semibold text-[#DC2626] text-[11px]">
+              Suggested Action: Adjust amount to $300.00 USDC or less to proceed.
+            </span>
+<button class="font-label-sm text-label-sm font-bold text-[#DC2626] hover:underline uppercase text-[10px] tracking-wider" onclick="updateCapValidation(300)" type="button">
+              Auto-Adjust
+            </button>
+</div>
+</div>
+<!-- Success/Compliant Preview Alert Box (Initially hidden) -->
+<div class="hidden rounded-xl p-space-md bg-secondary-container/30 border border-secondary flex items-start gap-2.5" id="valid-alert-box">
+<span class="material-symbols-outlined text-secondary text-[20px] shrink-0 mt-0.5">verified</span>
+<div class="flex flex-col gap-0.5">
+<h4 class="font-label-md text-label-md font-bold text-secondary">
+              Compliant Allocation Ready
+            </h4>
+<p class="font-body-sm text-body-sm text-on-surface leading-snug">
+              Requested amount is within your remaining <span class="font-mono font-bold">$300.00 USDC</span> capacity. ZK Nullifier verification will pass successfully.
+            </p>
+</div>
+</div>
+<!-- Dynamic Summary Breakdown -->
+<div class="bg-surface-container-low rounded-xl p-space-md flex flex-col gap-2">
+<div class="flex items-center justify-between font-body-sm text-body-sm">
+<span class="text-on-surface-variant">Requested Amount:</span>
+<span class="font-mono font-semibold text-on-surface" id="summary-requested">$500.00 USDC</span>
+</div>
+<div class="flex items-center justify-between font-body-sm text-body-sm">
+<span class="text-on-surface-variant">Available Human Cap:</span>
+<span class="font-mono font-semibold text-secondary">$300.00 USDC</span>
+</div>
+<!-- Excess Attempted Row -->
+<div class="flex items-center justify-between font-body-sm text-body-sm text-error bg-error-container/50 px-2 py-1 rounded" id="summary-excess-row">
+<span class="font-semibold">Excess Attempted:</span>
+<span class="font-mono font-bold" id="summary-excess">+$200.00 USDC (Rule #104)</span>
+</div>
+<div class="flex items-center justify-between font-body-sm text-body-sm pt-1 border-t border-surface-container">
+<span class="text-on-surface-variant">Est. Network Fee:</span>
+<span class="font-mono text-on-surface">< $0.01 (Sepolia Testnet)</span>
+</div>
+</div>
+<!-- Primary CTA Buttons -->
+<div class="flex flex-col gap-2">
+<button class="w-full py-3 px-space-md rounded-lg bg-surface-container-high text-outline cursor-not-allowed font-label-md text-label-md flex items-center justify-center gap-space-xs transition-colors shadow-none" disabled="" id="primary-action-btn" type="button">
+<span class="material-symbols-outlined text-[18px]">block</span>
+<span>Exceeds Allocation Limit</span>
+</button>
+<button class="w-full text-center py-1 text-primary hover:text-tertiary-container font-label-sm text-label-sm font-semibold transition-colors flex items-center justify-center gap-1" onclick="updateCapValidation(300)" type="button">
+<span class="material-symbols-outlined text-[15px]">swap_horiz</span>
+<span>Switch to Valid Amount ($300) to demo approval</span>
+</button>
+</div>
+<!-- Privacy & ZK Trust Note -->
+<div class="flex items-start gap-2 pt-space-xs">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant shrink-0 mt-0.5">lock</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-tight">
+            RWAComply smart contract validates cumulative spent state via ZK-nullifiers without revealing other wallet balances onchain.
+          </p>
+</div>
+</div>
+<!-- Quick Context Info Card -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px]">hub</span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm font-semibold text-on-surface block">Shared Cap Across 2 Wallets</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant font-mono text-[11px]">Wallet A (Active) • Wallet B (Linked)</span>
+</div>
+</div>
+<a class="px-2 py-1 rounded bg-surface-container hover:bg-surface-container-high font-label-sm text-label-sm text-on-surface font-semibold transition-colors shrink-0" href="#">
+          Manage
+        </a>
+</div>
+</div>
+</div>
+</div></div></main></div></body></html>

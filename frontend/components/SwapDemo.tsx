@@ -522,9 +522,9 @@ export function SwapDemo() {
 
   if (deploymentError) {
     return (
-      <div className="bg-red-50 border-2 border-red-600 p-6 rounded">
-        <p className="text-red-600 font-bold mb-2">Deployment Error</p>
-        <p className="text-red-600 text-sm">{deploymentError}</p>
+      <div className="bg-[#FFF7FA] border-2 border-[#B83270] p-6 rounded">
+        <p className="text-[#B83270] font-bold mb-2">Deployment Error</p>
+        <p className="text-[#B83270] text-sm">{deploymentError}</p>
       </div>
     );
   }
@@ -555,7 +555,7 @@ export function SwapDemo() {
             <div className="space-y-2 text-sm border-b border-gray-300 pb-4">
               <div className="flex justify-between">
                 <span className="font-semibold text-black">Pool status</span>
-                <span className={Boolean(poolPaused) ? 'text-red-700 font-bold' : 'text-green-700 font-bold'}>
+                <span className={Boolean(poolPaused) ? 'text-[#B83270] font-bold' : 'text-green-700 font-bold'}>
                   {Boolean(poolPaused) ? 'Paused' : 'Active'}
                 </span>
               </div>
@@ -716,14 +716,14 @@ export function SwapDemo() {
               {approvalTxHash && (
                 <div className="bg-white p-3 rounded border border-green-300">
                   <p className="text-xs text-gray-600 mb-1">Approval Tx Hash</p>
-                  <p className="font-mono text-xs break-all text-blue-700">{approvalTxHash}</p>
+                  <p className="font-mono text-xs break-all text-[#766B72]">{approvalTxHash}</p>
                 </div>
               )}
 
               {swapTxHash && (
                 <div className="bg-white p-3 rounded border border-green-300">
                   <p className="text-xs text-gray-600 mb-1">Swap Tx Hash</p>
-                  <p className="font-mono text-xs break-all text-blue-700">{swapTxHash}</p>
+                  <p className="font-mono text-xs break-all text-[#766B72]">{swapTxHash}</p>
                 </div>
               )}
 
@@ -750,10 +750,10 @@ export function SwapDemo() {
           )}
 
           {(phase === 'rejected' || phase === 'registering') && (
-            <div className="border-2 border-red-400 rounded-lg p-6 bg-red-50">
-              <h3 className="font-bold text-lg text-red-800 mb-2">{phase === 'registering' ? 'Registering' : 'Hook rejection'}</h3>
-              <p className="text-sm text-red-700 wrap-break-word">{errorMessage || 'Transaction failed'}</p>
-              <p className="text-xs text-red-700 mt-3">
+            <div className="border-2 border-[#B83270] rounded-lg p-6 bg-[#FFF7FA]">
+              <h3 className="font-bold text-lg text-[#9D285F] mb-2">{phase === 'registering' ? 'Registering' : 'Hook rejection'}</h3>
+              <p className="text-sm text-[#B83270] wrap-break-word">{errorMessage || 'Transaction failed'}</p>
+              <p className="text-xs text-[#B83270] mt-3">
                 Tier-0 failures are expected when swap actor tier is unverified, demonstrating
                 hook-level compliance enforcement.
               </p>

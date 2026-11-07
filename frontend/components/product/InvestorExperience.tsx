@@ -839,9 +839,9 @@ export default function InvestorExperience() {
       <SiteNav />
       <main className="page">
         <p className="kicker">Sepolia demo market — test tokens</p>
-        <h1 className="page-title">{symbol} / USDC</h1>
+        <h1 className="page-title">Shared allocation</h1>
         <p className="lede">
-          This is the mock-token demo pool. Connect your wallet to verify, register, check the shared purchase allocation, and buy through the supported route. A connected address is not an approved investor.
+          One human. Multiple wallets. One shared purchase limit. {symbol} / USDC is the mock-token demo pool. A connected address is not an approved investor.
         </p>
         <dl className="metric-grid">
           <div className="metric"><dt>Quote asset</dt><dd>Mock USDC</dd></div>
@@ -984,24 +984,40 @@ export default function InvestorExperience() {
                   </>
                 )}
                 <dl className="metric-grid">
-                  <div className="metric metric-emphasis"><dt>Remaining</dt><dd>{remainingValue === null ? 'Unavailable' : formatUsdc(remainingValue)}</dd></div>
-                  <div className="metric"><dt>Offering cap</dt><dd>{cap === null ? 'Unavailable' : formatUsdc(cap)}</dd></div>
-                  <div className="metric"><dt>Total gross purchases</dt><dd>{spentValue === null ? 'Unavailable' : formatUsdc(spentValue)}</dd></div>
-                  <div className="metric"><dt>Period</dt><dd>{offeringsQuery.data?.chain.periodId ?? 'Unavailable'}</dd></div>
-                  <div className="metric"><dt>Connected wallet</dt><dd>{address ? shortAddress(address) : 'None'}</dd></div>
+                  <div className="metric"><dt>Total allocation</dt><dd>{cap === null ? 'Unavailable' : formatUsdc(cap)}</dd></div>
+                  <div className="metric"><dt>Amount spent</dt><dd>{spentValue === null ? 'Unavailable' : formatUsdc(spentValue)}</dd></div>
+                  <div className="metric metric-emphasis"><dt>Remaining allocation</dt><dd>{remainingValue === null ? 'Unavailable' : formatUsdc(remainingValue)}</dd></div>
                 </dl>
+                {cap !== null && spentValue !== null && cap > BigInt(0) && (
+                  <div
+                    className="allocation-bar"
+                    role="progressbar"
+                    aria-label="Allocation used"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={Number(spentValue > cap ? BigInt(100) : (spentValue * BigInt(100)) / cap)}
+                  >
+                    <span style={{ width: `${Number(spentValue > cap ? BigInt(100) : (spentValue * BigInt(100)) / cap)}%` }} />
+                  </div>
+                )}
+                <p className="quiet">Period {offeringsQuery.data?.chain.periodId ?? 'unavailable'}. Connected wallet {address ? shortAddress(address) : 'none'}.</p>
               </>
             )}
             {shownLinked && (remaining.isError || spent.isError || policy.isError) && (
               <p className="notice" data-tone="error" role="alert">Part of the allocation could not be read from Ethereum Sepolia.</p>
             )}
-            {address && purchasesQuery.data && purchasesQuery.data.length > 0 && (
-              <ul>
-                {purchasesQuery.data.map((item) => (
-                  <li key={item.transactionHash}>{formatUsdc(BigInt(item.amount))} USDC · shared total {formatUsdc(BigInt(item.newSpent))}</li>
-                ))}
-              </ul>
-            )}
+            <section id="activity">
+              <h2 className="section-title">Recent activity</h2>
+              {address && purchasesQuery.data && purchasesQuery.data.length > 0 ? (
+                <ul className="activity-list">
+                  {purchasesQuery.data.slice(0, 5).map((item) => (
+                    <li key={item.transactionHash}>{formatUsdc(BigInt(item.amount))} USDC · shared total {formatUsdc(BigInt(item.newSpent))}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="quiet">No purchases are recorded for this wallet yet.</p>
+              )}
+            </section>
           </section>
 
           <section id="purchase" className="panel">

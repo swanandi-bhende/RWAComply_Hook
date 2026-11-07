@@ -106,9 +106,9 @@ export function TierTester() {
 
   if (deploymentError) {
     return (
-      <div className="bg-red-50 border-2 border-red-600 p-6 rounded">
-        <p className="text-red-600 font-bold mb-2">Deployment Error</p>
-        <p className="text-red-600 text-sm">{deploymentError}</p>
+      <div className="bg-[#FFF7FA] border-2 border-[#B83270] p-6 rounded">
+        <p className="text-[#B83270] font-bold mb-2">Deployment Error</p>
+        <p className="text-[#B83270] text-sm">{deploymentError}</p>
       </div>
     );
   }
@@ -180,9 +180,9 @@ export function TierTester() {
       <div className="border-2 border-black rounded p-6 bg-gray-50">
         <p className="text-sm font-bold text-gray-600 mb-2">OUTCOME FOR SELECTED TIER</p>
         {selectedTier === 0 ? (
-          <div className="bg-red-100 border-2 border-red-400 rounded p-4">
-            <p className="font-bold text-red-700">Transaction Fails</p>
-            <p className="text-xs font-mono text-red-700 mt-2">AccessDenied()</p>
+          <div className="bg-[#FCEAF2] border-2 border-[#B83270] rounded p-4">
+            <p className="font-bold text-[#B83270]">Transaction Fails</p>
+            <p className="text-xs font-mono text-[#B83270] mt-2">AccessDenied()</p>
           </div>
         ) : (
           <div className="bg-green-100 border-2 border-green-400 rounded p-4 space-y-2">
@@ -235,7 +235,7 @@ export function TierTester() {
           </div>
           <div className="border border-blue-300 bg-blue-50 rounded p-3">
             <p className="text-xs font-bold text-blue-600">TIER 1</p>
-            <p className="text-lg font-black text-blue-700">{simulatedFees[1]} bps</p>
+            <p className="text-lg font-black text-[#766B72]">{simulatedFees[1]} bps</p>
           </div>
           <div className="border border-green-300 bg-green-50 rounded p-3">
             <p className="text-xs font-bold text-green-600">TIER 2</p>

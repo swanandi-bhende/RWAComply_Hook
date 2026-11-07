@@ -31,7 +31,7 @@ export function HeroSection() {
             </p>
             <div className="space-y-2 text-xs font-mono bg-black border border-white p-3">
               <div>
-                <span className="text-red-400">Tier 0:</span>{' '}
+                <span className="text-[#B83270]">Tier 0:</span>{' '}
                 <span className="text-white">❌ Blocked</span>
               </div>
               <div>

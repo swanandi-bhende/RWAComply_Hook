@@ -85,11 +85,11 @@ export function LiveComplianceStatus() {
 
   if (deploymentError) {
     return (
-      <div className="bg-red-50 border-2 border-red-600 p-6 rounded">
-        <p className="text-red-600 font-bold mb-2">⚠️ Deployment Error</p>
-        <p className="text-red-600 text-sm font-mono">{deploymentError}</p>
-        <p className="text-red-600 text-xs mt-2">
-          Run: <code className="bg-red-100 px-2 py-1">bash script/run_canonical_demo.sh</code>
+      <div className="bg-[#FFF7FA] border-2 border-[#B83270] p-6 rounded">
+        <p className="text-[#B83270] font-bold mb-2">⚠️ Deployment Error</p>
+        <p className="text-[#B83270] text-sm font-mono">{deploymentError}</p>
+        <p className="text-[#B83270] text-xs mt-2">
+          Run: <code className="bg-[#FCEAF2] px-2 py-1">bash script/run_canonical_demo.sh</code>
         </p>
       </div>
     );
@@ -114,11 +114,11 @@ export function LiveComplianceStatus() {
   const tier = Number(userTier) || 0;
   const tierNames = ['Unverified (Tier 0)', 'Retail (Tier 1)', 'Institutional (Tier 2)'];
   const tierColors = [
-    'bg-red-50 border-red-300',
+    'bg-[#FFF7FA] border-[#EEE4E9]',
     'bg-blue-50 border-blue-300',
     'bg-green-50 border-green-300',
   ];
-  const tierTextColors = ['text-red-700', 'text-blue-700', 'text-green-700'];
+  const tierTextColors = ['text-[#B83270]', 'text-[#766B72]', 'text-green-700'];
 
   const currentFee = Number(dynamicFee || 0);
   const currentVolatility = Number(currentVol) || 0;
@@ -139,12 +139,12 @@ export function LiveComplianceStatus() {
         </div>
 
         {tier === 0 && (
-          <p className="text-sm font-semibold text-red-700">
+          <p className="text-sm font-semibold text-[#B83270]">
             This wallet has no access tier. Proof of human does not grant a tier. The purchase cap is enforced on the supported purchase route.
           </p>
         )}
         {tier === 1 && (
-          <p className="text-sm font-semibold text-blue-700">
+          <p className="text-sm font-semibold text-[#766B72]">
             Retail access is active. The shared purchase cap is enforced on the supported purchase route.
           </p>
         )}
@@ -170,7 +170,7 @@ export function LiveComplianceStatus() {
             <div
               className={`h-full ${
                 currentVolatility > volatilityThresholdVal
-                  ? 'bg-red-500'
+                  ? 'bg-[#FFF7FA]0'
                   : 'bg-green-500'
               }`}
               style={{ width: `${Math.min(currentVolatility * 2, 100)}%` }}
@@ -189,7 +189,7 @@ export function LiveComplianceStatus() {
             <p className="text-lg font-bold text-black">bps</p>
           </div>
           {tier === 0 ? (
-            <p className="text-xs text-red-700 font-semibold">
+            <p className="text-xs text-[#B83270] font-semibold">
               🔒 Tier 0 users cannot trade
             </p>
           ) : (
@@ -205,8 +205,8 @@ export function LiveComplianceStatus() {
       {/* Swap Cap Info */}
       {tier === 1 && (
         <div className="bg-blue-50 border-2 border-blue-300 p-4 rounded">
-          <p className="text-xs font-bold text-blue-700 mb-1">RETAIL SWAP CAP</p>
-          <p className="text-lg font-black text-blue-700">
+          <p className="text-xs font-bold text-[#766B72] mb-1">RETAIL SWAP CAP</p>
+          <p className="text-lg font-black text-[#766B72]">
             {retailCap ? `${Number(retailCap) / 1e18} tokens per swap` : 'Loading...'}
           </p>
           <p className="text-xs text-blue-600 mt-2">

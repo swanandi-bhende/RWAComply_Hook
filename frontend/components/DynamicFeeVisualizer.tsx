@@ -87,9 +87,9 @@ export function DynamicFeeVisualizer() {
 
   if (deploymentError) {
     return (
-      <div className="bg-red-50 border-2 border-red-600 p-6 rounded">
-        <p className="text-red-600 font-bold mb-2">Deployment Error</p>
-        <p className="text-red-600 text-sm">{deploymentError}</p>
+      <div className="bg-[#FFF7FA] border-2 border-[#B83270] p-6 rounded">
+        <p className="text-[#B83270] font-bold mb-2">Deployment Error</p>
+        <p className="text-[#B83270] text-sm">{deploymentError}</p>
       </div>
     );
   }
@@ -136,8 +136,8 @@ export function DynamicFeeVisualizer() {
         </div>
 
         <div className="bg-white border-2 border-blue-300 p-4 rounded">
-          <p className="text-xs font-bold text-blue-700 mb-2">TIER 1 EFFECTIVE FEE</p>
-          <p className="text-3xl font-black text-blue-700">{currentTier1Fee}</p>
+          <p className="text-xs font-bold text-[#766B72] mb-2">TIER 1 EFFECTIVE FEE</p>
+          <p className="text-3xl font-black text-[#766B72]">{currentTier1Fee}</p>
           <p className="text-xs text-blue-600 mt-2">bps</p>
         </div>
 
@@ -171,7 +171,7 @@ export function DynamicFeeVisualizer() {
             />
             <ReferenceLine
               x={currentVolNum}
-              stroke="#d00"
+              stroke="#B83270"
               strokeWidth={2}
               label={{ value: `Current ${currentVolNum}%`, position: 'top' }}
             />
@@ -186,7 +186,7 @@ export function DynamicFeeVisualizer() {
             <Line
               type="stepAfter"
               dataKey="tier1"
-              stroke="#2563eb"
+              stroke="#D9468D"
               strokeWidth={3}
               name="Tier 1"
               dot={false}
@@ -199,7 +199,7 @@ export function DynamicFeeVisualizer() {
               name="Tier 2"
               dot={false}
             />
-            <ReferenceDot x={selectedSimulatedVol} y={simulatedTier1Fee} r={6} fill="#2563eb" stroke="#1d4ed8" />
+            <ReferenceDot x={selectedSimulatedVol} y={simulatedTier1Fee} r={6} fill="#D9468D" stroke="#BE3477" />
             <ReferenceDot x={selectedSimulatedVol} y={simulatedTier2Fee} r={6} fill="#059669" stroke="#047857" />
           </LineChart>
         </ResponsiveContainer>
@@ -251,8 +251,8 @@ export function DynamicFeeVisualizer() {
             <p className="text-3xl font-black text-black">{selectedSimulatedVol}%</p>
           </div>
           <div className="bg-blue-50 border-2 border-blue-300 p-4 rounded">
-            <p className="text-xs font-bold text-blue-700 mb-2">TIER 1 WOULD PAY</p>
-            <p className="text-3xl font-black text-blue-700">{simulatedTier1Fee}</p>
+            <p className="text-xs font-bold text-[#766B72] mb-2">TIER 1 WOULD PAY</p>
+            <p className="text-3xl font-black text-[#766B72]">{simulatedTier1Fee}</p>
           </div>
           <div className="bg-green-50 border-2 border-green-300 p-4 rounded">
             <p className="text-xs font-bold text-green-700 mb-2">TIER 2 WOULD PAY</p>

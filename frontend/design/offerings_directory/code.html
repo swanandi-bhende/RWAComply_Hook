@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={"darkMode":"class","theme":{"extend":{"colors":{"secondary-fixed-dim":"#16845B","error-container":"#FCEAF2","on-tertiary-container":"#FFF7FA","on-background":"#211A1F","secondary":"#16845B","on-primary":"#ffffff","surface-dim":"#EEE4E9","tertiary":"#9D285F","primary":"#D9468D","on-secondary-container":"#16845B","surface-container-high":"#FCEAF2","surface-container-highest":"#FCEAF2","error":"#B83270","on-secondary":"#ffffff","tertiary-fixed-dim":"#FCEAF2","secondary-container":"#E7F6EF","on-tertiary":"#ffffff","on-primary-container":"#FFFFFF","on-tertiary-fixed":"#211A1F","on-error-container":"#9D285F","on-error":"#ffffff","secondary-fixed":"#E7F6EF","on-tertiary-fixed-variant":"#9D285F","on-surface":"#211A1F","on-surface-variant":"#766B72","surface-tint":"#D9468D","primary-fixed-dim":"#FCEAF2","surface":"#FCFAFB","on-primary-fixed":"#211A1F","inverse-primary":"#FCEAF2","inverse-surface":"#211A1F","tertiary-fixed":"#FCEAF2","surface-container-low":"#FFF7FA","on-primary-fixed-variant":"#9D285F","outline-variant":"#EEE4E9","primary-fixed":"#FCEAF2","surface-container-lowest":"#ffffff","outline":"#766B72","inverse-on-surface":"#FCFAFB","tertiary-container":"#BE3477","primary-container":"#BE3477","on-secondary-fixed":"#211A1F","background":"#FCFAFB","on-secondary-fixed-variant":"#16845B","surface-bright":"#FCFAFB","surface-variant":"#FCEAF2","surface-container":"#FCEAF2"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-sm":"0.5rem","gutter-sm":"1rem","space-md":"1rem","margin":"2rem","gutter":"1.5rem","margin-sm":"1rem","space-xl":"2rem","space-lg":"1.5rem","space-xs":"0.25rem"},"fontFamily":{"body-lg":["Inter"],"body-md":["Inter"],"display-mobile":["Inter"],"label-md":["Inter"],"label-sm":["Inter"],"numeric-metric":["Inter"],"headline-md":["Inter"],"body-sm":["Inter"],"display":["Inter"],"headline-lg-mobile":["Inter"],"headline-sm":["Inter"],"headline-lg":["Inter"]},"fontSize":{"body-lg":["1rem",{"lineHeight":"1.5rem","letterSpacing":"-0.005em","fontWeight":"400"}],"body-md":["0.875rem",{"lineHeight":"1.25rem","letterSpacing":"0","fontWeight":"400"}],"display-mobile":["2.25rem",{"lineHeight":"2.75rem","letterSpacing":"-0.02em","fontWeight":"600"}],"label-md":["0.875rem",{"lineHeight":"1.25rem","letterSpacing":"0.01em","fontWeight":"500"}],"label-sm":["0.75rem",{"lineHeight":"1rem","letterSpacing":"0.025em","fontWeight":"600"}],"numeric-metric":["1.75rem",{"lineHeight":"2rem","letterSpacing":"-0.02em","fontWeight":"600"}],"headline-md":["1.25rem",{"lineHeight":"1.75rem","letterSpacing":"-0.015em","fontWeight":"600"}],"body-sm":["0.75rem",{"lineHeight":"1rem","letterSpacing":"0","fontWeight":"400"}],"display":["3rem",{"lineHeight":"3.5rem","letterSpacing":"-0.025em","fontWeight":"600"}],"headline-lg-mobile":["1.5rem",{"lineHeight":"2rem","letterSpacing":"-0.015em","fontWeight":"600"}],"headline-sm":["1.125rem",{"lineHeight":"1.5rem","letterSpacing":"-0.01em","fontWeight":"500"}],"headline-lg":["2rem",{"lineHeight":"2.5rem","letterSpacing":"-0.02em","fontWeight":"600"}]}}}};</script></head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-72 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between"><div class="flex flex-col"><div class="px-space-lg pt-space-lg pb-space-md"><div class="flex items-center gap-space-sm"><img alt="RWAComply Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1U-3oCIjP5i3z-kGjWIIkRaKuDu3cDku9yx5nTnSnp5N-dGh-ZE0f0TvKeATc7h3REniLuJSP0-aHWrM8eM-2p-WwdsFetSTn4zuwy6PFePu95iE_9HR5i5z_U_ZWRuxm-SuJnEILOqvgp1Dj4KZUX3idv_3Oj8-140AbxqfFk_Uhv32IgLyFUJNLkGywmLt0iQLQ1wQwKssKwiJHNxr1MmvXbPyucfGYaykIjaLjbC1w"/><div class="flex flex-col"><div class="flex items-center gap-space-xs"><span class="font-headline-sm text-headline-sm text-on-surface font-semibold tracking-tight">RWAComply</span><span class="px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface font-label-sm text-label-sm text-[10px] uppercase font-bold tracking-wider">v1.0 Sepolia</span></div><span class="font-body-sm text-body-sm text-on-surface-variant text-[11px] leading-tight">Shared Allocation Protocol</span></div></div><div class="mt-space-sm pt-space-xs"><p class="font-body-sm text-body-sm text-on-surface-variant text-[11px] italic leading-tight">One human. Multiple wallets. One shared purchase limit.</p></div></div><nav class="flex flex-col gap-1 px-space-md mt-space-sm" data-active-classes="bg-primary-container text-on-primary font-label-md font-semibold rounded-lg"><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="overview" href="#"><span class="material-symbols-outlined text-[20px]">grid_view</span><span>Overview</span></a><a aria-current="page" class="flex items-center gap-space-sm px-space-md py-2.5 transition-all bg-primary-container text-on-primary font-label-md font-semibold rounded-lg" data-path="offerings" href="#"><span class="material-symbols-outlined text-[20px]">account_balance</span><span>Offerings</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="offering-details-&-buy" href="#"><span class="material-symbols-outlined text-[20px]">credit_card</span><span>Offering Details & Buy</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="linked-wallets" href="#"><span class="material-symbols-outlined text-[20px]">verified_user</span><span>Linked Wallets</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="activity" href="#"><span class="material-symbols-outlined text-[20px]">history</span><span>Activity</span></a></nav></div><div class="p-space-md flex flex-col gap-space-sm"><div class="bg-surface-container-low rounded-lg p-space-sm flex flex-col gap-1"><div class="flex items-center justify-between"><span class="font-label-sm text-label-sm text-on-surface-variant text-[11px] font-semibold uppercase tracking-wider">World ID Verification</span><span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span></span></div><div class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px] text-secondary">fingerprint</span><span class="font-label-sm text-label-sm text-on-surface font-mono text-[11px]">0x8f...4c19</span><span class="ml-auto px-1.5 py-0.5 rounded bg-secondary-container text-on-secondary-container font-label-sm text-label-sm text-[10px] font-bold">Verified</span></div></div><div class="flex items-center justify-between px-space-xs font-label-sm text-label-sm text-on-surface-variant text-[11px]"><a class="hover:text-on-surface transition-colors flex items-center gap-1" href="#"><span class="material-symbols-outlined text-[14px]">description</span>Protocol Docs</a><a class="hover:text-on-surface transition-colors flex items-center gap-1" href="#"><span class="material-symbols-outlined text-[14px]">gavel</span>Legal Terms</a></div></div></aside><div class="pl-72"><header class="fixed top-0 left-72 right-0 h-16 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40"><div class="h-16 w-full px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-sm font-label-md text-label-md text-on-surface-variant"><span class="hover:text-on-surface cursor-pointer">RWAComply</span><span class="material-symbols-outlined text-[16px]">chevron_right</span><span class="text-on-surface font-semibold">Institutional Console</span></div><div class="flex items-center gap-space-md"><div class="hidden sm:flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-surface-container font-label-sm text-label-sm text-on-surface-variant"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span><span>Sepolia Testnet</span></div><div class="hidden md:flex items-center gap-1 px-space-sm py-1 rounded bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold"><span class="material-symbols-outlined text-[14px]">shield_with_heart</span><span>World ID: Verified</span></div><div class="flex items-center gap-space-xs px-space-sm py-1 rounded-lg bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><span class="material-symbols-outlined text-[16px] text-on-surface-variant">account_balance_wallet</span><span class="font-label-sm text-label-sm font-mono text-on-surface">0x71C...3a91</span><span class="font-label-sm text-label-sm text-on-surface-variant text-[11px]">(Wallet A)</span><button class="p-1 text-on-surface-variant hover:text-on-surface" title="Copy Address" type="button"><span class="material-symbols-outlined text-[14px]">content_copy</span></button><button class="p-1 text-on-surface-variant hover:text-error" title="Disconnect" type="button"><span class="material-symbols-outlined text-[14px]">power_settings_new</span></button></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-16 bg-surface min-h-screen"><div class="max-w-7xl mx-auto px-space-lg py-space-xl"><div class="flex flex-col w-full">
+<div class="flex flex-col gap-space-lg pb-space-xl">
+<!-- Header & Metric Overview Banner -->
+<div class="flex flex-col lg:flex-row lg:items-end justify-between gap-space-md bg-surface-container-lowest p-space-xl rounded-xl shadow-sm">
+<div class="flex flex-col max-w-3xl">
+<div class="flex items-center gap-space-xs mb-space-xs">
+<span class="px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider font-semibold">Regulated Registry</span>
+<span class="text-outline-variant font-label-sm text-label-sm">•</span>
+<span class="flex items-center gap-1 font-label-sm text-label-sm text-secondary font-semibold">
+<span class="material-symbols-outlined text-[14px]">lock</span>
+            ZK Per-Human Limit Protocol
+          </span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface font-semibold tracking-tight">Institutional RWA Offerings</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant mt-1">
+          Regulated tokenized assets with enforced per-human cumulative purchase limits. Verified via World ID on Sepolia.
+        </p>
+</div>
+<div class="flex items-center gap-space-md shrink-0 bg-surface-container-low px-space-md py-space-sm rounded-lg">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">World ID Status</span>
+<span class="font-label-md text-label-md text-secondary font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">verified</span>
+            Identity Confirmed
+          </span>
+</div>
+<div class="w-px h-8 bg-surface-variant"></div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Active Cap Aggregator</span>
+<span class="font-label-md text-label-md text-on-surface font-mono font-medium">4 Contracts Synced</span>
+</div>
+</div>
+</div>
+<!-- Filter & Search Toolbar -->
+<div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-space-md mt-space-sm">
+<div class="flex items-center p-1 bg-surface-container-low rounded-lg gap-1">
+<button class="filter-tab px-4 py-1.5 rounded-lg bg-surface-container-lowest text-on-surface shadow-sm font-label-md text-label-md font-semibold transition-all" type="button">
+          All Offerings (4)
+        </button>
+<button class="filter-tab px-4 py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-all" type="button">
+          Live Demo (3)
+        </button>
+<button class="filter-tab px-4 py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-all" type="button">
+          Upcoming (1)
+        </button>
+<button class="filter-tab px-4 py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-all opacity-60" type="button">
+          Closed (0)
+        </button>
+</div>
+<div class="flex items-center gap-space-sm">
+<div class="relative w-full md:w-80">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-on-surface-variant">search</span>
+<input class="w-full pl-9 pr-4 py-2 bg-surface-container-lowest text-on-surface placeholder:text-on-surface-variant font-body-md text-body-md rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Search by asset or issuer..." type="text"/>
+</div>
+<div class="flex items-center gap-1 bg-surface-container-lowest px-3 py-2 rounded-lg shadow-sm text-on-surface-variant hover:text-on-surface cursor-pointer select-none">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+<span class="font-label-sm text-label-sm font-medium">Cap Filters</span>
+</div>
+</div>
+</div>
+<!-- Offerings Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-space-lg mt-space-xs">
+<!-- Card 1: Live Demo Feature Asset (UST-01) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow">
+<div class="flex flex-col">
+<div class="flex items-start justify-between gap-space-sm mb-space-md">
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-medium">Apex Capital Tokenization SPV</span>
+<span class="text-outline-variant">•</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant font-mono">ERC-3643</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface font-semibold mt-0.5">US Short-Duration Treasury Fund (UST-01)</h2>
+</div>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold shrink-0">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+              Live Demo
+            </span>
+</div>
+<div class="relative w-full h-36 rounded-lg overflow-hidden mb-space-md bg-surface-container-low">
+<img class="w-full h-full object-cover" data-alt="Institutional treasury notes vault with architectural concrete and brushed aluminum safety deposit architecture, representing low-risk sovereign debt backed securely by regulated custodian accounts in high resolution." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGUvegw70qRYbvpeOpKRsVeR_aMBC9HcHOF11uEQDbpnmLM_4fv92BnHL3mUALJ0jpLuEmBeb5FbInMH29K8XXOgcQejOxPXSHZg3UI-qVnEMVr4A45z9tM-nW26tP2yOjCcj27SFc1TjtjU0EDzyDJKf3Iy_RP858W2M-AnCXkz4Wa3mTZwMKNa_ylTalmlRNWmz1IpH7s1Umf12W22v_z63C1Tg-5Ls1XQVfwUhN"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-transparent to-transparent opacity-80"></div>
+<div class="absolute bottom-2 left-3 right-3 flex items-center justify-between">
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container-lowest/90 backdrop-blur font-mono text-on-surface">CUSIP: 912828YZ0</span>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container-lowest/90 backdrop-blur text-secondary font-medium">AAA Prime Collateral</span>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-lg leading-relaxed">
+            Tokenized 0-3 month US Treasury bills backed 1:1 by reserve custodial accounts. Strict individual cap enforcement prevents institutional monopolization.
+          </p>
+<!-- Allocation Capacity Progress Bar -->
+<div class="bg-surface-container-low p-space-md rounded-lg mb-space-lg flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-secondary">shield_person</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Your Aggregated Human Headroom</span>
+</div>
+<div class="flex items-baseline gap-1">
+<span class="font-label-md text-label-md font-semibold text-primary font-mono">$300 USDC</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">remaining of $1,000</span>
+</div>
+</div>
+<div class="w-full h-2 rounded bg-surface-container-high overflow-hidden flex">
+<div class="bg-primary-container h-full transition-all duration-500" style="width: 70%;"></div>
+<div class="bg-secondary h-full transition-all duration-500" style="width: 30%;"></div>
+</div>
+<div class="flex items-center justify-between font-body-sm text-body-sm text-on-surface-variant text-[11px]">
+<span>Utilized across 2 connected wallets: $700 USDC</span>
+<span class="text-secondary font-medium">30% Cap Space Available</span>
+</div>
+</div>
+<!-- Key Specs Table / Matrix -->
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-y-space-md gap-x-space-sm py-space-sm bg-surface-container-lowest mb-space-md">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[11px]">Network</span>
+<span class="font-label-md text-label-md text-on-surface font-medium mt-0.5">Ethereum Sepolia</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[11px]">Purchase Currency</span>
+<span class="font-label-md text-label-md text-on-surface font-medium mt-0.5 flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-surface-variant inline-block"></span>
+                USDC (Circle)
+              </span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[11px]">Max Limit / Human</span>
+<span class="font-label-md text-label-md text-on-surface font-semibold font-mono mt-0.5">$1,000 USDC</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[11px]">Your Remaining Allocation</span>
+<span class="font-label-md text-label-md text-primary font-bold font-mono mt-0.5">$300 USDC</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[11px]">Total Offering Size</span>
+<span class="font-label-md text-label-md text-on-surface font-medium font-mono mt-0.5">$5,000,000 USDC</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[11px]">Settlement</span>
+<span class="font-label-md text-label-md text-on-surface font-medium mt-0.5">T+0 Onchain DvP</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-space-md mt-space-sm gap-space-sm bg-surface-container-lowest">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface flex items-center gap-1 transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px]">description</span>
+            Compliance Sheet
+          </a>
+<button class="px-space-lg py-2.5 rounded-lg bg-primary-container text-on-primary hover:bg-primary font-label-md text-label-md font-semibold transition-all flex items-center gap-1.5 shadow-sm" type="button">
+<span>View Details & Buy</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Card 2: Live Demo Asset (Prime Logistics Real Estate) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow">
+<div class="flex flex-col">
+<div class="flex items-start justify-between gap-space-sm mb-space-md">
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-medium">Metropolitan Real Estate Trust</span>
+<span class="text-outline-variant">•</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant font-mono">Senior Note</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface font-semibold mt-0.5">Prime Logistics Real Estate Note (LOG-RE)</h2>
+</div>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold shrink-0">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+              Live Demo
+            </span>
+</div>
+<div class="relative w-full h-36 rounded-lg overflow-hidden mb-space-md bg-surface-container-low">
+<img class="w-full h-full object-cover" data-alt="High-end modern logistics and cargo distribution center in Western Europe with clean architectural geometry, solar-paneled roof, and commercial transport access bays in natural dawn daylight." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXcev9u8lL9KIi2SaJQc8w8sqxhJZldc43E7gyiuK8Sq00Ln11HAbOburLjuN6yoDqRWQJRNCIalc-Kth10icUV58ehqLVGKLxjFBKx0PDFPtaNDbw7ljLKZ6S4D0lBYtdBhF9UYWK5Bgq1nEM4ptKvqGvRKuWkHZMJVW80km9EyEHGto5c072224nX7M2XRBEjNza0mBJLt7bxo2fvxrpFce59K8pPVxH0jYdQuHU"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-transparent to-transparent opacity-80"></div>
+<div class="absolute bottom-2 left-3 right-3 flex items-center justify-between">
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container-lowest/90 backdrop-blur font-mono text-on-surface">LTV: 52.4%</span>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container-lowest/90 backdrop-blur text-on-surface-variant font-medium">Rotterdam Hub Core</span>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-lg leading-relaxed">
+            Senior secured debt tokenized against grade-A distribution warehousing facilities in Western Europe. Fully collateralized via institutional land registry charges.
+          </p>
+<!-- Allocation Capacity Progress Bar -->
+<div class="bg-surface-container-low p-space-md rounded-lg mb-space-lg flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-secondary">verified_user</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Your Aggregated Human Headroom</span>
+</div>
+<div class="flex items-baseline gap-1">
+<span class="font-label-md text-label-md font-semibold text-secondary font-mono">$2,500 USDC</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">remaining of $2,500</span>
+</div>
+</div>
+<div class="w-full h-2 rounded bg-surface-container-high overflow-hidden flex">
+<div class="bg-secondary h-full transition-all duration-500" style="width: 100%;"></div>
+</div>
+<div class="flex items-center justify-between font-body-sm text-body-sm text-on-surface-variant text-[11px]">
+<span>Fresh allocation pool untouched</span>
+<span class="text-secondary font-medium">100% Headroom Available</span>
+</div>
+</div>
+<!-- Key Specs Table / Matrix -->
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-y-space-md gap-x-space-sm py-space-sm bg-surface-container-lowest mb-space-md">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[11px]">Network</span>
+<span class="font-label-md text-label-md text-on-surface font-medium mt-0.5">Ethereum Sepolia</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[11px]">Purchase Currency</span>
+<span class="font-label-md text-label-md text-on-surface font-medium mt-0.5 flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-surface-variant inline-block"></span>
+                USDC (Circle)
+              </span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[11px]">Max Limit / Human</span>
+<span class="font-label-md text-label-md text-on-surface font-semibold font-mono mt-0.5">$2,500 USDC</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[11px]">Your Remaining Allocation</span>
+<span class="font-label-md text-label-md text-secondary font-bold font-mono mt-0.5">$2,500 USDC</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[11px]">Total Offering Size</span>
+<span class="font-label-md text-label-md text-on-surface font-medium font-mono mt-0.5">$12,000,000 USDC</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[11px]">Security Structure</span>
+<span class="font-label-md text-label-md text-on-surface font-medium mt-0.5">1st Lien Mortgage</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-space-md mt-space-sm gap-space-sm bg-surface-container-lowest">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface flex items-center gap-1 transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px]">folder_open</span>
+            Offering Memo
+          </a>
+<button class="px-space-lg py-2.5 rounded-lg bg-surface-container-high text-on-surface hover:bg-surface-container-highest font-label-md text-label-md font-semibold transition-all flex items-center gap-1.5 shadow-sm" type="button">
+<span>View Details & Buy</span>
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Card 3: Upcoming Offering (Solar Syndicate) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow">
+<div class="flex flex-col">
+<div class="flex items-start justify-between gap-space-sm mb-space-md">
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-medium">Helios Clean Energy Partners</span>
+<span class="text-outline-variant">•</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant font-mono">Infrastructure</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface font-semibold mt-0.5">Renewable Infrastructure Solar Syndicate</h2>
+</div>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm font-semibold shrink-0">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+              Upcoming — June 2025
+            </span>
+</div>
+<div class="relative w-full h-36 rounded-lg overflow-hidden mb-space-md bg-surface-container-low">
+<img class="w-full h-full object-cover" data-alt="Expansive utility-scale desert solar farm array in North America under crisp morning blue sky, reflecting clean technical engineering and institutional infrastructure design." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQtrLVoJOMAHkFtDs_eXVSOplq095mnunzuvTevfWvxUPwxCqBg6gg49seZ7N-TBID6mX4a0m-WasHVhajc3tTb9ix99L3QGrT49jP3Qbao_CAsjd3js581QXuV8DELCljT7e74J3UgRUBu7emRrpeMDPWe9qpRQgpZWUNNOK9Cy5e7_Jja9HkJ9PDHsxP5gcA1Ky-9-kZa-jXOevDC6trAvfZx9onb01V-QokdNK4"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-transparent to-transparent opacity-80"></div>
+<div class="absolute bottom-2 left-3 right-3 flex items-center justify-between">
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container-lowest/90 backdrop-blur font-mono text-on-surface">250 MW Capacity</span>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container-lowest/90 backdrop-blur text-on-surface-variant font-medium">20-Year PPA Backed</span>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-lg leading-relaxed">
+            Asset-backed tokenization of contracted utility-scale solar installations across North America. Cash flows governed by statutory corporate power agreements.
+          </p>
+<!-- Pre-launch Audit Status Badge -->
+<div class="bg-surface-container-low p-space-md rounded-lg mb-space-lg flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">policy</span>
+<span class="font-label-md text-label-md text-on-surface font-medium">Smart Contract Audit Pending</span>
+</div>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container-highest text-on-surface font-mono">ConsenSys Diligence</span>
+</div>
+<!-- Key Specs Matrix -->
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-y-space-md gap-x-space-sm py-space-sm bg-surface-container-lowest mb-space-md">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[11px]">Network</span>
+<span class="font-label-md text-label-md text-on-surface font-medium mt-0.5">Ethereum / Arbitrum</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[11px]">Purchase Currency</span>
+<span class="font-label-md text-label-md text-on-surface font-medium mt-0.5">USDC</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[11px]">Max Limit / Human</span>
+<span class="font-label-md text-label-md text-on-surface font-semibold font-mono mt-0.5">$5,000 USDC</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[11px]">Status</span>
+<span class="font-label-md text-label-md text-on-surface font-medium mt-0.5">Pre-Registration</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[11px]">Total Offering Size</span>
+<span class="font-label-md text-label-md text-on-surface font-medium font-mono mt-0.5">$28,500,000 USDC</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[11px]">Identity Standard</span>
+<span class="font-label-md text-label-md text-on-surface font-medium mt-0.5">World ID Orb Tier</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-space-md mt-space-sm gap-space-sm bg-surface-container-lowest">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface flex items-center gap-1 transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+            View Syndicate Terms
+          </a>
+<button class="px-space-lg py-2.5 rounded-lg bg-surface-container-high text-on-surface-variant font-label-md text-label-md font-semibold cursor-not-allowed opacity-80 flex items-center gap-1.5 shadow-sm" type="button">
+<span class="material-symbols-outlined text-[16px]">notifications</span>
+<span>Notify Me Upon Launch</span>
+</button>
+</div>
+</div>
+<!-- Card 4: Institutional Private Credit (Invoice Pool) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-shadow">
+<div class="flex flex-col">
+<div class="flex items-start justify-between gap-space-sm mb-space-md">
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-medium">Credence Liquid Capital</span>
+<span class="text-outline-variant">•</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant font-mono">Private Credit</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface font-semibold mt-0.5">SME Invoice Receivables Pool Series B</h2>
+</div>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold shrink-0">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+              Live Demo
+            </span>
+</div>
+<div class="relative w-full h-36 rounded-lg overflow-hidden mb-space-md bg-surface-container-low">
+<img class="w-full h-full object-cover" data-alt="Minimalist institutional finance boardroom overlooking a clean metropolitan business skyline, soft balanced ambient lighting, conveying corporate debt verification and liquidity pools." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFQ5_At-YneXmGIgfzBg6kOj4POACepfbvJzuMM2rj09w_fzaiodwUECB9s5SMIDFX_TCMRMJCMrt80muxoXQR5ft9rmzjfp72Jgs7IJquGAtWzdmUcVG0uvbJEAzHlstGzSavLB4ljNl3Co0YrEmXKL7D4INaG-nOwciADJ2A3mFNEbLJyg4iRDNqIPl0WcZUdOXcgyUxxrF14Z14V6lryYR0U7ywUs-FcHp7dYNT"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-transparent to-transparent opacity-80"></div>
+<div class="absolute bottom-2 left-3 right-3 flex items-center justify-between">
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container-lowest/90 backdrop-blur font-mono text-on-surface">Pool Tenor: 45 Days</span>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container-lowest/90 backdrop-blur text-secondary font-medium">Auto-Amortizing</span>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-lg leading-relaxed">
+            Diversified institutional pool of verified enterprise trade invoices with automated settlement. Zero direct consumer exposure; backed by Fortune 500 corporate obligors.
+          </p>
+<!-- Allocation Capacity Progress Bar -->
+<div class="bg-surface-container-low p-space-md rounded-lg mb-space-lg flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-secondary">verified_user</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Your Aggregated Human Headroom</span>
+</div>
+<div class="flex items-baseline gap-1">
+<span class="font-label-md text-label-md font-semibold text-secondary font-mono">$1,500 USDC</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">remaining of $1,500</span>
+</div>
+</div>
+<div class="w-full h-2 rounded bg-surface-container-high overflow-hidden flex">
+<div class="bg-secondary h-full transition-all duration-500" style="width: 100%;"></div>
+</div>
+<div class="flex items-center justify-between font-body-sm text-body-sm text-on-surface-variant text-[11px]">
+<span>Verified human wallet unencumbered</span>
+<span class="text-secondary font-medium">100% Headroom Available</span>
+</div>
+</div>
+<!-- Key Specs Matrix -->
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-y-space-md gap-x-space-sm py-space-sm bg-surface-container-lowest mb-space-md">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[11px]">Network</span>
+<span class="font-label-md text-label-md text-on-surface font-medium mt-0.5">Ethereum Sepolia</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[11px]">Purchase Currency</span>
+<span class="font-label-md text-label-md text-on-surface font-medium mt-0.5 flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-surface-variant inline-block"></span>
+                USDC (Circle)
+              </span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[11px]">Max Limit / Human</span>
+<span class="font-label-md text-label-md text-on-surface font-semibold font-mono mt-0.5">$1,500 USDC</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[11px]">Your Remaining Allocation</span>
+<span class="font-label-md text-label-md text-secondary font-bold font-mono mt-0.5">$1,500 USDC</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[11px]">Total Offering Size</span>
+<span class="font-label-md text-label-md text-on-surface font-medium font-mono mt-0.5">$3,200,000 USDC</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-[11px]">Credit Enhancement</span>
+<span class="font-label-md text-label-md text-on-surface font-medium mt-0.5">10% First-Loss SPV</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-space-md mt-space-sm gap-space-sm bg-surface-container-lowest">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface flex items-center gap-1 transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px]">verified</span>
+            Audited Ledger
+          </a>
+<button class="px-space-lg py-2.5 rounded-lg bg-surface-container-high text-on-surface hover:bg-surface-container-highest font-label-md text-label-md font-semibold transition-all flex items-center gap-1.5 shadow-sm" type="button">
+<span>View Details</span>
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Institutional Allocation Analytics & Protocol Engine Bar -->
+<div class="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col md:flex-row items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-12 h-12 rounded-lg bg-surface-container-low flex items-center justify-center shrink-0">
+<svg class="w-7 h-7 text-primary" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="9"></circle>
+<path d="M12 7v5l3 3"></path>
+<path d="M8 12h1"></path>
+</svg>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Decentralized Limit Aggregator</span>
+<span class="font-body-md text-body-md text-on-surface-variant">
+            Cross-wallet multi-address balances update synchronously at block level. Transactions exceeding personal nullifiers are reverted deterministically before execution.
+          </span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm shrink-0">
+<div class="px-3 py-1.5 rounded bg-surface-container-low text-on-surface font-mono font-label-sm text-label-sm">
+          Protocol Gas Avg: ~14.2 gwei
+        </div>
+</div>
+</div>
+<!-- Compliance & Regulatory Guardrails Banner -->
+<div class="bg-surface-container-low rounded-xl p-space-lg flex flex-col md:flex-row items-start gap-space-md">
+<div class="p-2 rounded bg-surface-container-lowest text-primary shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[24px]">gavel</span>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-label-md text-label-md text-on-surface font-semibold uppercase tracking-wider">
+          Compliance Guardrails & Fiduciary Disclosures
+        </span>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+          Compliance Guardrails: All offerings enforce cumulative cross-wallet caps via RWAComply contract logic. No KYC data is stored onchain; identity is cryptographically anchored via zero-knowledge World ID proofs. Issuances are restricted to qualified participants under applicable regional exemptions. Token ownership represents claims against distinct bankruptcy-remote special purpose vehicles (SPVs).
+        </p>
+</div>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    const tabs = document.querySelectorAll('.filter-tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', function() {
+        tabs.forEach(t => {
+          t.classList.remove('bg-surface-container-lowest', 'text-on-surface', 'shadow-sm', 'font-semibold');
+          t.classList.add('text-on-surface-variant');
+        });
+        this.classList.add('bg-surface-container-lowest', 'text-on-surface', 'shadow-sm', 'font-semibold');
+        this.classList.remove('text-on-surface-variant');
+      });
+    });
+  })();
+</script></div></main></div></body></html>

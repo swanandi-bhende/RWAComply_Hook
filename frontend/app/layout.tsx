@@ -1,18 +1,11 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Mozilla_Headline, Mozilla_Text } from "next/font/google";
+import { Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { ClientShell } from "./client-shell";
 
-const headline = Mozilla_Headline({
-  variable: "--font-headline",
-  subsets: ["latin"],
-  weight: "700",
-});
-
-const text = Mozilla_Text({
+const text = Inter({
   variable: "--font-text",
   subsets: ["latin"],
-  weight: ["300", "400", "600"],
 });
 
 const geistMono = Geist_Mono({
@@ -22,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "RWAComply",
-  description: "One human. Multiple wallets. One shared purchase budget.",
+  description: "One human. Multiple wallets. One shared purchase limit.",
 };
 
 export default function RootLayout({
@@ -33,7 +26,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${headline.variable} ${text.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${text.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body>
         <ClientShell>{children}</ClientShell>

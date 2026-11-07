@@ -49,12 +49,12 @@ export function OfferingMarket() {
           {!failed && !directory && <p>Reading the offering directory.</p>}
           {directory && (
             <dl>
-              <div><dt>Quote asset</dt><dd>Mock USDC</dd></div>
-              <div><dt>Per-human cap</dt><dd>{usdc(directory.chain.cap)}</dd></div>
-              <div><dt>Period</dt><dd>{directory.chain.periodId ?? 'Unavailable'}</dd></div>
+              <div><dt>Network</dt><dd>Ethereum Sepolia</dd></div>
+              <div><dt>Purchase currency</dt><dd>Mock USDC</dd></div>
+              <div><dt>Per-human allocation</dt><dd>{usdc(directory.chain.cap)}</dd></div>
+              <div><dt>Status</dt><dd>{directory.arkivStatus === 'ready' ? 'Deployed demo market' : directory.arkivStatus}</dd></div>
+              <div><dt>Issuer</dt><dd>{offering?.owner ? 'Published by the offering owner' : 'Unavailable'}</dd></div>
               <div><dt>Directory</dt><dd>{directory.arkivStatus}</dd></div>
-              <div><dt>Price</dt><dd>No live quote is available for this pool.</dd></div>
-              <div><dt>Status</dt><dd>{directory.arkivStatus === 'ready' ? 'Metadata published' : 'Check the directory status'}</dd></div>
             </dl>
           )}
           <p><Link className="btn btn-primary" href="/invest">Review and invest</Link></p>

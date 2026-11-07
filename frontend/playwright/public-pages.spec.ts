@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 const pages = [
-  ['/', 'One human. Multiple wallets. One shared purchase budget.'],
+  ['/', 'One human. Multiple wallets. One shared purchase limit.'],
   ['/offerings', 'Explore tokenized assets'],
   ['/invest', 'Verify with World App'],
   ['/issuer', 'On Sepolia, the marketplace registry is not deployed.'],

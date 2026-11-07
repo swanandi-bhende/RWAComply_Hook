@@ -92,7 +92,7 @@ export function ProjectPresentation() {
           <div className="text-5xl font-black mb-8">The Problem</div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-red-50 border-3 border-black p-10">
+            <div className="bg-[#FFF7FA] border-3 border-black p-10">
               <h3 className="text-3xl font-black mb-6 text-black">DeFi Today</h3>
               <ul className="space-y-5 text-black font-bold text-lg">
                 <li>Completely anonymous</li>
@@ -148,7 +148,7 @@ export function ProjectPresentation() {
                   <div className="border border-white p-3">
                     <p className="font-bold text-lg">Tier 0</p>
                     <p className="text-gray-300">Unverified</p>
-                    <p className="text-red-400 font-bold">BLOCKED</p>
+                    <p className="text-[#B83270] font-bold">BLOCKED</p>
                   </div>
                   <div className="border border-white p-3">
                     <p className="font-bold text-lg">Tier 1</p>

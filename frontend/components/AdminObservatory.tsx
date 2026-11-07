@@ -185,9 +185,9 @@ export function AdminObservatory() {
 
   if (deploymentError) {
     return (
-      <div className="bg-red-50 border-2 border-red-600 p-6 rounded">
-        <p className="text-red-600 font-bold mb-2">Deployment Error</p>
-        <p className="text-red-600 text-sm">{deploymentError}</p>
+      <div className="bg-[#FFF7FA] border-2 border-[#B83270] p-6 rounded">
+        <p className="text-[#B83270] font-bold mb-2">Deployment Error</p>
+        <p className="text-[#B83270] text-sm">{deploymentError}</p>
       </div>
     );
   }
@@ -350,7 +350,7 @@ export function AdminObservatory() {
                 });
               }}
               className={`w-full px-4 py-2 rounded font-bold text-white ${
-                poolPausedBool ? 'bg-green-700 hover:bg-green-800' : 'bg-red-700 hover:bg-red-800'
+                poolPausedBool ? 'bg-green-700 hover:bg-green-800' : 'bg-[#B83270] hover:bg-[#9D285F]'
               }`}
             >
               {poolPausedBool ? 'Resume Pool' : 'Pause Pool'}
@@ -475,14 +475,14 @@ export function AdminObservatory() {
                   entry.status === 'success'
                     ? 'bg-green-50 border-green-500'
                     : entry.status === 'failed'
-                      ? 'bg-red-50 border-red-500'
+                      ? 'bg-[#FFF7FA] border-[#B83270]'
                       : 'bg-yellow-50 border-yellow-500'
                 }`}
               >
                 <p className="font-semibold text-sm text-gray-900">{entry.action}</p>
                 <p className="text-xs text-gray-600 mt-1">value: {entry.value}</p>
-                {entry.hash && <p className="text-xs text-blue-700 font-mono mt-1 break-all">{entry.hash}</p>}
-                {entry.error && <p className="text-xs text-red-700 mt-1 wrap-break-word">{entry.error}</p>}
+                {entry.hash && <p className="text-xs text-[#766B72] font-mono mt-1 break-all">{entry.hash}</p>}
+                {entry.error && <p className="text-xs text-[#B83270] mt-1 wrap-break-word">{entry.error}</p>}
                 <p className="text-xs text-gray-500 mt-2">
                   {new Date(entry.timestamp).toLocaleTimeString()} • {entry.status}
                 </p>

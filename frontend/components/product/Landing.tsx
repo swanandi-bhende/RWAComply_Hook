@@ -10,7 +10,7 @@ export function Landing() {
         <section className="hero-layout" aria-labelledby="hero-title">
           <div>
             <p className="kicker">Tokenized-asset purchase limits</p>
-            <h1 id="hero-title" className="page-title">One human. Multiple wallets. One shared purchase budget.</h1>
+            <h1 id="hero-title" className="page-title">One human. Multiple wallets. One shared purchase limit.</h1>
             <p className="lede">
               RWAComply helps tokenized-asset issuers enforce one cumulative purchase limit across the wallets linked to the same verified investor.
             </p>

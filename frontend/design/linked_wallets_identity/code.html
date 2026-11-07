@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={"darkMode":"class","theme":{"extend":{"colors":{"secondary-fixed-dim":"#16845B","error-container":"#FCEAF2","on-tertiary-container":"#FFF7FA","on-background":"#211A1F","secondary":"#16845B","on-primary":"#ffffff","surface-dim":"#EEE4E9","tertiary":"#9D285F","primary":"#D9468D","on-secondary-container":"#16845B","surface-container-high":"#FCEAF2","surface-container-highest":"#FCEAF2","error":"#B83270","on-secondary":"#ffffff","tertiary-fixed-dim":"#FCEAF2","secondary-container":"#E7F6EF","on-tertiary":"#ffffff","on-primary-container":"#FFFFFF","on-tertiary-fixed":"#211A1F","on-error-container":"#9D285F","on-error":"#ffffff","secondary-fixed":"#E7F6EF","on-tertiary-fixed-variant":"#9D285F","on-surface":"#211A1F","on-surface-variant":"#766B72","surface-tint":"#D9468D","primary-fixed-dim":"#FCEAF2","surface":"#FCFAFB","on-primary-fixed":"#211A1F","inverse-primary":"#FCEAF2","inverse-surface":"#211A1F","tertiary-fixed":"#FCEAF2","surface-container-low":"#FFF7FA","on-primary-fixed-variant":"#9D285F","outline-variant":"#EEE4E9","primary-fixed":"#FCEAF2","surface-container-lowest":"#ffffff","outline":"#766B72","inverse-on-surface":"#FCFAFB","tertiary-container":"#BE3477","primary-container":"#BE3477","on-secondary-fixed":"#211A1F","background":"#FCFAFB","on-secondary-fixed-variant":"#16845B","surface-bright":"#FCFAFB","surface-variant":"#FCEAF2","surface-container":"#FCEAF2"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-sm":"0.5rem","gutter-sm":"1rem","space-md":"1rem","margin":"2rem","gutter":"1.5rem","margin-sm":"1rem","space-xl":"2rem","space-lg":"1.5rem","space-xs":"0.25rem"},"fontFamily":{"body-lg":["Inter"],"body-md":["Inter"],"display-mobile":["Inter"],"label-md":["Inter"],"label-sm":["Inter"],"numeric-metric":["Inter"],"headline-md":["Inter"],"body-sm":["Inter"],"display":["Inter"],"headline-lg-mobile":["Inter"],"headline-sm":["Inter"],"headline-lg":["Inter"]},"fontSize":{"body-lg":["1rem",{"lineHeight":"1.5rem","letterSpacing":"-0.005em","fontWeight":"400"}],"body-md":["0.875rem",{"lineHeight":"1.25rem","letterSpacing":"0","fontWeight":"400"}],"display-mobile":["2.25rem",{"lineHeight":"2.75rem","letterSpacing":"-0.02em","fontWeight":"600"}],"label-md":["0.875rem",{"lineHeight":"1.25rem","letterSpacing":"0.01em","fontWeight":"500"}],"label-sm":["0.75rem",{"lineHeight":"1rem","letterSpacing":"0.025em","fontWeight":"600"}],"numeric-metric":["1.75rem",{"lineHeight":"2rem","letterSpacing":"-0.02em","fontWeight":"600"}],"headline-md":["1.25rem",{"lineHeight":"1.75rem","letterSpacing":"-0.015em","fontWeight":"600"}],"body-sm":["0.75rem",{"lineHeight":"1rem","letterSpacing":"0","fontWeight":"400"}],"display":["3rem",{"lineHeight":"3.5rem","letterSpacing":"-0.025em","fontWeight":"600"}],"headline-lg-mobile":["1.5rem",{"lineHeight":"2rem","letterSpacing":"-0.015em","fontWeight":"600"}],"headline-sm":["1.125rem",{"lineHeight":"1.5rem","letterSpacing":"-0.01em","fontWeight":"500"}],"headline-lg":["2rem",{"lineHeight":"2.5rem","letterSpacing":"-0.02em","fontWeight":"600"}]}}}};</script></head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-72 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between"><div class="flex flex-col"><div class="px-space-lg pt-space-lg pb-space-md"><div class="flex items-center gap-space-sm"><img alt="RWAComply Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1U-3oCIjP5i3z-kGjWIIkRaKuDu3cDku9yx5nTnSnp5N-dGh-ZE0f0TvKeATc7h3REniLuJSP0-aHWrM8eM-2p-WwdsFetSTn4zuwy6PFePu95iE_9HR5i5z_U_ZWRuxm-SuJnEILOqvgp1Dj4KZUX3idv_3Oj8-140AbxqfFk_Uhv32IgLyFUJNLkGywmLt0iQLQ1wQwKssKwiJHNxr1MmvXbPyucfGYaykIjaLjbC1w"/><div class="flex flex-col"><div class="flex items-center gap-space-xs"><span class="font-headline-sm text-headline-sm text-on-surface font-semibold tracking-tight">RWAComply</span><span class="px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface font-label-sm text-label-sm text-[10px] uppercase font-bold tracking-wider">v1.0 Sepolia</span></div><span class="font-body-sm text-body-sm text-on-surface-variant text-[11px] leading-tight">Shared Allocation Protocol</span></div></div><div class="mt-space-sm pt-space-xs"><p class="font-body-sm text-body-sm text-on-surface-variant text-[11px] italic leading-tight">One human. Multiple wallets. One shared purchase limit.</p></div></div><nav class="flex flex-col gap-1 px-space-md mt-space-sm" data-active-classes="bg-primary-container text-on-primary font-label-md font-semibold rounded-lg"><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="overview" href="#"><span class="material-symbols-outlined text-[20px]">grid_view</span><span>Overview</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="offerings" href="#"><span class="material-symbols-outlined text-[20px]">account_balance</span><span>Offerings</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="offering-details-&-buy" href="#"><span class="material-symbols-outlined text-[20px]">credit_card</span><span>Offering Details & Buy</span></a><a aria-current="page" class="flex items-center gap-space-sm px-space-md py-2.5 transition-all bg-primary-container text-on-primary font-label-md font-semibold rounded-lg" data-path="linked-wallets" href="#"><span class="material-symbols-outlined text-[20px]">verified_user</span><span>Linked Wallets</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="activity" href="#"><span class="material-symbols-outlined text-[20px]">history</span><span>Activity</span></a></nav></div><div class="p-space-md flex flex-col gap-space-sm"><div class="bg-surface-container-low rounded-lg p-space-sm flex flex-col gap-1"><div class="flex items-center justify-between"><span class="font-label-sm text-label-sm text-on-surface-variant text-[11px] font-semibold uppercase tracking-wider">World ID Verification</span><span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-secondary"></span></span></div><div class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px] text-secondary">fingerprint</span><span class="font-label-sm text-label-sm text-on-surface font-mono text-[11px]">0x8f...4c19</span><span class="ml-auto px-1.5 py-0.5 rounded bg-secondary-container text-on-secondary-container font-label-sm text-label-sm text-[10px] font-bold">Verified</span></div></div><div class="flex items-center justify-between px-space-xs font-label-sm text-label-sm text-on-surface-variant text-[11px]"><a class="hover:text-on-surface transition-colors flex items-center gap-1" href="#"><span class="material-symbols-outlined text-[14px]">description</span>Protocol Docs</a><a class="hover:text-on-surface transition-colors flex items-center gap-1" href="#"><span class="material-symbols-outlined text-[14px]">gavel</span>Legal Terms</a></div></div></aside><div class="pl-72"><header class="fixed top-0 left-72 right-0 h-16 bg-surface/85 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40"><div class="h-16 w-full px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-sm font-label-md text-label-md text-on-surface-variant"><span class="hover:text-on-surface cursor-pointer">RWAComply</span><span class="material-symbols-outlined text-[16px]">chevron_right</span><span class="text-on-surface font-semibold">Institutional Console</span></div><div class="flex items-center gap-space-md"><div class="hidden sm:flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-surface-container font-label-sm text-label-sm text-on-surface-variant"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span><span>Sepolia Testnet</span></div><div class="hidden md:flex items-center gap-1 px-space-sm py-1 rounded bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold"><span class="material-symbols-outlined text-[14px]">shield_with_heart</span><span>World ID: Verified</span></div><div class="flex items-center gap-space-xs px-space-sm py-1 rounded-lg bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><span class="material-symbols-outlined text-[16px] text-on-surface-variant">account_balance_wallet</span><span class="font-label-sm text-label-sm font-mono text-on-surface">0x71C...3a91</span><span class="font-label-sm text-label-sm text-on-surface-variant text-[11px]">(Wallet A)</span><button class="p-1 text-on-surface-variant hover:text-on-surface" title="Copy Address" type="button"><span class="material-symbols-outlined text-[14px]">content_copy</span></button><button class="p-1 text-on-surface-variant hover:text-error" title="Disconnect" type="button"><span class="material-symbols-outlined text-[14px]">power_settings_new</span></button></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-16 bg-surface min-h-screen"><div class="max-w-7xl mx-auto px-space-lg py-space-xl"><div class="flex flex-col w-full gap-space-xl">
+<!-- Top Banner / Identity Headroom Metric Bar -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-space-md">
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Zero-Knowledge Verification Suite</span>
+<span class="h-1 w-1 rounded-full bg-on-surface-variant/40"></span>
+<span class="font-label-sm text-label-sm font-mono text-secondary font-medium">Protocol v1.02 Sepolia</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface font-semibold tracking-tight">Identity & Linked Wallets</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-3xl">
+        Manage cryptographic proof of personhood and register multiple addresses to your unified purchase allocation.
+      </p>
+</div>
+<div class="flex items-center gap-space-sm self-start md:self-auto">
+<button class="inline-flex items-center gap-2 px-space-md py-2 rounded-lg bg-surface-container-high text-on-surface font-label-md text-label-md hover:bg-surface-container-highest transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[18px]">history_edu</span>
+        Audit Log
+      </button>
+<button class="inline-flex items-center gap-2 px-space-md py-2 rounded-lg bg-primary-container text-on-primary font-label-md text-label-md hover:bg-primary transition-colors shadow-sm" onclick="document.getElementById('link-wallet-modal').classList.remove('hidden')" type="button">
+<span class="material-symbols-outlined text-[18px]">add_link</span>
+        + Link Another Wallet
+      </button>
+</div>
+</div>
+<!-- Core Architecture Callout Banner -->
+<div class="relative overflow-hidden rounded-xl bg-surface-container-low p-space-lg shadow-sm">
+<div class="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-secondary-fixed/30 blur-3xl pointer-events-none"></div>
+<div class="relative flex flex-col lg:flex-row lg:items-center justify-between gap-space-lg">
+<div class="flex items-start gap-space-md max-w-3xl">
+<div class="flex-shrink-0 w-10 h-10 rounded-lg bg-surface-container-lowest flex items-center justify-center text-primary-container shadow-sm">
+<span class="material-symbols-outlined text-[24px]">verified_user</span>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Single Identity, Distributed Keys</span>
+<span class="px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold text-[11px]">Sybil Resistant</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+            One human proof, infinite wallet flexibility. When you link wallets to your verified World ID, all linked addresses share the same cumulative offering limits. This prevents circumvention while keeping your wallet identities private.
+          </p>
+</div>
+</div>
+<!-- Aggregated Ceiling Micro-card -->
+<div class="flex-shrink-0 flex items-center gap-space-md bg-surface-container-lowest px-space-md py-space-sm rounded-lg shadow-sm">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-medium text-[11px]">Aggregate Headroom</span>
+<span class="font-numeric-metric text-numeric-metric text-on-surface font-mono font-semibold">$300.00 <span class="text-xs font-normal text-on-surface-variant">USDC</span></span>
+</div>
+<div class="w-12 h-12 flex items-center justify-center">
+<svg class="w-10 h-10 transform -rotate-90" viewbox="0 0 36 36">
+<path class="text-surface-container-high" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3"></path>
+<path class="text-secondary" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="70, 100" stroke-linecap="round" stroke-width="3"></path>
+</svg>
+</div>
+</div>
+</div>
+</div>
+<!-- 3-Stage Cryptographic Verification Lifecycle -->
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase font-bold tracking-wider">Cryptographic Proof Chain</span>
+<span class="font-label-sm text-label-sm text-secondary font-medium flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-secondary"></span> 3 of 3 Stages Validated
+      </span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-md">
+<!-- Stage 1 Card -->
+<div class="rounded-xl bg-surface-container-lowest p-space-lg shadow-sm flex flex-col justify-between gap-space-md hover:bg-surface-container-low transition-colors">
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm font-mono text-on-surface-variant font-bold">STAGE 01</span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> Verified
+            </span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold">World ID Personhood</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Biometric zero-knowledge proof generated by iris orb protocol.</p>
+</div>
+<div class="mt-space-xs flex flex-col gap-1.5 p-space-sm rounded-lg bg-surface-container-low">
+<div class="flex items-center justify-between text-[11px] font-mono">
+<span class="text-on-surface-variant">Nullifier Hash</span>
+<span class="text-on-surface font-semibold">0x9182a4...4c19ef</span>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-on-surface-variant">Verification Level</span>
+<span class="text-on-surface font-medium">World ID Orb Verified</span>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-on-surface-variant">Verified On</span>
+<span class="text-on-surface">May 12, 2025</span>
+</div>
+</div>
+</div>
+<button class="inline-flex items-center justify-center gap-1 text-primary-container font-label-md text-label-md font-semibold hover:text-primary transition-colors pt-space-xs" type="button">
+<span>View ZK-Proof Details</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+<!-- Stage 2 Card -->
+<div class="rounded-xl bg-surface-container-lowest p-space-lg shadow-sm flex flex-col justify-between gap-space-md hover:bg-surface-container-low transition-colors">
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm font-mono text-on-surface-variant font-bold">STAGE 02</span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> 2 of 2 Wallets
+            </span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Key Control Signature</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">EIP-712 structured cryptographic signatures validating private keys.</p>
+</div>
+<div class="mt-space-xs flex flex-col gap-1.5 p-space-sm rounded-lg bg-surface-container-low">
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-on-surface-variant">Challenge Mechanism</span>
+<span class="text-on-surface font-mono">EIP-712 Typed Data</span>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-on-surface-variant">Active Nonces</span>
+<span class="text-secondary font-semibold font-mono">2 Valid Signatures</span>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-on-surface-variant">Authorization</span>
+<span class="text-on-surface">Mutual Zero-Knowledge</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-space-xs text-on-surface-variant font-body-sm text-body-sm">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-secondary">verified</span>
+            No Private Keys Exposed
+          </span>
+<span class="font-mono text-[11px]">secp256k1</span>
+</div>
+</div>
+<!-- Stage 3 Card -->
+<div class="rounded-xl bg-surface-container-lowest p-space-lg shadow-sm flex flex-col justify-between gap-space-md hover:bg-surface-container-low transition-colors">
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm font-mono text-on-surface-variant font-bold">STAGE 03</span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> Confirmed Onchain
+            </span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Registry Smart Contract</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Immutable identity bindings synced to Ethereum Sepolia state.</p>
+</div>
+<div class="mt-space-xs flex flex-col gap-1.5 p-space-sm rounded-lg bg-surface-container-low">
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-on-surface-variant">Registry Contract</span>
+<span class="text-on-surface font-mono font-semibold">0x8A...3F01</span>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-on-surface-variant">Network</span>
+<span class="text-on-surface">Ethereum Sepolia</span>
+</div>
+<div class="flex items-center justify-between text-[11px]">
+<span class="text-on-surface-variant">Last Block Sync</span>
+<span class="text-on-surface font-mono">#5,421,880</span>
+</div>
+</div>
+</div>
+<a class="inline-flex items-center justify-center gap-1 text-primary-container font-label-md text-label-md font-semibold hover:text-primary transition-colors pt-space-xs" href="#">
+<span>View on Etherscan</span>
+<span class="material-symbols-outlined text-[16px]">open_in_new</span>
+</a>
+</div>
+</div>
+</div>
+<!-- Linked Wallets Ledger Section -->
+<div class="flex flex-col gap-space-md">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-xs">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface font-semibold">
+          Registered Addresses for World ID <span class="font-mono text-primary">#9182...4c</span>
+</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">
+          2 Wallets actively linked and sharing cumulative offering limits.
+        </p>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="inline-flex items-center gap-1.5 px-space-md py-2 rounded-lg bg-surface-container-lowest text-on-surface font-label-md text-label-md hover:bg-surface-container-high transition-colors shadow-sm" onclick="document.getElementById('link-wallet-modal').classList.remove('hidden')" type="button">
+<span class="material-symbols-outlined text-[18px]">add</span>
+          Link Another Wallet
+        </button>
+</div>
+</div>
+<!-- Active Wallets Data Table / Container -->
+<div class="rounded-xl bg-surface-container-lowest shadow-sm overflow-hidden">
+<!-- Desktop Table View -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+<th class="py-3.5 px-space-md font-semibold">Wallet / Label</th>
+<th class="py-3.5 px-space-md font-semibold">Connected</th>
+<th class="py-3.5 px-space-md font-semibold text-right">Cumulative Spent</th>
+<th class="py-3.5 px-space-md font-semibold text-right">Shared Allocation Balance</th>
+<th class="py-3.5 px-space-md font-semibold text-center">Status</th>
+<th class="py-3.5 px-space-md font-semibold text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container">
+<!-- Row 1: Primary MetaMask Wallet -->
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="py-space-md px-space-md">
+<div class="flex items-start gap-space-sm">
+<div class="w-9 h-9 rounded-lg bg-surface-container-high flex items-center justify-center text-on-surface mt-0.5 flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-label-md text-label-md font-mono text-on-surface font-semibold">0x71C8b29...3a91</span>
+<span class="px-2 py-0.5 rounded bg-primary-container text-on-primary font-label-sm text-label-sm text-[10px] font-bold uppercase tracking-wider">Current Active</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant font-medium">Primary Trading (MetaMask)</span>
+</div>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<span class="font-body-md text-body-md text-on-surface">3 days ago</span>
+<span class="block font-body-sm text-body-sm text-on-surface-variant">Sepolia Block #5,417,100</span>
+</td>
+<td class="py-space-md px-space-md text-right font-mono">
+<span class="font-label-md text-label-md text-on-surface font-semibold">$700.00 USDC</span>
+<span class="block font-body-sm text-body-sm text-on-surface-variant">70% of Cap</span>
+</td>
+<td class="py-space-md px-space-md text-right">
+<div class="flex flex-col items-end">
+<span class="font-label-md text-label-md font-mono text-secondary font-bold">$300.00 USDC</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Remaining Headroom</span>
+</div>
+</td>
+<td class="py-space-md px-space-md text-center">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> Verified & Active
+                </span>
+</td>
+<td class="py-space-md px-space-md text-right">
+<div class="inline-flex items-center gap-1 justify-end">
+<button class="p-1.5 text-on-surface-variant hover:text-on-surface rounded-lg hover:bg-surface-container transition-colors" title="Copy Full Address" type="button">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+</button>
+<button class="p-1.5 text-on-surface-variant/40 cursor-not-allowed rounded-lg" disabled="" title="Primary Active Wallet cannot be disconnected" type="button">
+<span class="material-symbols-outlined text-[18px]">link_off</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2: Secondary Ledger Wallet -->
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="py-space-md px-space-md">
+<div class="flex items-start gap-space-sm">
+<div class="w-9 h-9 rounded-lg bg-surface-container-high flex items-center justify-center text-on-surface mt-0.5 flex-shrink-0">
+<span class="material-symbols-outlined text-[20px]">security</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-label-md text-label-md font-mono text-on-surface font-semibold">0x3D4a56...98Fc</span>
+<span class="px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-label-sm text-label-sm text-[10px] font-semibold uppercase tracking-wider">Secondary</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant font-medium">Institutional Cold Storage (Ledger)</span>
+</div>
+</div>
+</td>
+<td class="py-space-md px-space-md">
+<span class="font-body-md text-body-md text-on-surface">Yesterday</span>
+<span class="block font-body-sm text-body-sm text-on-surface-variant">Sepolia Block #5,420,490</span>
+</td>
+<td class="py-space-md px-space-md text-right font-mono">
+<span class="font-label-md text-label-md text-on-surface font-semibold">$0.00 USDC</span>
+<span class="block font-body-sm text-body-sm text-on-surface-variant">0% of Cap</span>
+</td>
+<td class="py-space-md px-space-md text-right">
+<div class="flex flex-col items-end">
+<span class="font-label-md text-label-md font-mono text-secondary font-bold">$300.00 USDC</span>
+<span class="font-body-sm text-body-sm text-secondary-fixed-dim/90 font-medium">Synced Shared Pool</span>
+</div>
+</td>
+<td class="py-space-md px-space-md text-center">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> Verified & Active
+                </span>
+</td>
+<td class="py-space-md px-space-md text-right">
+<div class="inline-flex items-center gap-1 justify-end">
+<button class="p-1.5 text-on-surface-variant hover:text-on-surface rounded-lg hover:bg-surface-container transition-colors" title="Copy Full Address" type="button">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+</button>
+<button class="p-1.5 text-on-surface-variant hover:text-error rounded-lg hover:bg-error-container/40 transition-colors" title="Disconnect Linked Wallet" type="button">
+<span class="material-symbols-outlined text-[18px]">link_off</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Limit Distribution Visual Meter -->
+<div class="p-space-lg bg-surface-container-low flex flex-col gap-space-sm">
+<div class="flex items-center justify-between text-body-sm font-body-sm">
+<div class="flex items-center gap-2">
+<span class="font-semibold text-on-surface">Shared Pool Utilization:</span>
+<span class="font-mono text-on-surface font-medium">$700.00 / $1,000.00 USDC Total Limit</span>
+</div>
+<span class="font-semibold text-secondary font-mono">30% Capacity Remaining</span>
+</div>
+<!-- Progress bar -->
+<div class="w-full h-3 rounded-full bg-surface-container-high overflow-hidden flex">
+<div class="h-full bg-primary-container" style="width: 70%;" title="Wallet 0x71C8b...: $700.00"></div>
+<div class="h-full bg-secondary" style="width: 0%;" title="Wallet 0x3D4a5...: $0.00"></div>
+</div>
+<div class="flex flex-wrap items-center justify-between gap-space-xs font-body-sm text-body-sm text-on-surface-variant">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-sm bg-primary-container"></span>
+<span>Primary Wallet ($700.00)</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-sm bg-secondary"></span>
+<span>Ledger Storage ($0.00)</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-sm bg-surface-container-high"></span>
+<span>Available Capacity ($300.00)</span>
+</div>
+</div>
+<span class="text-[11px] font-mono">Aggregated across nullifier 0x9182a4...</span>
+</div>
+</div>
+</div>
+</div>
+<!-- How Linking Works / Add Wallet Flow Stepper Card -->
+<div class="rounded-xl bg-surface-container-lowest p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-[20px]">help_outline</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold">How Multi-Wallet Identity Linking Works</h3>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">
+        Connect cold wallets, treasury multisigs, or secondary browser accounts without leaking real-world identity or paying mainnet gas fees.
+      </p>
+</div>
+<!-- 3 Steps Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-md relative">
+<!-- Step 1 -->
+<div class="flex flex-col gap-space-xs p-space-md rounded-lg bg-surface-container-low relative">
+<div class="flex items-center justify-between">
+<div class="w-7 h-7 rounded-full bg-surface-container-high text-on-surface flex items-center justify-center font-bold text-label-sm font-label-sm">
+            1
+          </div>
+<span class="font-mono text-label-sm text-label-sm text-on-surface-variant font-medium">Browser Ext</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-semibold mt-2">Connect New Wallet</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+          Connect your target secondary wallet (e.g. Ledger, Coinbase Wallet, or Rabby) via your browser extension.
+        </p>
+</div>
+<!-- Step 2 -->
+<div class="flex flex-col gap-space-xs p-space-md rounded-lg bg-surface-container-low relative">
+<div class="flex items-center justify-between">
+<div class="w-7 h-7 rounded-full bg-surface-container-high text-on-surface flex items-center justify-center font-bold text-label-sm font-label-sm">
+            2
+          </div>
+<span class="font-mono text-label-sm text-label-sm text-secondary font-medium">Gasless Signature</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-semibold mt-2">Sign EIP-712 Challenge</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+          Sign a structured message containing an authorization nonce to mathematically prove private key ownership.
+        </p>
+</div>
+<!-- Step 3 -->
+<div class="flex flex-col gap-space-xs p-space-md rounded-lg bg-surface-container-low relative">
+<div class="flex items-center justify-between">
+<div class="w-7 h-7 rounded-full bg-surface-container-high text-on-surface flex items-center justify-center font-bold text-label-sm font-label-sm">
+            3
+          </div>
+<span class="font-mono text-label-sm text-label-sm text-on-surface-variant font-medium">Zero-Knowledge</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-semibold mt-2">Publish ZK Binding</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+          Submit the commitment proof to the RWAComply registry. The address immediately shares your verified limits.
+        </p>
+</div>
+</div>
+<!-- Security Guarantee Footer -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm pt-space-xs text-on-surface-variant font-body-sm text-body-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-secondary">lock</span>
+<span>No seed phrases or private keys are ever transmitted. World ID biometric records remain strictly on-device.</span>
+</div>
+<a class="inline-flex items-center gap-1 font-semibold text-primary-container hover:underline whitespace-nowrap" href="#">
+        Read Protocol Whitepaper <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</a>
+</div>
+</div>
+<!-- Interactive Slide-over / Link Wallet Dialog (Hidden by Default) -->
+<div class="hidden fixed inset-0 z-50 flex items-center justify-center bg-on-background/40 backdrop-blur-sm p-4" id="link-wallet-modal">
+<div class="bg-surface-container-lowest rounded-xl max-w-lg w-full p-space-lg shadow-xl flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-primary-container text-on-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">add_link</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Link Additional Wallet</h3>
+</div>
+<button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container" onclick="document.getElementById('link-wallet-modal').classList.add('hidden')" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">
+        Authorize an additional address to spend from your World ID allocation pool (<span class="font-mono text-on-surface">Nullifier: 0x9182...4c</span>).
+      </p>
+<div class="flex flex-col gap-space-sm">
+<label class="font-label-sm text-label-sm text-on-surface font-semibold uppercase tracking-wider">Wallet Label (Optional)</label>
+<input class="w-full px-space-md py-2.5 rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md outline-none focus:bg-surface-container-lowest" placeholder="e.g. Treasury Safe Multisig" type="text"/>
+</div>
+<div class="p-space-md rounded-lg bg-surface-container-low flex flex-col gap-2">
+<div class="flex items-center justify-between text-body-sm font-body-sm">
+<span class="text-on-surface-variant">Active Connection</span>
+<span class="font-mono text-on-surface font-semibold">0x71C8b29...3a91 (Already Linked)</span>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant text-[12px]">
+<span class="material-symbols-outlined text-[16px] text-secondary">info</span>
+<span>Switch accounts in your browser extension to register a new address.</span>
+</div>
+</div>
+<div class="flex items-center justify-end gap-space-sm pt-space-xs">
+<button class="px-space-md py-2 rounded-lg bg-surface-container text-on-surface font-label-md text-label-md hover:bg-surface-container-high transition-colors" onclick="document.getElementById('link-wallet-modal').classList.add('hidden')" type="button">
+          Cancel
+        </button>
+<button class="px-space-md py-2 rounded-lg bg-primary-container text-on-primary font-label-md text-label-md hover:bg-primary transition-colors flex items-center gap-1.5 shadow-sm" type="button">
+<span class="material-symbols-outlined text-[18px]">fingerprint</span>
+          Sign EIP-712 Challenge
+        </button>
+</div>
+</div>
+</div>
+</div></div></main></div></body></html>

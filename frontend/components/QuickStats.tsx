@@ -141,14 +141,14 @@ export function QuickStats() {
         {/* Pool Status */}
         <div className={`border-2 p-6 rounded ${
           isPaused
-            ? 'bg-red-50 border-red-300'
+            ? 'bg-[#FFF7FA] border-[#EEE4E9]'
             : 'bg-green-50 border-green-300'
         }`}>
           <div className="flex items-start justify-between">
             <div>
               <p className="text-xs font-bold text-gray-600 mb-2">POOL STATUS</p>
               <p className={`text-lg font-bold ${
-                isPaused ? 'text-red-700' : 'text-green-700'
+                isPaused ? 'text-[#B83270]' : 'text-green-700'
               }`}>
                 {isPaused ? '⏸️ PAUSED' : '▶️ ACTIVE'}
               </p>
