@@ -63,7 +63,7 @@ Confirm the branch is `v2`. Push it yourself when you want Vercel to import it. 
 Use the names in [vercel-environment-variables.md](vercel-environment-variables.md).
 
 - Public configuration: the six `NEXT_PUBLIC_*` addresses. You already have them from the Sepolia deployment record.
-- World ID secrets: `WORLD_APP_ID`, `WORLD_RP_ID`, `WORLD_PRIVATE_KEY`, `WORLD_RP_SIGNER_ADDRESS`, `WORLD_ID_ENVIRONMENT=staging`, `WORLD_SESSION_ENCRYPTION_KEY`. Copy the existing staging values. Do not invent production ids.
+- World ID secrets: `WORLD_APP_ID`, `WORLD_RP_ID`, `WORLD_PRIVATE_KEY`, `WORLD_RP_SIGNER_ADDRESS`, `WORLD_ID_ENVIRONMENT=sandbox`, `WORLD_SESSION_ENCRYPTION_KEY`. Copy the existing values. Do not invent production ids.
 - Allocation signing: `ALLOCATION_AUTH_SIGNING_KEY` and `ALLOCATION_AUTH_SIGNER_ADDRESS`. Copy the existing pair.
 - RPC: `ALLOCATION_RPC_URL`, `ALLOCATION_CHAIN_ID=11155111`, `ALLOCATION_LEDGER_ADDRESS`, `ALLOCATION_GROUP_ID`.
 - Database: none yet. Do not set `WORLD_ENROLLMENT_DB_PATH`.

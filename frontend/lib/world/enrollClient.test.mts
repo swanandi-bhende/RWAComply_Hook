@@ -116,7 +116,7 @@ test('enrollment forwards the unchanged result and ignores cancellation or failu
   assert.equal(receivedConfig?.session_id, 'create');
   assert.equal(receivedConfig?.allow_legacy_proofs, false);
   assert.equal(receivedConfig?.app_id, APP_ID);
-  assert.equal(receivedConfig?.environment, 'sandbox');
+  assert.equal(receivedConfig?.environment, 'staging');
   assert.equal(receivedConfig?.action_description, 'RWAComply proof of human');
   assert.equal(receivedConfig?.rp_context.rp_id, RP_ID);
   assert.deepEqual(seen, [verifiedResult]);
@@ -256,4 +256,48 @@ test('the connector is presented before polling and a client flag cannot verify 
     },
   });
   assert.deepEqual(offline, { ok: false, reason: 'world_unavailable' });
+});
+
+test('sandbox configuration is passed through and a rejected proof is not verified', async () => {
+  let received: IDKitRequestConfig | undefined;
+  const accepted = await enrollProofOfHuman({
+    fetchImpl: async (input) => {
+      const url = String(input);
+      if (url.endsWith('/api/world/rp-context')) {
+        return Response.json({ ...contextResponse(), environment: 'sandbox' });
+      }
+      return Response.json({ success: true, session_id: verifiedSessionId });
+    },
+    openRequest: async (config) => {
+      received = config;
+      return {
+        connectorURI: 'https://sandbox.world.org/verify?t=wld&i=reqsandbox1&k=abc',
+        requestId: 'reqsandbox1',
+        pollUntilCompletion: async () => ({ success: true, result: verifiedResult }),
+      };
+    },
+  });
+  assert.equal(accepted.ok, true);
+  assert.equal(received?.environment, 'sandbox');
+
+  const rejected = await enrollProofOfHuman({
+    fetchImpl: async (input) => {
+      const url = String(input);
+      if (url.endsWith('/api/world/rp-context')) {
+        return Response.json({ ...contextResponse(), environment: 'sandbox' });
+      }
+      return Response.json({ error: 'The World ID environment does not match this server' }, { status: 422 });
+    },
+    openRequest: async () => ({
+      connectorURI: 'https://sandbox.world.org/verify?t=wld&i=reqsandbox1&k=abc',
+      requestId: 'reqsandbox1',
+      pollUntilCompletion: async () => ({ success: true, result: verifiedResult }),
+    }),
+  });
+  assert.deepEqual(rejected, { ok: false, reason: 'environment_mismatch' });
+
+  const missing = await enrollProofOfHuman({
+    fetchImpl: async () => Response.json({ app_id: APP_ID, rp_context: rpContext() }),
+  });
+  assert.deepEqual(missing, { ok: false, reason: 'environment_mismatch' });
 });

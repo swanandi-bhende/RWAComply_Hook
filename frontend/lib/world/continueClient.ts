@@ -6,7 +6,7 @@ import {
   type RpContext,
 } from '@worldcoin/idkit-core';
 import type { WorldEnvironment } from './config.ts';
-import { httpsReturnTo, idkitEnvironment } from './handoff.ts';
+import { httpsReturnTo } from './handoff.ts';
 import { SESSION_ID_PATTERN } from './sessionProof.ts';
 import type { SessionIdStore } from './sessionStore.ts';
 import { waitForProof, type ProofOfHumanRequest, type WorldProofStatus } from './enrollClient.ts';
@@ -24,6 +24,8 @@ export type ContinuationClientResult =
         | 'world_app_unavailable'
         | 'proof_failed'
         | 'verification_rejected'
+        | 'environment_mismatch'
+        | 'configuration'
         | 'world_unavailable'
         | 'unexpected';
     };
@@ -123,18 +125,18 @@ export async function continueProofOfHuman(options: {
     return { ok: false, reason: 'world_unavailable' };
   }
   if (typeof contextBody.app_id !== 'string' || !contextBody.app_id.startsWith('app_')) {
-    return { ok: false, reason: 'unexpected' };
+    return { ok: false, reason: 'configuration' };
   }
   if (
     contextBody.environment !== 'staging' &&
     contextBody.environment !== 'production' &&
     contextBody.environment !== 'sandbox'
   ) {
-    return { ok: false, reason: 'unexpected' };
+    return { ok: false, reason: 'environment_mismatch' };
   }
-  if (!isRpContext(contextBody.rp_context)) return { ok: false, reason: 'unexpected' };
+  if (!isRpContext(contextBody.rp_context)) return { ok: false, reason: 'configuration' };
 
-  const environment = idkitEnvironment(contextBody.environment);
+  const environment = contextBody.environment;
   const config = sessionProofConfig({
     appId: contextBody.app_id as `app_${string}`,
     rpContext: contextBody.rp_context,
@@ -174,6 +176,10 @@ export async function continueProofOfHuman(options: {
   }
   if (continueResponse.status === 503) return { ok: false, reason: 'world_unavailable' };
   if (continueResponse.status === 422 || continueResponse.status === 404) {
+    const failure = (await continueResponse.json().catch(() => null)) as { error?: unknown } | null;
+    if (typeof failure?.error === 'string' && failure.error.includes('environment does not match')) {
+      return { ok: false, reason: 'environment_mismatch' };
+    }
     return { ok: false, reason: 'verification_rejected' };
   }
   if (!continueResponse.ok) return { ok: false, reason: 'unexpected' };

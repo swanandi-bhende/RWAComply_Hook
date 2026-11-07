@@ -31,7 +31,7 @@ The registration signature is EIP-712 domain `AllocationLedger` version `1`, cha
 
 ## World ID
 
-`WORLD_ID_ENVIRONMENT` is `staging`. The app id and RP id are set. The World signer matches `WORLD_RP_SIGNER_ADDRESS`. No real proof was completed. No duration was measured. No continuation grant was issued by World. Fixture tests still show that a cancelled, failed, or timed-out widget does not register a wallet, and that a rejected proof does not create an enrollment.
+`WORLD_ID_ENVIRONMENT` is `sandbox`. The app id and RP id are set. The World signer matches `WORLD_RP_SIGNER_ADDRESS`. No real proof was completed. No duration was measured. No continuation grant was issued by World. Fixture tests still show that a cancelled, failed, or timed-out widget does not register a wallet, and that a rejected proof does not create an enrollment.
 
 To complete it, a person has to do these steps. Do not treat a fixture as this result.
 

@@ -2,6 +2,8 @@ export function verificationFailure(reason: string): string {
   if (reason === 'cancelled') return 'Verification was cancelled. No wallet was registered.';
   if (reason === 'timeout') return 'This World App request expired. Start verification again.';
   if (reason === 'world_app_unavailable') return 'The World App request could not be created. Check the connection and try again.';
+  if (reason === 'environment_mismatch') return 'The World ID environment does not match this server.';
+  if (reason === 'configuration') return 'World ID app or relying party configuration is missing.';
   if (reason === 'proof_failed' || reason === 'verification_rejected') {
     return 'Verification could not be completed. Please try again.';
   }

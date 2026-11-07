@@ -97,6 +97,7 @@ test('continuation forwards the session proof and stores only the browser sessio
   });
   assert.equal(intent, 'continue');
   assert.equal(received?.app_id, APP_ID);
+  assert.equal(received?.environment, 'staging');
   assert.equal('action' in (received ?? {}), false);
   assert.deepEqual(forwarded, [sessionResult]);
   assert.equal(result.ok, true);
@@ -148,4 +149,25 @@ test('a second wallet loads the saved session from the browser resume and does n
     },
   });
   assert.equal(result.ok, true);
+
+  let continued: IDKitSessionConfig | undefined;
+  const sandbox = await continueProofOfHuman({
+    sessionId,
+    fetchImpl: async (input) => {
+      const url = String(input);
+      if (url.endsWith('/api/world/rp-context')) {
+        return Response.json({ app_id: APP_ID, environment: 'sandbox', rp_context: rpContext() });
+      }
+      return Response.json({ continuation_token: 'abc', expires_at: 10 });
+    },
+    openRequest: async (_id, config) => {
+      continued = config;
+      return {
+        connectorURI: 'https://sandbox.world.org/verify?t=wld&i=reqsandbox1&k=abc',
+        pollUntilCompletion: async () => ({ success: true, result: sessionResult }),
+      };
+    },
+  });
+  assert.equal(sandbox.ok, true);
+  assert.equal(continued?.environment, 'sandbox');
 });

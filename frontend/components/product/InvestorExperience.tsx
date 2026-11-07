@@ -362,7 +362,7 @@ export default function InvestorExperience() {
       onHandoff: (next: { connectorURI: string; expiresAt: number; environment: 'staging' | 'production' | 'sandbox' }) => {
         setPrompt('qr_ready');
         setHandoff(next);
-        setVerify({ tone: 'pending', text: 'Request created. Scan the QR with the Sandbox World App. Opening the app is not the request.' });
+        setVerify({ tone: 'pending', text: `Request created for ${next.environment}. Scan the QR code. Opening the app is not the request.` });
       },
       onStatus: (status: 'waiting_for_connection' | 'awaiting_confirmation') => {
         if (status === 'awaiting_confirmation') {

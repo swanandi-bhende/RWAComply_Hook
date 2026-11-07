@@ -21,7 +21,7 @@ function sessionId(tag: string): string {
   return `session_${tag.padStart(64, '0')}01${'0'.repeat(62)}`;
 }
 
-function env() {
+function env(overrides: Record<string, string> = {}) {
   return {
     WORLD_APP_ID: APP_ID,
     WORLD_RP_ID: RP_ID,
@@ -29,6 +29,7 @@ function env() {
     WORLD_RP_SIGNER_ADDRESS: privateKeyToAccount(SIGNING_KEY).address,
     WORLD_SESSION_ENCRYPTION_KEY: ENCRYPTION_KEY,
     WORLD_ID_ENVIRONMENT: 'staging',
+    ...overrides,
   };
 }
 
@@ -144,22 +145,24 @@ test('a verified Proof of Human enrollment stores an encrypted session and retur
   });
 });
 
-test('a sandbox proof is accepted when the server is configured for staging', async () => {
+test('a sandbox server accepts only a sandbox proof', async () => {
   await withStore(async (store) => {
     const body = proof({ environment: 'sandbox' });
     const response = await handleEnroll(post(body), {
-      env: env(),
+      env: env({ WORLD_ID_ENVIRONMENT: 'sandbox' }),
       store,
       verify: async () => portal({ environment: 'sandbox' }),
     });
     assert.equal(response.status, 200);
     assert.equal(store.records()[0]?.environment, 'sandbox');
-    const rejected = await handleEnroll(post(body), {
-      env: env(),
+    const rejected = await handleEnroll(post(proof()), {
+      env: env({ WORLD_ID_ENVIRONMENT: 'sandbox' }),
       store,
-      verify: async () => portal({ environment: 'staging' }),
+      verify: async () => portal(),
     });
     assert.equal(rejected.status, 422);
+    assert.equal(((await rejected.json()) as { error: string }).error, 'The World ID environment does not match this server');
+    assert.equal(store.records().length, 1);
   });
 });
 

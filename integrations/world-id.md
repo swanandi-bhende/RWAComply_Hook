@@ -7,7 +7,7 @@ A live proof has not been completed. The server path and its failure tests exist
 ## Flow
 
 1. [`frontend/app/api/world/rp-context/route.ts`](../frontend/app/api/world/rp-context/route.ts) returns a short-lived context signed with `WORLD_PRIVATE_KEY`.
-2. The first wallet uses IDKit with action `signup`, `session_id: "create"`, and `allow_legacy_proofs: false`. A server configured for `staging` still creates the phone request in the `sandbox` environment, because the installed TestFlight app is the Sandbox app.
+2. The first wallet uses IDKit with action `signup`, `session_id: "create"`, and `allow_legacy_proofs: false`. The request environment is `WORLD_ID_ENVIRONMENT`. This deployment uses `sandbox`. A later wallet uses `IDKit.proveSession` with the same environment.
 3. [`frontend/app/api/world/enroll/route.ts`](../frontend/app/api/world/enroll/route.ts) posts the IDKit result to `https://developer.world.org/api/v4/verify/{rp_id}`.
 4. After World accepts it, the server creates a random `bytes32` allocation id and stores the session with AES-256-GCM. The raw session id and the raw nullifier are not stored. A duplicate proof returns HTTP 409.
 5. A later wallet calls `IDKit.proveSession`. The app does not call `IDKit.createSession`. The session nullifier only ties that interaction to the same session. It is not the allocation id.

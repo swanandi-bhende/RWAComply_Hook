@@ -69,7 +69,7 @@ export function WorldAppHandoff({
     : 'Waiting for World App to retrieve this request.';
   return (
     <div className="stack">
-      <p>Scan this QR code with the Sandbox World App. The code is the IDKit request link. Opening the app without that request does not verify you.</p>
+      <p>Scan this QR code with {environment === 'sandbox' ? 'the Sandbox World App' : 'World App'}. The code is the IDKit request link. Opening the app without that request does not verify you.</p>
       {image
         ? (
           // The source is a data URL generated in the browser from the IDKit connector.
@@ -80,8 +80,9 @@ export function WorldAppHandoff({
       <p><a className="btn btn-primary" href={plan.connectorURI} target="_blank" rel="noopener noreferrer">Open World App</a></p>
       <p className="quiet">This request expires at {expires}. If it expires, start again.</p>
       <dl className="quiet">
-        <div>IDKit {IDKIT_PACKAGE_VERSION}. Environment {inspection.environment}. Connector {inspection.host}{inspection.path}.</div>
-        <div>Request id {inspection.parameters.i ? 'present' : 'missing'}. Encryption key {inspection.parameters.k ? 'present' : 'missing'}. Bridge {inspection.bridgeHost || new URL(IDKIT_DEFAULT_BRIDGE).host}.</div>
+        <div>IDKit {IDKIT_PACKAGE_VERSION}. Configured environment {environment}. Connector {inspection.host}{inspection.path}.</div>
+        <div>Request created. App ID present. RP ID present. Request id {inspection.parameters.i ? 'present' : 'missing'}.</div>
+        <div>Bridge {inspection.bridgeHost || new URL(IDKIT_DEFAULT_BRIDGE).host}.</div>
         <div>{phaseText}</div>
       </dl>
       <button type="button" className="btn btn-secondary" onClick={onCancel}>Cancel verification</button>

@@ -96,7 +96,7 @@ Names used by the server:
 - `WORLD_RP_ID`
 - `WORLD_PRIVATE_KEY` — the managed relying-party signing key. This is the only copy of that secret.
 - `WORLD_RP_SIGNER_ADDRESS` — the public signer address shown in the World Developer Portal.
-- `WORLD_ID_ENVIRONMENT` — `staging`, `sandbox`, or `production`. A `staging` server sends phone requests to the Sandbox app.
+- `WORLD_ID_ENVIRONMENT` — `staging`, `sandbox`, or `production`. The value is passed to IDKit unchanged. This deployment uses `sandbox`.
 - `WORLD_SESSION_ENCRYPTION_KEY` — a separate 32-byte key. Generate it with `openssl rand -hex 32`. Do not reuse the signing key.
 - `WORLD_ENROLLMENT_DB_PATH` — optional. A relative path is resolved from the repository root. The default file is `frontend/data/world-enrollments.sqlite`.
 - `ALLOCATION_AUTH_SIGNING_KEY` — the AllocationLedger backend signer. It is separate from `WORLD_PRIVATE_KEY`.

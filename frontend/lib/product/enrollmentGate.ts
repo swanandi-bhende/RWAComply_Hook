@@ -71,7 +71,7 @@ export function enrollmentButton(input: {
       return {
         disabled: true,
         label: 'Waiting for World App',
-        explanation: 'Scan the QR code with the Sandbox World App. The app must show the RWAComply request before you approve it.',
+        explanation: 'Scan the QR code with World App. The app must show the RWAComply request before you approve it.',
       };
     }
     if (input.prompt === 'retrieved') {

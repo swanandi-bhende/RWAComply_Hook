@@ -35,8 +35,7 @@ export type BoundEnrollment = {
 };
 
 export function proofEnvironmentAccepted(configured: WorldEnvironment, actual: unknown): actual is WorldEnvironment {
-  if (actual === configured) return true;
-  return configured === 'staging' && actual === 'sandbox';
+  return actual === configured;
 }
 
 type ProofItem = {

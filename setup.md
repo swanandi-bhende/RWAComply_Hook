@@ -79,7 +79,7 @@ The allocation server refuses to start signing when `ALLOCATION_AUTH_SIGNING_KEY
 | `WORLD_RP_ID` | Public relying-party id |
 | `WORLD_PRIVATE_KEY` | Secret. The only World signing key the server reads |
 | `WORLD_RP_SIGNER_ADDRESS` | Public signer shown in the World Developer Portal |
-| `WORLD_ID_ENVIRONMENT` | `staging`, `sandbox`, or `production`. `staging` still hands the phone to the Sandbox app |
+| `WORLD_ID_ENVIRONMENT` | `staging`, `sandbox`, or `production`. This deployment uses `sandbox` |
 | `WORLD_SESSION_ENCRYPTION_KEY` | Secret. 32 bytes from `openssl rand -hex 32`. Do not reuse the signing key |
 | `WORLD_ENROLLMENT_DB_PATH` | Optional. Relative paths resolve from the repository root. The default file is `frontend/data/world-enrollments.sqlite` |
 

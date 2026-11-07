@@ -4,7 +4,7 @@ import test from 'node:test';
 import { IDKit, CredentialRequest } from '@worldcoin/idkit-core';
 import { signRequest } from '@worldcoin/idkit-core/signing';
 import QRCode from 'qrcode';
-import { IDKIT_PACKAGE_VERSION, idkitEnvironment, inspectConnector, worldHandoff } from './handoff.ts';
+import { IDKIT_PACKAGE_VERSION, inspectConnector, worldHandoff } from './handoff.ts';
 
 const CONNECTOR = 'https://staging.world.org/verify?t=wld&i=reqtest123&k=abc';
 
@@ -24,9 +24,6 @@ test('a desktop handoff encodes the IDKit connector and rejects another URL', as
 test('the phone connector is the sandbox URI and a decoded QR matches it exactly', async () => {
   const installed = JSON.parse(readFileSync(new URL('../../node_modules/@worldcoin/idkit-core/package.json', import.meta.url), 'utf8')) as { version: string };
   assert.equal(installed.version, IDKIT_PACKAGE_VERSION);
-  assert.equal(idkitEnvironment('staging'), 'sandbox');
-  assert.equal(idkitEnvironment('sandbox'), 'sandbox');
-  assert.equal(idkitEnvironment('production'), 'production');
 
   const signed = signRequest({ signingKeyHex: `0x${'11'.repeat(32)}`, action: 'signup', ttl: 300 });
   const original = globalThis.fetch;
@@ -47,7 +44,7 @@ test('the phone connector is the sandbox URI and a decoded QR matches it exactly
         signature: signed.sig,
       },
       allow_legacy_proofs: false,
-      environment: idkitEnvironment('staging'),
+      environment: 'sandbox',
     }).constraints(CredentialRequest('proof_of_human'));
     const connector = request.connectorURI;
     assert.equal(connector.startsWith('https://sandbox.world.org/verify?t=wld&i=reqsandbox1&k='), true);

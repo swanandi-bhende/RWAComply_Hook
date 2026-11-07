@@ -22,7 +22,7 @@ Names only. Do not paste private keys into chat, into this file, or into a commi
 | `WORLD_RP_ID` | Required before World ID can start | Server | Relying-party id | World Developer Portal |
 | `WORLD_PRIVATE_KEY` | Required before a connector request can be signed | Server | RP signing key. Must not equal the allocation key or the session key | World Developer Portal. Server only |
 | `WORLD_RP_SIGNER_ADDRESS` | Required with the RP key | Server | Address derived from `WORLD_PRIVATE_KEY` | World Developer Portal |
-| `WORLD_ID_ENVIRONMENT` | Required for identity routes | Server | `staging` for this deployment. The phone handoff uses the Sandbox app. `production` only after a real production app exists | Keep `staging` |
+| `WORLD_ID_ENVIRONMENT` | Required for identity routes | Server | `sandbox` for the TestFlight and Play app. `production` only after a real production app exists | Set `sandbox` |
 | `WORLD_SESSION_ENCRYPTION_KEY` | Required before an enrollment can be stored | Server | Encrypts the saved World ID session. 32-byte hex. Must not reuse the RP key | Generated locally. Server only |
 | `WORLD_ENROLLMENT_DB_PATH` | Omit on Vercel | Server | Local SQLite path. On Vercel the identity routes refuse to open it | Leave unset in Vercel |
 | `RWA_DEMO_IDENTITY` | Omit on Vercel | Server | `local` enables the Anvil demo only when the host is localhost. Any other host, including a Vercel domain, stays off | Do not set this in Vercel |

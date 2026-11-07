@@ -12,15 +12,6 @@ export type ConnectorEnvironment = keyof typeof CONNECTOR_BY_ENVIRONMENT;
 
 const CONNECTORS = new Set<string>(Object.values(CONNECTOR_BY_ENVIRONMENT));
 
-/**
- * The hackathon TestFlight and Play builds are the Sandbox World App.
- * IDKit's staging connector opens that app and does not deliver the request.
- * Staging remains valid for the browser simulator. Phone requests use sandbox.
- */
-export function idkitEnvironment(server: ConnectorEnvironment): ConnectorEnvironment {
-  return server === 'staging' ? 'sandbox' : server;
-}
-
 export type WorldConnectorHandoff = {
   mode: 'qr';
   connectorURI: string;

@@ -8,7 +8,7 @@ import {
   type RpContext,
 } from '@worldcoin/idkit-core';
 import type { WorldEnvironment } from './config.ts';
-import { httpsReturnTo, idkitEnvironment } from './handoff.ts';
+import { httpsReturnTo } from './handoff.ts';
 import type { SessionIdStore } from './sessionStore.ts';
 
 export type EnrollmentClientSuccess = {
@@ -25,6 +25,8 @@ export type EnrollmentClientFailure = {
     | 'world_app_unavailable'
     | 'proof_failed'
     | 'verification_rejected'
+    | 'environment_mismatch'
+    | 'configuration'
     | 'already_enrolled'
     | 'world_unavailable'
     | 'unexpected';
@@ -173,18 +175,18 @@ export async function enrollProofOfHuman(options: {
   }
 
   if (typeof contextBody.app_id !== 'string' || !contextBody.app_id.startsWith('app_')) {
-    return { ok: false, reason: 'unexpected' };
+    return { ok: false, reason: 'configuration' };
   }
   if (
     contextBody.environment !== 'staging' &&
     contextBody.environment !== 'production' &&
     contextBody.environment !== 'sandbox'
   ) {
-    return { ok: false, reason: 'unexpected' };
+    return { ok: false, reason: 'environment_mismatch' };
   }
-  if (!isRpContext(contextBody.rp_context)) return { ok: false, reason: 'unexpected' };
+  if (!isRpContext(contextBody.rp_context)) return { ok: false, reason: 'configuration' };
 
-  const environment = idkitEnvironment(contextBody.environment);
+  const environment = contextBody.environment;
   const config = enrollmentRequestConfig({
     appId: contextBody.app_id as `app_${string}`,
     rpContext: contextBody.rp_context,
@@ -228,6 +230,10 @@ export async function enrollProofOfHuman(options: {
   if (enrollResponse.status === 409) return { ok: false, reason: 'already_enrolled' };
   if (enrollResponse.status === 503) return { ok: false, reason: 'world_unavailable' };
   if (enrollResponse.status === 422 || enrollResponse.status === 401) {
+    const failure = (await enrollResponse.json().catch(() => null)) as { error?: unknown } | null;
+    if (typeof failure?.error === 'string' && failure.error.includes('environment does not match')) {
+      return { ok: false, reason: 'environment_mismatch' };
+    }
     return { ok: false, reason: 'verification_rejected' };
   }
   if (!enrollResponse.ok) return { ok: false, reason: 'unexpected' };
