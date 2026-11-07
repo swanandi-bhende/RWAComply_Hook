@@ -63,7 +63,7 @@ test('a saved verification offers wallet continuation without a new enrollment',
     body: JSON.stringify({ state: 'verified', linkedWallets: [] }),
   }));
   await page.goto('/invest');
-  await expect(page.getByText('Proof of human verified.')).toBeVisible();
+  await expect(page.getByText('World ID Proof of Human verified.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Continue and register this wallet' }).first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Verify with World App' })).toHaveCount(0);
 });

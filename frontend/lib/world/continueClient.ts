@@ -6,10 +6,10 @@ import {
   type RpContext,
 } from '@worldcoin/idkit-core';
 import type { WorldEnvironment } from './config.ts';
-import { safeReturnTo } from './handoff.ts';
+import { httpsReturnTo, idkitEnvironment } from './handoff.ts';
 import { SESSION_ID_PATTERN } from './sessionProof.ts';
 import type { SessionIdStore } from './sessionStore.ts';
-import type { ProofOfHumanRequest } from './enrollClient.ts';
+import { waitForProof, type ProofOfHumanRequest, type WorldProofStatus } from './enrollClient.ts';
 
 export type ContinuationClientResult =
   | { ok: true; continuationToken: string; expiresAt: number }
@@ -53,6 +53,7 @@ export function sessionProofConfig(input: {
 }): IDKitSessionConfig {
   return {
     app_id: input.appId,
+    action_description: 'RWAComply proof of human',
     rp_context: input.rpContext,
     environment: input.environment,
     ...(input.returnTo ? { return_to: input.returnTo } : {}),
@@ -87,7 +88,8 @@ export async function continueProofOfHuman(options: {
   signal?: AbortSignal;
   timeoutMs?: number;
   returnTo?: string;
-  onHandoff?: (handoff: { connectorURI: string; expiresAt: number }) => void;
+  onHandoff?: (handoff: { connectorURI: string; expiresAt: number; requestId?: string; environment: WorldEnvironment }) => void;
+  onStatus?: (status: WorldProofStatus) => void;
   onProofReceived?: () => void;
 } = {}): Promise<ContinuationClientResult> {
   let sessionId = options.sessionId ?? options.sessionStore?.read() ?? '';
@@ -123,16 +125,21 @@ export async function continueProofOfHuman(options: {
   if (typeof contextBody.app_id !== 'string' || !contextBody.app_id.startsWith('app_')) {
     return { ok: false, reason: 'unexpected' };
   }
-  if (contextBody.environment !== 'staging' && contextBody.environment !== 'production') {
+  if (
+    contextBody.environment !== 'staging' &&
+    contextBody.environment !== 'production' &&
+    contextBody.environment !== 'sandbox'
+  ) {
     return { ok: false, reason: 'unexpected' };
   }
   if (!isRpContext(contextBody.rp_context)) return { ok: false, reason: 'unexpected' };
 
+  const environment = idkitEnvironment(contextBody.environment);
   const config = sessionProofConfig({
     appId: contextBody.app_id as `app_${string}`,
     rpContext: contextBody.rp_context,
-    environment: contextBody.environment,
-    returnTo: safeReturnTo(options.returnTo),
+    environment,
+    returnTo: httpsReturnTo(options.returnTo),
   });
   let request: ProofOfHumanRequest;
   try {
@@ -143,10 +150,13 @@ export async function continueProofOfHuman(options: {
   options.onHandoff?.({
     connectorURI: request.connectorURI,
     expiresAt: contextBody.rp_context.expires_at,
+    requestId: request.requestId,
+    environment,
   });
-  const completion = await request.pollUntilCompletion({
+  const completion = await waitForProof(request, {
     timeout: options.timeoutMs ?? Math.max(1000, contextBody.rp_context.expires_at * 1000 - Date.now()),
     signal: options.signal,
+    onStatus: options.onStatus,
   });
   if (!completion.success) return completionFailure(String(completion.error));
   options.onProofReceived?.();

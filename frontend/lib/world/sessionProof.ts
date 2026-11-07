@@ -1,5 +1,5 @@
 import type { WorldEnvironment } from './config.ts';
-import { canonicalNullifierBytes, type PortalCallResult } from './enrollmentProof.ts';
+import { canonicalNullifierBytes, proofEnvironmentAccepted, type PortalCallResult } from './enrollmentProof.ts';
 
 export const SESSION_ID_PATTERN = /^session_[0-9a-fA-F]{64}01[0-9a-fA-F]{62}$/;
 const PROOF_OF_HUMAN = 'proof_of_human';
@@ -34,14 +34,15 @@ export function classifySessionProof(
   payload: unknown,
   environment: WorldEnvironment,
   nowSeconds: number,
-): { sessionId: string } {
+): { sessionId: string; proofEnvironment: WorldEnvironment } {
   if (!isRecord(payload)) throw new SessionProofRejected('invalid_body');
   if (payload.protocol_version !== '4.0') throw new SessionProofRejected('invalid_proof');
   if ('action' in payload) throw new SessionProofRejected('wrong_action');
   if (typeof payload.session_id !== 'string' || !SESSION_ID_PATTERN.test(payload.session_id)) {
     throw new SessionProofRejected('missing_session');
   }
-  if (payload.environment !== environment) throw new SessionProofRejected('wrong_environment');
+  const proofEnvironment = proofEnvironmentAccepted(environment, payload.environment) ? payload.environment : undefined;
+  if (!proofEnvironment) throw new SessionProofRejected('wrong_environment');
   if (!Array.isArray(payload.responses) || payload.responses.length !== 1 || !isRecord(payload.responses[0])) {
     throw new SessionProofRejected('invalid_proof');
   }
@@ -72,7 +73,7 @@ export function classifySessionProof(
     throw new SessionProofRejected('invalid_proof');
   }
   if (proof.expires_at_min <= nowSeconds) throw new SessionProofRejected('expired_proof');
-  return { sessionId: payload.session_id };
+  return { sessionId: payload.session_id, proofEnvironment };
 }
 
 const EXPIRED_CODES = new Set([

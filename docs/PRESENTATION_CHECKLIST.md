@@ -2,7 +2,7 @@
 
 This is the local runbook. It does not claim a finished World ID proof or a Sepolia investor purchase.
 
-The guided demonstration is `/demo`. The genuine investor path is `/invest`. They are separate.
+The presentation registration path is `/invest`. Choose “Use demo verification for this presentation” only for the two wallets in `RWA_SEPOLIA_DEMO_ALLOWED_WALLETS`. That choice is not World ID. `/demo` remains the local Anvil sandbox.
 
 ## Before presentation
 

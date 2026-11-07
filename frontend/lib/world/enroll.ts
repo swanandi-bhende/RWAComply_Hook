@@ -133,7 +133,7 @@ export async function handleEnroll(
       const inserted = store.insert({
         appId: config.appId,
         rpId: config.rpId,
-        environment: config.environment,
+        environment: bound.proofEnvironment,
         action: 'signup',
         credential: 'proof_of_human',
         nullifierHash: bound.nullifierHash,

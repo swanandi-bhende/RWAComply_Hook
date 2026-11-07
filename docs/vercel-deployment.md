@@ -87,7 +87,7 @@ After the first deployment:
 3. Add that exact origin as an allowed URL for the relying party. Do not leave the connector pointed at localhost.
 4. Confirm the RP id matches `WORLD_RP_ID`.
 5. Redeploy if the portal required a different `WORLD_RP_ID`.
-6. Open `/invest`, start verification, and confirm the connector URL host is the Vercel domain and the QR uses `world.org` or `staging.world.org`.
+6. Open `/invest`, start verification, and confirm the QR uses `sandbox.world.org` for the Sandbox app, or `world.org` only for a production app.
 7. A successful proof still requires a genuine Orb-verified World ID. This repository has not completed that proof on a deployed domain.
 
 Cookies are `HttpOnly` and `SameSite=Lax`. `Secure` is added when `x-forwarded-proto` is `https`. The cookie has no `Domain` attribute, so the host that set it is the only host that receives it.

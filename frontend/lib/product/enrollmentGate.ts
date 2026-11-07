@@ -24,7 +24,7 @@ export function enrollmentButton(input: {
   walletReady: boolean;
   alreadyRegistered: boolean;
   phase: EnrollmentPhase;
-  prompt?: 'creating' | 'qr_ready' | 'checking';
+  prompt?: 'creating' | 'qr_ready' | 'retrieved' | 'checking';
   identity?: 'unverified' | 'verified' | 'expired';
   marketLoading?: boolean;
   arkivUnavailable?: boolean;
@@ -71,7 +71,14 @@ export function enrollmentButton(input: {
       return {
         disabled: true,
         label: 'Waiting for World App',
-        explanation: 'Scan the QR code with World App, or open the World App link. Approving it does not verify you until RWAComply checks the proof.',
+        explanation: 'Scan the QR code with the Sandbox World App. The app must show the RWAComply request before you approve it.',
+      };
+    }
+    if (input.prompt === 'retrieved') {
+      return {
+        disabled: true,
+        label: 'Approve in World App',
+        explanation: 'World App has the RWAComply request. Approve proof of human there. RWAComply still has to check the proof.',
       };
     }
     return { disabled: true, label: 'Waiting for World App', explanation: 'Complete the proof in World App.' };

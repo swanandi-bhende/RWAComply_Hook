@@ -22,10 +22,12 @@ Names only. Do not paste private keys into chat, into this file, or into a commi
 | `WORLD_RP_ID` | Required before World ID can start | Server | Relying-party id | World Developer Portal |
 | `WORLD_PRIVATE_KEY` | Required before a connector request can be signed | Server | RP signing key. Must not equal the allocation key or the session key | World Developer Portal. Server only |
 | `WORLD_RP_SIGNER_ADDRESS` | Required with the RP key | Server | Address derived from `WORLD_PRIVATE_KEY` | World Developer Portal |
-| `WORLD_ID_ENVIRONMENT` | Required for identity routes | Server | `staging` for this deployment. Production only after a real production app exists | Keep `staging` |
+| `WORLD_ID_ENVIRONMENT` | Required for identity routes | Server | `staging` for this deployment. The phone handoff uses the Sandbox app. `production` only after a real production app exists | Keep `staging` |
 | `WORLD_SESSION_ENCRYPTION_KEY` | Required before an enrollment can be stored | Server | Encrypts the saved World ID session. 32-byte hex. Must not reuse the RP key | Generated locally. Server only |
 | `WORLD_ENROLLMENT_DB_PATH` | Omit on Vercel | Server | Local SQLite path. On Vercel the identity routes refuse to open it | Leave unset in Vercel |
 | `RWA_DEMO_IDENTITY` | Omit on Vercel | Server | `local` enables the Anvil demo only when the host is localhost. Any other host, including a Vercel domain, stays off | Do not set this in Vercel |
+| `RWA_SEPOLIA_DEMO_BYPASS_ENABLED` | No. Off unless set to `true` | Server | Enables the presentation registration option on `/invest` | Set `true` only for the presentation |
+| `RWA_SEPOLIA_DEMO_ALLOWED_WALLETS` | Required when the bypass is enabled | Server | Comma-separated investor wallets. No wildcard. The deployer, allocation signer, and liquidity helper are rejected even if listed | The two presentation investor wallets. Do not use the infrastructure accounts |
 | `ARKIV_ACCESS_KEY` | Optional. Offerings still render the chain status without it | Server | Reads the published offering directory | Already created for the local Arkiv client. Server only |
 | `ARKIV_PUBLISHER_PRIVATE_KEY` | Omit | Server | Used only by the local publish script. The website does not publish on request | Do not put this in Vercel |
 | `ARKIV_CLIENT_STOPPED` | Omit | Server | Test switch that stops the Arkiv client | Do not set this |

@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { WorldConfigError, readEnrollmentConfig, type WorldEnv } from './config.ts';
 import { portalVerifyClient, type WorldVerifyClient } from './enroll.ts';
+import { proofEnvironmentAccepted } from './enrollmentProof.ts';
 import { EnrollmentStore } from './enrollmentStore.ts';
 import { decryptSessionId, domainHash, CONTINUATION_GRANT_HASH_DOMAIN, SESSION_ID_HASH_DOMAIN } from './sessionCrypto.ts';
 import {
@@ -71,7 +72,7 @@ export async function handleContinue(
       !enrollment ||
       enrollment.appId !== config.appId ||
       enrollment.rpId !== config.rpId ||
-      enrollment.environment !== config.environment
+      !proofEnvironmentAccepted(config.environment, enrollment.environment)
     ) {
       return json({ error: 'This World ID session is not enrolled' }, 404);
     }
@@ -86,7 +87,7 @@ export async function handleContinue(
     }
 
     const portal = await (options.verify ?? portalVerifyClient())({ rpId: config.rpId, rawBody });
-    acceptSessionPortal(portal, bound.sessionId, config.environment);
+    acceptSessionPortal(portal, bound.sessionId, bound.proofEnvironment);
 
     const token = randomBytes(32).toString('hex');
     const expiresAt = nowSeconds + CONTINUATION_GRANT_TTL_SECONDS;

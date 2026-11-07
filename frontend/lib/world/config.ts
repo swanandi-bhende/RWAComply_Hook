@@ -105,14 +105,14 @@ export function publicWorldConfig(env: WorldEnv = process.env): WorldPublicConfi
   return { appId, rpId };
 }
 
-export type WorldEnvironment = 'staging' | 'production';
+export type WorldEnvironment = 'staging' | 'production' | 'sandbox';
 
 const ENCRYPTION_KEY_PATTERN = /^(0x)?[0-9a-fA-F]{64}$/;
 
 export function readWorldEnvironment(env: WorldEnv = process.env): WorldEnvironment | undefined {
   const value = env.WORLD_ID_ENVIRONMENT?.trim() ?? '';
   if (!value) return undefined;
-  if (value === 'staging' || value === 'production') return value;
+  if (value === 'staging' || value === 'production' || value === 'sandbox') return value;
   throw new WorldConfigError('WORLD_ID_ENVIRONMENT is invalid');
 }
 

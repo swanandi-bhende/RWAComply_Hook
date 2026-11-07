@@ -1,12 +1,14 @@
 import {
   CredentialRequest,
   IDKit,
+  IDKitErrorCodes,
   type IDKitCompletionResult,
   type IDKitRequestConfig,
+  type IDKitResult,
   type RpContext,
 } from '@worldcoin/idkit-core';
 import type { WorldEnvironment } from './config.ts';
-import { safeReturnTo } from './handoff.ts';
+import { httpsReturnTo, idkitEnvironment } from './handoff.ts';
 import type { SessionIdStore } from './sessionStore.ts';
 
 export type EnrollmentClientSuccess = {
@@ -36,9 +38,13 @@ type RpContextResponse = {
   rp_context?: Partial<RpContext>;
 };
 
+export type WorldProofStatus = 'waiting_for_connection' | 'awaiting_confirmation';
+
 export type ProofOfHumanRequest = {
   connectorURI: string;
+  requestId?: string;
   pollUntilCompletion: (options?: { timeout?: number; signal?: AbortSignal }) => Promise<IDKitCompletionResult>;
+  pollOnce?: () => Promise<{ type: string; result?: IDKitResult; error?: string }>;
   getDebugReport?: () => { request_payload?: unknown };
 };
 
@@ -51,6 +57,7 @@ export function enrollmentRequestConfig(input: {
   return {
     app_id: input.appId,
     action: 'signup',
+    action_description: 'RWAComply proof of human',
     session_id: 'create',
     rp_context: input.rpContext,
     allow_legacy_proofs: false,
@@ -73,6 +80,57 @@ function isRpContext(value: Partial<RpContext> | undefined): value is RpContext 
     value.expires_at > value.created_at;
 }
 
+export async function waitForProof(
+  request: ProofOfHumanRequest,
+  options: { timeout: number; signal?: AbortSignal; onStatus?: (status: WorldProofStatus) => void },
+): Promise<IDKitCompletionResult> {
+  if (!request.pollOnce) {
+    return request.pollUntilCompletion({ timeout: options.timeout, signal: options.signal });
+  }
+  const deadline = Date.now() + options.timeout;
+  const requestId = request.requestId;
+  while (Date.now() < deadline) {
+    if (options.signal?.aborted) return { success: false, error: IDKitErrorCodes.Cancelled };
+    if (request.requestId && requestId && request.requestId !== requestId) {
+      return { success: false, error: IDKitErrorCodes.GenericError };
+    }
+    let status: { type: string; result?: IDKitResult; error?: string };
+    try {
+      status = await request.pollOnce();
+    } catch {
+      if (options.signal?.aborted || Date.now() >= deadline) {
+        return { success: false, error: options.signal?.aborted ? IDKitErrorCodes.Cancelled : IDKitErrorCodes.Timeout };
+      }
+      await delay(Math.min(1000, Math.max(0, deadline - Date.now())), options.signal);
+      continue;
+    }
+    if (status.type === 'waiting_for_connection' || status.type === 'awaiting_confirmation') {
+      options.onStatus?.(status.type);
+    }
+    if (status.type === 'confirmed' && status.result) return { success: true, result: status.result };
+    if (status.type === 'failed') {
+      const code = status.error ?? IDKitErrorCodes.GenericError;
+      const known = (Object.values(IDKitErrorCodes) as string[]).includes(code);
+      return {
+        success: false,
+        error: (known ? code : IDKitErrorCodes.GenericError) as Extract<IDKitCompletionResult, { success: false }>['error'],
+      };
+    }
+    await delay(Math.min(1000, Math.max(0, deadline - Date.now())), options.signal);
+  }
+  return { success: false, error: IDKitErrorCodes.Timeout };
+}
+
+function delay(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve) => {
+    const timer = setTimeout(resolve, ms);
+    signal?.addEventListener('abort', () => {
+      clearTimeout(timer);
+      resolve();
+    }, { once: true });
+  });
+}
+
 function completionFailure(error: string): EnrollmentClientFailure {
   if (error === 'user_rejected') return { ok: false, reason: 'cancelled' };
   if (error === 'timeout') return { ok: false, reason: 'timeout' };
@@ -93,7 +151,8 @@ export async function enrollProofOfHuman(options: {
   signal?: AbortSignal;
   timeoutMs?: number;
   returnTo?: string;
-  onHandoff?: (handoff: { connectorURI: string; expiresAt: number }) => void;
+  onHandoff?: (handoff: { connectorURI: string; expiresAt: number; requestId?: string; environment: WorldEnvironment }) => void;
+  onStatus?: (status: WorldProofStatus) => void;
   onProofReceived?: () => void;
 } = {}): Promise<EnrollmentClientResult> {
   const fetchImpl = options.fetchImpl ?? fetch;
@@ -116,16 +175,21 @@ export async function enrollProofOfHuman(options: {
   if (typeof contextBody.app_id !== 'string' || !contextBody.app_id.startsWith('app_')) {
     return { ok: false, reason: 'unexpected' };
   }
-  if (contextBody.environment !== 'staging' && contextBody.environment !== 'production') {
+  if (
+    contextBody.environment !== 'staging' &&
+    contextBody.environment !== 'production' &&
+    contextBody.environment !== 'sandbox'
+  ) {
     return { ok: false, reason: 'unexpected' };
   }
   if (!isRpContext(contextBody.rp_context)) return { ok: false, reason: 'unexpected' };
 
+  const environment = idkitEnvironment(contextBody.environment);
   const config = enrollmentRequestConfig({
     appId: contextBody.app_id as `app_${string}`,
     rpContext: contextBody.rp_context,
-    environment: contextBody.environment,
-    returnTo: safeReturnTo(options.returnTo),
+    environment,
+    returnTo: httpsReturnTo(options.returnTo),
   });
 
   let request: ProofOfHumanRequest;
@@ -138,10 +202,13 @@ export async function enrollProofOfHuman(options: {
   options.onHandoff?.({
     connectorURI: request.connectorURI,
     expiresAt: contextBody.rp_context.expires_at,
+    requestId: request.requestId,
+    environment,
   });
-  const completion = await request.pollUntilCompletion({
+  const completion = await waitForProof(request, {
     timeout: options.timeoutMs ?? Math.max(1000, contextBody.rp_context.expires_at * 1000 - Date.now()),
     signal: options.signal,
+    onStatus: options.onStatus,
   });
   if (!completion.success) return completionFailure(String(completion.error));
   options.onProofReceived?.();

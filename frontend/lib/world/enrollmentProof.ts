@@ -31,7 +31,13 @@ export type BoundEnrollment = {
   sessionId: string;
   nullifierBytes: Buffer;
   nullifierHash: string;
+  proofEnvironment: WorldEnvironment;
 };
+
+export function proofEnvironmentAccepted(configured: WorldEnvironment, actual: unknown): actual is WorldEnvironment {
+  if (actual === configured) return true;
+  return configured === 'staging' && actual === 'sandbox';
+}
 
 type ProofItem = {
   identifier?: unknown;
@@ -97,7 +103,8 @@ export function classifyBoundEnrollment(
   if (action === undefined) throw new EnrollmentRejected('standalone_session');
   if (action !== 'signup') throw new EnrollmentRejected('wrong_action');
   if (!SESSION_ID_PATTERN.test(sessionId)) throw new EnrollmentRejected('missing_session');
-  if (payload.environment !== environment) throw new EnrollmentRejected('wrong_environment');
+  const proofEnvironment = proofEnvironmentAccepted(environment, payload.environment) ? payload.environment : undefined;
+  if (!proofEnvironment) throw new EnrollmentRejected('wrong_environment');
 
   const humanProofs = responses.filter((item) => item.identifier === PROOF_OF_HUMAN);
   if (humanProofs.length !== 1) throw new EnrollmentRejected('wrong_credential');
@@ -113,6 +120,7 @@ export function classifyBoundEnrollment(
     sessionId,
     nullifierBytes,
     nullifierHash: nullifierReplayHash(nullifierBytes),
+    proofEnvironment,
   };
 }
 
@@ -152,7 +160,8 @@ export function acceptPortalVerification(
   }
   if (portal.body.protocol_version !== '4.0') throw new EnrollmentRejected('invalid_proof');
   if (portal.body.action !== 'signup') throw new EnrollmentRejected('wrong_action');
-  if (portal.body.environment !== environment) throw new EnrollmentRejected('wrong_environment');
+  if (!proofEnvironmentAccepted(environment, bound.proofEnvironment)) throw new EnrollmentRejected('wrong_environment');
+  if (portal.body.environment !== bound.proofEnvironment) throw new EnrollmentRejected('wrong_environment');
   if (typeof portal.body.nullifier !== 'string') throw new EnrollmentRejected('missing_nullifier');
   if (typeof portal.body.session_id === 'string' && portal.body.session_id !== bound.sessionId) {
     throw new EnrollmentRejected('missing_session');

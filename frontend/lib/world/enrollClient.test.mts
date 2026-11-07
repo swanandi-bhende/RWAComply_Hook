@@ -116,7 +116,8 @@ test('enrollment forwards the unchanged result and ignores cancellation or failu
   assert.equal(receivedConfig?.session_id, 'create');
   assert.equal(receivedConfig?.allow_legacy_proofs, false);
   assert.equal(receivedConfig?.app_id, APP_ID);
-  assert.equal(receivedConfig?.environment, 'staging');
+  assert.equal(receivedConfig?.environment, 'sandbox');
+  assert.equal(receivedConfig?.action_description, 'RWAComply proof of human');
   assert.equal(receivedConfig?.rp_context.rp_id, RP_ID);
   assert.deepEqual(seen, [verifiedResult]);
 
@@ -138,6 +139,59 @@ test('enrollment forwards the unchanged result and ignores cancellation or failu
     assert.equal(result.ok, false);
     assert.equal(enrollCalls, 0);
   }
+});
+
+test('polling stays on one request and reports retrieval, cancellation, and expiry', async () => {
+  const statuses = ['waiting_for_connection', 'awaiting_confirmation', 'confirmed'];
+  const seen: string[] = [];
+  let polls = 0;
+  const result = await enrollProofOfHuman({
+    fetchImpl: async (input) => {
+      if (String(input).endsWith('/api/world/enroll')) {
+        return Response.json({ success: true, session_id: verifiedSessionId });
+      }
+      return Response.json(contextResponse());
+    },
+    onStatus: (status) => seen.push(status),
+    openRequest: async () => ({
+      connectorURI: 'https://sandbox.world.org/verify?t=wld&i=reqsandbox1&k=abc',
+      requestId: 'reqsandbox1',
+      pollOnce: async () => {
+        polls += 1;
+        const type = statuses[polls - 1];
+        if (type === 'confirmed') return { type, result: verifiedResult };
+        return { type };
+      },
+      pollUntilCompletion: async () => {
+        throw new Error('pollUntilCompletion should not run when pollOnce exists');
+      },
+    }),
+  });
+  assert.equal(result.ok, true);
+  assert.deepEqual(seen, ['waiting_for_connection', 'awaiting_confirmation']);
+
+  const cancelled = await enrollProofOfHuman({
+    fetchImpl: async () => Response.json(contextResponse()),
+    openRequest: async () => ({
+      connectorURI: 'https://sandbox.world.org/verify?t=wld&i=same&k=abc',
+      requestId: 'same',
+      pollOnce: async () => ({ type: 'failed', error: 'user_rejected' }),
+      pollUntilCompletion: async () => ({ success: false, error: 'timeout' }) as IDKitCompletionResult,
+    }),
+  });
+  assert.deepEqual(cancelled, { ok: false, reason: 'cancelled' });
+
+  const expired = await enrollProofOfHuman({
+    timeoutMs: 1,
+    fetchImpl: async () => Response.json(contextResponse()),
+    openRequest: async () => ({
+      connectorURI: 'https://sandbox.world.org/verify?t=wld&i=same&k=abc',
+      requestId: 'same',
+      pollOnce: async () => ({ type: 'waiting_for_connection' }),
+      pollUntilCompletion: async () => ({ success: true, result: verifiedResult }),
+    }),
+  });
+  assert.deepEqual(expired, { ok: false, reason: 'timeout' });
 });
 
 test('the connector is presented before polling and a client flag cannot verify the person', async () => {

@@ -144,6 +144,25 @@ test('a verified Proof of Human enrollment stores an encrypted session and retur
   });
 });
 
+test('a sandbox proof is accepted when the server is configured for staging', async () => {
+  await withStore(async (store) => {
+    const body = proof({ environment: 'sandbox' });
+    const response = await handleEnroll(post(body), {
+      env: env(),
+      store,
+      verify: async () => portal({ environment: 'sandbox' }),
+    });
+    assert.equal(response.status, 200);
+    assert.equal(store.records()[0]?.environment, 'sandbox');
+    const rejected = await handleEnroll(post(body), {
+      env: env(),
+      store,
+      verify: async () => portal({ environment: 'staging' }),
+    });
+    assert.equal(rejected.status, 422);
+  });
+});
+
 test('enrollment rejects the wrong action, environment, credential, nullifier, and session binding', async () => {
   await withStore(async (store) => {
     const cases: Array<{ body: unknown; status: number; error: string }> = [
