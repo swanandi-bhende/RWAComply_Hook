@@ -14,7 +14,7 @@ export async function runEnrollmentAction<TAuth extends { ok: true }>(options: {
 }): Promise<EnrollmentActionResult> {
   const enrolled = await options.enroll();
   if (!enrolled.ok) {
-    return { registered: false, stage: 'enrollment', reason: enrolled.reason };
+    return { registered: false, stage: 'enrollment', reason: enrolled.reason, message: enrolled.message };
   }
   if (!enrolled.continuationToken) {
     return { registered: false, stage: 'enrollment', reason: 'unexpected' };

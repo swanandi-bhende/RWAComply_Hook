@@ -96,7 +96,8 @@ export function acceptSessionPortal(
     throw new SessionProofRejected('invalid_proof');
   }
   const body = portal.body;
-  if (body.success !== true || body.protocol_version !== '4.0') {
+  if (body.success !== true) throw new SessionProofRejected('invalid_proof');
+  if (body.protocol_version !== undefined && body.protocol_version !== '4.0') {
     throw new SessionProofRejected('invalid_proof');
   }
   if (body.environment !== environment) throw new SessionProofRejected('wrong_environment');

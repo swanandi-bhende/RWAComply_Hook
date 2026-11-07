@@ -417,21 +417,31 @@ export default function InvestorExperience() {
     setHandoff(null);
     if (result.registered) {
       setEnrollmentPhase('idle');
-      setVerify({
+      setVerify({ tone: 'ok', text: 'World ID Proof of Human verified' });
+      setLink({
         tone: 'ok',
-        text: 'Wallet linked. It shares this offering’s purchase allocation with the other wallets of this verified person.',
+        text: 'Wallet registered on Ethereum Sepolia. It shares this offering’s purchase allocation with the other wallets of this verified person.',
       });
       await identityQuery.refetch();
       return;
     }
-    setEnrollmentPhase('failed');
-    const detail = result.message
-      ?? (result.stage === 'enrollment'
-        ? verificationFailure(result.reason ?? 'unexpected')
-        : result.stage === 'authorization'
-          ? walletLinkFailure(result.reason ?? 'unexpected')
-          : 'Registration was not confirmed.');
-    setVerify({ tone: 'error', text: `${detail} This wallet was not registered.` });
+    if (result.stage === 'enrollment') {
+      setEnrollmentPhase('failed');
+      setVerify({
+        tone: 'error',
+        text: result.message ?? verificationFailure(result.reason ?? 'unexpected'),
+      });
+      setLink({ tone: 'pending', text: 'Wallet registration pending.' });
+      return;
+    }
+    setEnrollmentPhase('awaiting_signature');
+    setVerify({ tone: 'ok', text: 'World ID Proof of Human verified' });
+    const registrationDetail = result.message
+      ?? (result.stage === 'authorization'
+        ? walletLinkFailure(result.reason ?? 'unexpected')
+        : 'Registration was not confirmed.');
+    setLink({ tone: 'error', text: `Wallet registration pending. ${registrationDetail}` });
+    await identityQuery.refetch();
   }
 
   const demoForWallet = Boolean(address && demoChallenge?.wallet === address);
@@ -649,12 +659,16 @@ export default function InvestorExperience() {
     setHandoff(null);
     setEnrollmentPhase(result.registered ? 'idle' : 'failed');
     if (!result.registered) {
-      const detail = result.stage === 'continuation'
-        ? verificationFailure(result.reason ?? 'unexpected')
-        : result.stage === 'authorization'
-          ? walletLinkFailure(result.reason ?? 'unexpected')
-          : (result.message ?? 'Registration was not confirmed.');
-      setLink({ tone: 'error', text: `${detail} This wallet was not registered.` });
+      if (result.stage === 'continuation') {
+        setVerify({ tone: 'error', text: verificationFailure(result.reason ?? 'unexpected') });
+        setLink({ tone: 'pending', text: 'Wallet registration pending.' });
+        return;
+      }
+      setVerify({ tone: 'ok', text: 'World ID Proof of Human verified' });
+      const registrationDetail = result.stage === 'authorization'
+        ? walletLinkFailure(result.reason ?? 'unexpected')
+        : (result.message ?? 'Registration was not confirmed.');
+      setLink({ tone: 'error', text: `Wallet registration pending. ${registrationDetail}` });
       return;
     }
     await remaining.refetch();

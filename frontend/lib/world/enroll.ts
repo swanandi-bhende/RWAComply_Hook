@@ -13,6 +13,17 @@ import {
 import { cookieIsSecure, newResumeToken, RESUME_TTL_SECONDS, resumeCookie } from './browserResume.ts';
 import { BROWSER_RESUME_HASH_DOMAIN, CONTINUATION_GRANT_HASH_DOMAIN, domainHash, encryptSessionId, SESSION_ID_HASH_DOMAIN } from './sessionCrypto.ts';
 
+function devWorldLog(event: string, fields: Record<string, string | number | boolean>): void {
+  if (process.env.VERCEL === '1') return;
+  console.info(`[world] ${event} ${JSON.stringify(fields)}`);
+}
+
+function safePortalCode(body: unknown): string {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return '';
+  const code = (body as { code?: unknown }).code;
+  return typeof code === 'string' && /^[a-z0-9_]{1,64}$/.test(code) ? code : '';
+}
+
 const VERIFY_TIMEOUT_MS = 15_000;
 const ENROLLMENT_GRANT_TTL_SECONDS = 300;
 const MAX_BODY_BYTES = 256 * 1024;
@@ -118,12 +129,16 @@ export async function handleEnroll(
     return failure('invalid_proof');
   }
 
+  let portalStatus = 0;
+  let portalCode = '';
   try {
     const bound = classifyBoundEnrollment(payload, config.environment);
     const portal = await (options.verify ?? portalVerifyClient())({
       rpId: config.rpId,
       rawBody,
     });
+    portalStatus = portal.status;
+    portalCode = safePortalCode(portal.body);
     acceptPortalVerification(portal, bound, config.environment);
 
     const encrypted = encryptSessionId(bound.sessionId, config.sessionEncryptionKey);
@@ -161,6 +176,14 @@ export async function handleEnroll(
           expiresAt: resumeExpires,
           createdAt: new Date(nowSeconds * 1000).toISOString(),
         });
+        devWorldLog('enroll_persisted', {
+          portalStatus,
+          portalCode,
+          environmentRejected: false,
+          sessionPersisted: true,
+          resumeCookieIssued: true,
+          continuationIssued: true,
+        });
         return jsonResponse({
           success: true,
           session_id: bound.sessionId,
@@ -174,6 +197,15 @@ export async function handleEnroll(
     }
     return jsonResponse({ error: 'Enrollment could not be completed' }, 500);
   } catch (error) {
+    const code = error instanceof EnrollmentRejected ? error.code : 'unexpected';
+    devWorldLog('enroll_rejected', {
+      code,
+      portalStatus,
+      portalCode,
+      environmentRejected: code === 'wrong_environment',
+      sessionPersisted: false,
+      resumeCookieIssued: false,
+    });
     if (error instanceof EnrollmentRejected) return failure(error.code);
     return jsonResponse({ error: 'Enrollment could not be completed' }, 500);
   }

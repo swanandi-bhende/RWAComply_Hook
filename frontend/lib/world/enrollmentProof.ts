@@ -157,8 +157,12 @@ export function acceptPortalVerification(
   if (!isRecord(portal.body) || portal.body.success !== true) {
     throw new EnrollmentRejected('invalid_proof');
   }
-  if (portal.body.protocol_version !== '4.0') throw new EnrollmentRejected('invalid_proof');
-  if (portal.body.action !== 'signup') throw new EnrollmentRejected('wrong_action');
+  if (portal.body.protocol_version !== undefined && portal.body.protocol_version !== '4.0') {
+    throw new EnrollmentRejected('invalid_proof');
+  }
+  if (portal.body.action !== undefined && portal.body.action !== 'signup') {
+    throw new EnrollmentRejected('wrong_action');
+  }
   if (!proofEnvironmentAccepted(environment, bound.proofEnvironment)) throw new EnrollmentRejected('wrong_environment');
   if (portal.body.environment !== bound.proofEnvironment) throw new EnrollmentRejected('wrong_environment');
   if (typeof portal.body.nullifier !== 'string') throw new EnrollmentRejected('missing_nullifier');
@@ -178,14 +182,11 @@ export function acceptPortalVerification(
   if (!portalNullifier || !portalNullifier.equals(bound.nullifierBytes)) {
     throw new EnrollmentRejected('missing_nullifier');
   }
-  const resultNullifiers = humanResults.map((item) =>
-    typeof item.nullifier === 'string' ? canonicalNullifierBytes(item.nullifier) : undefined,
-  );
-  if (
-    resultNullifiers.some(
-      (item) => !item || !item.equals(bound.nullifierBytes),
-    )
-  ) {
+  if (humanResults.some((item) => {
+    if (typeof item.nullifier !== 'string') return false;
+    const bytes = canonicalNullifierBytes(item.nullifier);
+    return !bytes || !bytes.equals(bound.nullifierBytes);
+  })) {
     throw new EnrollmentRejected('missing_nullifier');
   }
 }

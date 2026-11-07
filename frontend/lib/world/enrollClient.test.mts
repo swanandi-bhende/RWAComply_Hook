@@ -294,7 +294,11 @@ test('sandbox configuration is passed through and a rejected proof is not verifi
       pollUntilCompletion: async () => ({ success: true, result: verifiedResult }),
     }),
   });
-  assert.deepEqual(rejected, { ok: false, reason: 'environment_mismatch' });
+  assert.deepEqual(rejected, {
+    ok: false,
+    reason: 'environment_mismatch',
+    message: 'The World ID environment does not match this server',
+  });
 
   const missing = await enrollProofOfHuman({
     fetchImpl: async () => Response.json({ app_id: APP_ID, rp_context: rpContext() }),

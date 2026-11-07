@@ -8,6 +8,7 @@ import {
   worldHandoff,
   type ConnectorEnvironment,
 } from '@/lib/world/handoff';
+import { Logo } from './Logo';
 
 export function WorldAppHandoff({
   connectorURI,
@@ -69,6 +70,7 @@ export function WorldAppHandoff({
     : 'Waiting for World App to retrieve this request.';
   return (
     <div className="stack">
+      <Logo height={36} />
       <p>Scan this QR code with {environment === 'sandbox' ? 'the Sandbox World App' : 'World App'}. The code is the IDKit request link. Opening the app without that request does not verify you.</p>
       {image
         ? (

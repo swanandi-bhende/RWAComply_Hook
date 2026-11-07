@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Logo } from './Logo';
 import { SiteFooter } from './SiteFooter';
 import { SiteNav } from './SiteNav';
 
@@ -9,6 +10,7 @@ export function Landing() {
       <main className="page">
         <section className="hero-layout" aria-labelledby="hero-title">
           <div>
+            <Logo height={40} />
             <p className="kicker">Tokenized-asset purchase limits</p>
             <h1 id="hero-title" className="page-title">One human. Multiple wallets. One shared purchase limit.</h1>
             <p className="lede">

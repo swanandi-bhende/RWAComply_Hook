@@ -8,7 +8,7 @@ A live proof has not been completed. The server path and its failure tests exist
 
 1. [`frontend/app/api/world/rp-context/route.ts`](../frontend/app/api/world/rp-context/route.ts) returns a short-lived context signed with `WORLD_PRIVATE_KEY`.
 2. The first wallet uses IDKit with action `signup`, `session_id: "create"`, and `allow_legacy_proofs: false`. The request environment is `WORLD_ID_ENVIRONMENT`. This deployment uses `sandbox`. A later wallet uses `IDKit.proveSession` with the same environment.
-3. [`frontend/app/api/world/enroll/route.ts`](../frontend/app/api/world/enroll/route.ts) posts the IDKit result to `https://developer.world.org/api/v4/verify/{rp_id}`.
+3. [`frontend/app/api/world/enroll/route.ts`](../frontend/app/api/world/enroll/route.ts) posts the unchanged IDKit result to `https://developer.world.org/api/v4/verify/{rp_id}`. A successful Developer Portal response has `success: true`, the same environment, and the same nullifier. It does not have to repeat `protocol_version` or put the nullifier on every result row. World ID verification is stored before wallet registration. A failed registration does not undo the verified session.
 4. After World accepts it, the server creates a random `bytes32` allocation id and stores the session with AES-256-GCM. The raw session id and the raw nullifier are not stored. A duplicate proof returns HTTP 409.
 5. A later wallet calls `IDKit.proveSession`. The app does not call `IDKit.createSession`. The session nullifier only ties that interaction to the same session. It is not the allocation id.
 6. [`frontend/app/api/world/continue/route.ts`](../frontend/app/api/world/continue/route.ts) verifies the proof and returns a one-time grant. The response does not include the allocation id.

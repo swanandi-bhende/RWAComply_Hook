@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { Logo } from './Logo';
 
 const LINKS = [
   { href: '/', label: 'Overview' },
@@ -33,7 +34,7 @@ export function SiteNav() {
   return (
     <>
       <aside className={open ? 'app-sidebar is-open' : 'app-sidebar'}>
-        <Link href="/" className="brand">RWAComply</Link>
+        <Link href="/" className="brand"><Logo height={28} /></Link>
         <p className="sidebar-promise">One human. Multiple wallets. One shared purchase limit.</p>
         <nav id="site-navigation" aria-label="Product" className="nav-links">
           {LINKS.map((link) => {

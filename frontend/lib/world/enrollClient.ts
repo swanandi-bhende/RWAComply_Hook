@@ -30,6 +30,7 @@ export type EnrollmentClientFailure = {
     | 'already_enrolled'
     | 'world_unavailable'
     | 'unexpected';
+  message?: string;
 };
 
 export type EnrollmentClientResult = EnrollmentClientSuccess | EnrollmentClientFailure;
@@ -133,6 +134,40 @@ function delay(ms: number, signal?: AbortSignal): Promise<void> {
   });
 }
 
+const SAFE_ENROLLMENT_MESSAGES = new Set([
+  'Invalid request body',
+  'The World ID proof is expired',
+  'The World ID action is not signup',
+  'The World ID credential is not Proof of Human',
+  'The World ID environment does not match this server',
+  'The proof is not bound to a new session',
+  'A session proof without Proof of Human uniqueness cannot enroll',
+  'The uniqueness nullifier is missing',
+  'World ID verification timed out',
+  'World ID verification is unavailable',
+  'The World ID proof is invalid',
+  'This Proof of Human enrollment already exists',
+  'Enrollment could not be completed',
+]);
+
+function devWorldLog(event: string, fields: Record<string, string | number | boolean>): void {
+  if (process.env.NODE_ENV === 'production') return;
+  console.info(`[world] ${event} ${JSON.stringify(fields)}`);
+}
+
+function completionSummary(result: IDKitResult): Record<string, string | number | boolean> {
+  const responses = Array.isArray(result.responses) ? result.responses : [];
+  return {
+    protocolVersion: result.protocol_version,
+    sessionPresent: 'session_id' in result && typeof result.session_id === 'string',
+    actionPresent: 'action' in result && typeof result.action === 'string',
+    environment: typeof result.environment === 'string' ? result.environment : 'missing',
+    responseCount: responses.length,
+    nullifierPresent: responses.some((item) => 'nullifier' in item && typeof item.nullifier === 'string'),
+    sessionNullifierPresent: responses.some((item) => 'session_nullifier' in item),
+  };
+}
+
 function completionFailure(error: string): EnrollmentClientFailure {
   if (error === 'user_rejected') return { ok: false, reason: 'cancelled' };
   if (error === 'timeout') return { ok: false, reason: 'timeout' };
@@ -212,7 +247,11 @@ export async function enrollProofOfHuman(options: {
     signal: options.signal,
     onStatus: options.onStatus,
   });
-  if (!completion.success) return completionFailure(String(completion.error));
+  if (!completion.success) {
+    devWorldLog('idkit_completion', { success: false, error: String(completion.error) });
+    return completionFailure(String(completion.error));
+  }
+  devWorldLog('idkit_completion', { success: true, ...completionSummary(completion.result) });
   options.onProofReceived?.();
 
   let enrollResponse: Response;
@@ -227,16 +266,25 @@ export async function enrollProofOfHuman(options: {
     return { ok: false, reason: 'world_unavailable' };
   }
 
-  if (enrollResponse.status === 409) return { ok: false, reason: 'already_enrolled' };
-  if (enrollResponse.status === 503) return { ok: false, reason: 'world_unavailable' };
+  const failureBody = enrollResponse.ok
+    ? null
+    : (await enrollResponse.clone().json().catch(() => null)) as { error?: unknown } | null;
+  const failureMessage = SAFE_ENROLLMENT_MESSAGES.has(String(failureBody?.error))
+    ? String(failureBody?.error)
+    : '';
+  devWorldLog('enroll_response', {
+    status: enrollResponse.status,
+    safeMessage: failureMessage !== '',
+  });
+  if (enrollResponse.status === 409) return { ok: false, reason: 'already_enrolled', message: failureMessage || undefined };
+  if (enrollResponse.status === 503) return { ok: false, reason: 'world_unavailable', message: failureMessage || undefined };
   if (enrollResponse.status === 422 || enrollResponse.status === 401) {
-    const failure = (await enrollResponse.json().catch(() => null)) as { error?: unknown } | null;
-    if (typeof failure?.error === 'string' && failure.error.includes('environment does not match')) {
-      return { ok: false, reason: 'environment_mismatch' };
+    if (failureMessage.includes('environment does not match')) {
+      return { ok: false, reason: 'environment_mismatch', message: failureMessage };
     }
-    return { ok: false, reason: 'verification_rejected' };
+    return { ok: false, reason: 'verification_rejected', message: failureMessage || undefined };
   }
-  if (!enrollResponse.ok) return { ok: false, reason: 'unexpected' };
+  if (!enrollResponse.ok) return { ok: false, reason: 'unexpected', message: failureMessage || undefined };
 
   const body = (await enrollResponse.json()) as {
     success?: unknown;

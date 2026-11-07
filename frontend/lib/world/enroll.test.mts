@@ -145,6 +145,39 @@ test('a verified Proof of Human enrollment stores an encrypted session and retur
   });
 });
 
+test('the Developer Portal success response can omit protocol version and per-result nullifiers', async () => {
+  await withStore(async (store) => {
+    const body = proof({ environment: 'sandbox' });
+    const official = portal({ environment: 'sandbox' });
+    const officialBody = official.body as Record<string, unknown>;
+    delete officialBody.protocol_version;
+    officialBody.results = [{ identifier: 'proof_of_human', success: true }];
+    const response = await handleEnroll(post(body), {
+      env: env({ WORLD_ID_ENVIRONMENT: 'sandbox' }),
+      store,
+      verify: async ({ rawBody }) => {
+        assert.equal(rawBody, JSON.stringify(body));
+        return official;
+      },
+    });
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get('set-cookie') ?? '', /^rwacomply_resume=/);
+    assert.equal(store.records().length, 1);
+    assert.equal(store.records()[0]?.environment, 'sandbox');
+    assert.equal(store.records()[0]?.credential, 'proof_of_human');
+
+    const mismatched = portal({ environment: 'sandbox', nullifier: `0x${'11'.repeat(32)}` });
+    const rejected = await handleEnroll(post(proof({ environment: 'sandbox', session_id: sessionId('cd') })), {
+      env: env({ WORLD_ID_ENVIRONMENT: 'sandbox' }),
+      store,
+      verify: async () => mismatched,
+    });
+    assert.equal(rejected.status, 422);
+    assert.equal(((await rejected.json()) as { error: string }).error, 'The uniqueness nullifier is missing');
+    assert.equal(store.records().length, 1);
+  });
+});
+
 test('a sandbox server accepts only a sandbox proof', async () => {
   await withStore(async (store) => {
     const body = proof({ environment: 'sandbox' });
