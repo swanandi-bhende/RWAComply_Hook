@@ -53,7 +53,7 @@ Confirm the branch is `v2`. Push it yourself when you want Vercel to import it. 
 4. Framework preset: Next.js.
 5. Install command: `npm ci`.
 6. Build command: `npm run build`.
-7. Output Directory: leave the field empty. Do not type `Default`, `.next`, or `frontend`. Next.js publishes `.next` only when that field is blank.
+7. Output Directory: turn the override off, or leave the field empty. Do not type `Default`, `.next`, or `frontend`. `frontend/vercel.json` sets `outputDirectory` to `null` so a saved value of `Default` is not used. Next.js publishes `.next` on its own.
 8. Node.js: the app is developed on Node `22.23.4` because it uses `node:sqlite` locally. If Vercel rejects that exact patch, set the project Node.js version to 22.x.
 9. Do not set a custom function max duration. The routes are ordinary reads and one signature, not long jobs.
 10. Do not add a hardcoded production domain in the repository.
